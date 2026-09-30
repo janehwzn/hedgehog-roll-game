@@ -1,9 +1,9 @@
 # 刺猬滚跑 🦔
 
 一个小朋友口述规则、妈妈亲手做出来的手指迷宫小游戏。
-规则来自 Steven（3 岁）的画和他亲口说的玩法：「刺猬滚跑，用手指在山洞里走，跟着箭头，从骷髅头的嘴巴穿过去，躲开弓箭和弹弓，走到山洞尽头就过关！」
+规则来自 Steven（5 岁）的画和他亲口说的玩法：「刺猬滚跑，用手指在山洞里走，跟着箭头，从骷髅头的嘴巴穿过去，躲开弓箭和弹弓，走到山洞尽头就过关！」
 
-A tiny finger-drag cave-maze game. The rules were dictated by 3-year-old Steven from his own drawing: *drag the hedgehog through the cave, follow the arrows, thread through the skull's mouth, dodge bows and slingshots, reach the end to win.*
+A tiny finger-drag cave-maze game. The rules were dictated by 5-year-old Steven from his own drawing: *drag the hedgehog through the cave, follow the arrows, thread through the skull's mouth, dodge bows and slingshots, reach the end to win.*
 
 ## 📱 在手机上玩 / Play on your phone
 
