@@ -230,7 +230,7 @@ function showIntro(idx,passed){
   document.getElementById('introSub').textContent=passed?('🎉 '+(LEVELS[idx-1]?LEVELS[idx-1].name:'')+'通过啦！'):def.sub;
   document.getElementById('introHint').textContent=def.hint;
   document.getElementById('introRules').style.display=idx===0?'block':'none';
-  document.getElementById('startBtn').textContent=idx===0?'开始滚跑！':'进入'+def.name.split(' ')[0];
+  document.getElementById('startBtn').textContent=idx===0?'开始滚跑！':'进入'+def.name.split(' ').slice(0,3).join(' ');
   document.getElementById('startOv').style.display='flex';
   document.getElementById('winOv').style.display='none';
 }
@@ -605,7 +605,7 @@ function draw(){
 function hud(){
   document.getElementById('hHeart').textContent='❤'.repeat(Math.max(0,G.hearts))||'💔';
   document.getElementById('hStar').textContent='⭐ '+G.starGot;
-  document.getElementById('hLevel').textContent=G.level.def.name.split(' ')[0]+' '+G.level.def.name.split(' ')[1];
+  document.getElementById('hLevel').textContent=G.level.def.name.split(' ').slice(0,3).join(' ');
 }
 
 /* ---------- 主循环 ---------- */
