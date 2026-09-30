@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>🦔 刺猬滚跑</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3e2723">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#201a18;font-family:"PingFang SC","Microsoft YaHei",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;}
+  #cv{position:fixed;inset:0;display:block;touch-action:none;}
+  .pill{background:rgba(255,255,255,.92);border-radius:999px;padding:8px 14px;font-size:17px;font-weight:700;color:#4e342e;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+  #hud{position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:5;}
+  #warn{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;text-align:center;z-index:6;pointer-events:none;opacity:0;transition:opacity .3s;padding:0 16px;}
+  #warn.show{opacity:1;}
+  #warn span{display:inline-block;background:rgba(239,83,80,.94);color:#fff;font-weight:700;font-size:16px;padding:10px 20px;border-radius:999px;box-shadow:0 3px 10px rgba(0,0,0,.2);}
+  .overlay{position:fixed;inset:0;background:rgba(43,32,28,.97);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .overlay h1{font-size:34px;color:#ffcc80;margin:10px 0;}
+  .overlay h2{font-size:21px;color:#ffab91;margin:4px 0 10px;}
+  .overlay p{font-size:16px;color:#d7ccc8;line-height:1.7;margin:6px 0;max-width:340px;}
+  .overlay .big{font-size:64px;}
+  .btn{margin-top:18px;background:#ff9800;color:#fff;border:none;font-size:22px;font-weight:700;padding:14px 52px;border-radius:999px;box-shadow:0 4px 12px rgba(255,152,0,.5);}
+  .btn:active{transform:scale(.95);}
+  .rule{background:#4e342e;border-radius:16px;padding:12px 18px;margin:8px 0;font-size:15px;color:#ffecb3;text-align:left;box-shadow:0 2px 6px rgba(0,0,0,.3);max-width:360px;line-height:1.9;}
+  .hint{background:#33691e;border-radius:16px;padding:10px 18px;margin:8px 0;font-size:15px;color:#f1f8e9;max-width:360px;line-height:1.7;}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud">
+  <div class="pill" id="hHeart">❤❤❤</div>
+  <div class="pill" id="hLevel">第 1 关</div>
+  <div class="pill" id="hStar">⭐ 0</div>
+</div>
+<div id="warn"><span id="warnTxt"></span></div>
+
+<div class="overlay" id="startOv">
+  <div class="big">🦔</div>
+  <h1 id="introTitle">刺猬滚跑</h1>
+  <h2 id="introLevel">第 1 关 · 跟着箭头走</h2>
+  <p id="introSub">山洞探险开始！</p>
+  <div class="hint" id="introHint">🔭 镜头说：跟着蓝色箭头，钻进山洞，一直往上走！</div>
+  <div class="rule" id="introRules">
+    🦔 你是一只小刺猬，<b>用手指挪着它走</b><br>
+    ➡️ 跟着<b>蓝色箭头</b>，钻进山洞往上走<br>
+    💀 从<b>骷髅头的嘴巴</b>钻过去再爬出来<br>
+    🏹 小心<b>弓箭</b>和<b>弹弓</b>，别被打到！<br>
+    ⭐ 吃到小星星加分，走到<b>出口</b>就过关！
+  </div>
+  <button class="btn" id="startBtn">开始滚跑！</button>
+</div>
+
+<div class="overlay" id="winOv" style="display:none;">
+  <div class="big">🎉</div>
+  <h1>全部过关！</h1>
+  <p id="winStats"></p>
+  <p style="font-size:15px;color:#a1887f;">小刺猬滚得太棒啦！🦔💨</p>
+  <button class="btn" id="againBtn">再玩一次</button>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
