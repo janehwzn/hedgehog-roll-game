@@ -353,7 +353,8 @@ function update(dt){
     }else{
       banner('🎉 '+L.def.name+'通过！',2200);
       sfxLevel();
-      setTimeout(()=>{G.phase='intro';showIntro(G.idx+1,true);},1400);
+      const ni=G.idx+1; // 通关后必须载入下一关的数据，否则会一直在重玩本关
+      setTimeout(()=>{loadLevel(ni);showIntro(ni,true);},1400);
     }
   }
 }
@@ -627,4 +628,9 @@ document.getElementById('againBtn').addEventListener('click',()=>{
 resize();loadLevel(0);
 requestAnimationFrame(loop);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+// Node 测试钩子：浏览器里 module 未定义，无影响
+if(typeof module!=='undefined'&&typeof process!=='undefined'){
+  module.exports._t={getG:function(){return G},loadLevel:loadLevel,showIntro:showIntro,update:update,
+    clickStart:function(){document.getElementById('startBtn').click();}};
+}
 })();
