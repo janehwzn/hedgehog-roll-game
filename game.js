@@ -52,26 +52,42 @@ function nearestOnPath(path,x,y){
   return {x:p.x,y:p.y,s:p.s,dist:Math.sqrt(bd)};
 }
 
-// 隧道半宽（带收窄点，比如骷髅头的嘴巴）
-function halfWidthAt(level,s){
+// 骷髅夹子开合状态：{open:1张开/0夹紧, warn:是否预警抖动}
+function chompState(pin,t){
+  const c=pin.chomp;
+  if(!c)return {open:1,warn:false};
+  const cyc=(((t==null?0:t)+(c.phase||0))%c.period+c.period)%c.period;
+  if(cyc<c.open)return {open:1,warn:false};
+  if(cyc<c.open+(c.warn==null?0.6:c.warn))return {open:1,warn:true};
+  return {open:0,warn:false};
+}
+// 隧道半宽（带收窄点；chomp 夹子会随时间开合）
+function halfWidthAt(level,s,t){
+  t=(t==null?0:t);
   let hw=level.half;
   const pinches=level.pinches||[];
   for(let k=0;k<pinches.length;k++){
     const pin=pinches[k];
     const d=Math.abs(s-pin.s);
     if(d<pin.len){
-      const t=1-d/pin.len;
-      const sm=t*t*(3-2*t);
-      hw=Math.min(hw,level.half+(pin.half-level.half)*sm);
+      const tt=1-d/pin.len;
+      const sm=tt*tt*(3-2*tt);
+      let ph=pin.half;
+      if(pin.chomp){
+        const st=chompState(pin,t);
+        const shut=pin.shutHalf==null?16:pin.shutHalf;
+        ph=pin.half+(shut-pin.half)*(1-st.open);
+      }
+      hw=Math.min(hw,level.half+(ph-level.half)*sm);
     }
   }
   return hw;
 }
 
 // 把刺猬限制在隧道内；返回修正后的位置和所在弧长
-function clampToTunnel(path,level,x,y,r){
+function clampToTunnel(path,level,x,y,r,t){
   const n=nearestOnPath(path,x,y);
-  const hw=halfWidthAt(level,n.s)-r;
+  const hw=halfWidthAt(level,n.s,t)-r;
   if(n.dist<=hw)return {x:x,y:y,s:n.s,hitWall:false};
   const dx=x-n.x,dy=y-n.y;
   const d=Math.hypot(dx,dy)||1;
@@ -151,11 +167,55 @@ const LEVELS=[
              {frac:0.58,side:1,period:3.8,speed:280},
              {frac:0.83,side:-1,period:3.2,speed:280}],
     starN:9 },
+  { name:'第 6 关 · 骷髅大夹子',
+    sub:'夹子长了尖刺，会突然夹人！',
+    hint:'🔭 镜头说：看到夹子张开再冲，被夹到会掉心！',
+    waypoints:[[80,690],[80,590],[260,590],[260,490],[100,490],[100,390],[280,390],[280,280],[140,280],[140,170]],
+    half:48,
+    pinches:[{frac:0.5,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.6,open:2.0,warn:0.6,phase:0}}],
+    bows:[{frac:0.25,side:1,period:2.6,speed:320},
+           {frac:0.75,side:-1,period:2.6,speed:340}],
+    slings:[{frac:0.62,side:1,period:3.8,speed:250}],
+    starN:8 },
+  { name:'第 7 关 · 双夹子',
+    sub:'两个夹子，节奏不一样！',
+    hint:'🔭 镜头说：两个夹子一快一慢，看准时机！',
+    waypoints:[[90,690],[90,600],[300,600],[300,500],[120,500],[120,400],[310,400],[310,300],[150,300],[150,190],[260,190]],
+    half:46,
+    pinches:[{frac:0.35,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.2,open:1.8,warn:0.5,phase:0}},
+             {frac:0.68,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:4.4,open:2.6,warn:0.6,phase:1.7}}],
+    bows:[{frac:0.18,side:1,period:2.4,speed:340},
+           {frac:0.52,side:-1,period:2.8,speed:360},
+           {frac:0.85,side:1,period:2.4,speed:340}],
+    slings:[{frac:0.45,side:-1,period:3.6,speed:250},
+             {frac:0.80,side:1,period:4.0,speed:270}],
+    starN:8 },
+  { name:'第 8 关 · 终极夹子阵',
+    sub:'最后一关，三个夹子等你！',
+    hint:'🔭 镜头说：三个夹子各有各的节奏，冲啊！',
+    waypoints:[[70,690],[70,590],[280,590],[280,490],[100,490],[100,390],[300,390],[300,290],[120,290],[120,190],[270,190],[270,120]],
+    half:46,
+    pinches:[{frac:0.25,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:2.8,open:1.6,warn:0.4,phase:0}},
+             {frac:0.5,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.6,open:2.0,warn:0.6,phase:1.2}},
+             {frac:0.75,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:4.6,open:2.8,warn:0.6,phase:2.3}}],
+    bows:[{frac:0.15,side:1,period:2.2,speed:360},
+           {frac:0.38,side:-1,period:2.6,speed:380},
+           {frac:0.62,side:1,period:2.2,speed:360},
+           {frac:0.88,side:-1,period:2.6,speed:380}],
+    slings:[{frac:0.42,side:1,period:3.4,speed:260},
+             {frac:0.66,side:-1,period:3.8,speed:280}],
+    starN:9 },
 ];
 
 if(typeof module!=='undefined'){
   module.exports={buildPath:buildPath,pathFrame:pathFrame,
-    nearestOnPath:nearestOnPath,halfWidthAt:halfWidthAt,
+    nearestOnPath:nearestOnPath,halfWidthAt:halfWidthAt,chompState:chompState,
     clampToTunnel:clampToTunnel,stepProjectile:stepProjectile,
     circleHit:circleHit,LEVELS:LEVELS};
 }
@@ -311,7 +371,8 @@ function showEvo(){
 }
 
 /* ---------- 状态 ---------- */
-let G=null,totalStars=0;
+let G=null,totalStars=0,runHearts=3; // runHearts：整局 8 关一共只有 3 颗心，不过关不回满
+function setHearts(n){runHearts=Math.max(0,Math.min(3,n));if(G)G.hearts=runHearts;}
 const HEDGE_R=16;
 
 function loadLevel(idx){
@@ -319,7 +380,8 @@ function loadLevel(idx){
   const path=buildPath(def.waypoints);
   const level={
     def:def,path:path,half:def.half,
-    pinches:(def.pinches||[]).map(p=>({s:p.frac*path.len,half:p.half,len:p.len,skull:!!p.skull})),
+    pinches:(def.pinches||[]).map(p=>({s:p.frac*path.len,half:p.half,len:p.len,skull:!!p.skull,
+      spikes:!!p.spikes,shutHalf:p.shutHalf,chomp:p.chomp})),
     bows:(def.bows||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:1.1+i*0.8})),
     slings:(def.slings||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:2.0+i*1.1})),
     stars:[]
@@ -330,7 +392,7 @@ function loadLevel(idx){
     level.stars.push({x:f.x+f.nx*off,y:f.y+f.ny*off,got:false,ph:Math.random()*6});
   }
   const st=pathFrame(path,14);
-  G={idx:idx,level:level,phase:'intro',time:0,hearts:3,starGot:0,
+  G={idx:idx,level:level,phase:'intro',time:0,hearts:runHearts,starGot:0,
      hed:{x:st.x,y:st.y,tx:st.x,ty:st.y,r:HEDGE_R,face:1},
      projs:[],invuln:0,sMax:0};
   showIntro(idx,false);
@@ -346,6 +408,20 @@ function showIntro(idx,passed){
   document.getElementById('startBtn').textContent=idx===0?'开始滚跑！':'进入'+def.name.split(' ').slice(0,3).join(' ');
   document.getElementById('startOv').style.display='flex';
   document.getElementById('winOv').style.display='none';
+  updateHeartShop();
+}
+
+/* ---------- 心用完了 ---------- */
+function gameOver(){
+  sfxHit();
+  document.getElementById('overStars').textContent='⭐ '+Pet.stars;
+  document.getElementById('reviveBtn').style.display=Pet.stars>=20?'':'none';
+  document.getElementById('overOv').style.display='flex';
+}
+/* ---------- 每关开始前：20⭐ 换 1❤️ ---------- */
+function updateHeartShop(){
+  document.getElementById('shopInfo').innerHTML='⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/3';
+  document.getElementById('heartBtn').disabled=!(Pet.stars>=20&&runHearts<3);
 }
 
 /* ---------- 输入：手指挪刺猬 ---------- */
@@ -389,7 +465,7 @@ function banner(t,ms){
 /* ---------- 发射 ---------- */
 function fireBow(b){
   const L=G.level,f=pathFrame(L.path,b.s);
-  const hw=halfWidthAt(L,b.s);
+  const hw=halfWidthAt(L,b.s,G.time);
   const px=f.x+f.nx*b.side*(hw+2),py=f.y+f.ny*b.side*(hw+2);
   const vx=-f.nx*b.side*b.speed,vy=-f.ny*b.side*b.speed;
   G.projs.push({x:px,y:py,vx:vx,vy:vy,life:2.4,kind:'arrow',ang:Math.atan2(vy,vx)});
@@ -397,7 +473,7 @@ function fireBow(b){
 }
 function fireSling(b){
   const L=G.level,f=pathFrame(L.path,b.s);
-  const hw=halfWidthAt(L,b.s);
+  const hw=halfWidthAt(L,b.s,G.time);
   const px=f.x+f.nx*b.side*(hw+2),py=f.y+f.ny*b.side*(hw+2);
   const base=Math.atan2(-f.ny*b.side,-f.nx*b.side);
   for(const o of [-0.28,0,0.28]){
@@ -417,7 +493,7 @@ function update(dt){
   const px=h.x,py=h.y;
   h.x+=(h.tx-h.x)*k;h.y+=(h.ty-h.y)*k;
   if(Math.abs(h.tx-h.x)>2)h.face=h.tx>h.x?1:-1;
-  const c=clampToTunnel(L.path,L,h.x,h.y,h.r);
+  const c=clampToTunnel(L.path,L,h.x,h.y,h.r,G.time);
   h.x=c.x;h.y=c.y;
   if(c.s>G.sMax)G.sMax=c.s;
   // 弓箭 / 弹弓
@@ -434,22 +510,28 @@ function update(dt){
   for(const p of G.projs){
     if(!stepProjectile(p,dt))continue;
     const n=nearestOnPath(L.path,p.x,p.y);
-    const hw=halfWidthAt(L,n.s);
+    const hw=halfWidthAt(L,n.s,G.time);
     if(n.dist>hw+30)continue; // 打到对面墙上
     if(G.invuln<=0&&circleHit(p.x,p.y,p.kind==='arrow'?6:7,h.x,h.y,h.r)){
-      G.hearts--;G.invuln=1.6;sfxHit();
-      if(G.hearts<=0){
-        banner('😵 刺猬晕啦，再试一次！',2200);
-        const idx=G.idx,ts=totalStars-G.starGot;
-        setTimeout(()=>{totalStars=ts;loadLevel(idx);},900);
-        G.phase='over';return;
-      }
-      banner('哎呀！被打到了，还剩 '+'❤'.repeat(G.hearts),1800);
+      setHearts(runHearts-1);G.invuln=1.6;sfxHit();
+      if(runHearts<=0){gameOver();G.phase='over';return;}
+      banner('哎呀！被打到了，还剩 '+'❤'.repeat(runHearts),1800);
       continue;
     }
     keep.push(p);
   }
   G.projs=keep;
+  // 骷髅夹子夹人：夹紧的一瞬间如果刺猬在嘴里，就会被夹到
+  for(const pin of L.pinches){
+    if(!pin.chomp)continue;
+    const cst=chompState(pin,G.time);
+    if(cst.open===0&&Math.abs(c.s-pin.s)<pin.len*0.85&&G.invuln<=0){
+      setHearts(runHearts-1);G.invuln=1.6;sfxHit();
+      if(runHearts<=0){gameOver();G.phase='over';return;}
+      banner('啊呜！被骷髅夹子夹到了，还剩 '+'❤'.repeat(runHearts),1800);
+      break;
+    }
+  }
   // 星星
   for(const s of L.stars){
     if(!s.got&&circleHit(s.x,s.y,10,h.x,h.y,h.r+4)){
@@ -479,12 +561,12 @@ function drawTunnel(){
   const L=G.level,pts=L.path.pts;
   // 墙（深色 halo）+ 地面
   for(let i=0;i<pts.length;i+=2){
-    const p=pts[i],hw=halfWidthAt(L,p.s);
+    const p=pts[i],hw=halfWidthAt(L,p.s,G.time);
     ctx.fillStyle='#4e342e';
     ctx.beginPath();ctx.arc(p.x,p.y,hw+10,0,7);ctx.fill();
   }
   for(let i=0;i<pts.length;i+=2){
-    const p=pts[i],hw=halfWidthAt(L,p.s);
+    const p=pts[i],hw=halfWidthAt(L,p.s,G.time);
     ctx.fillStyle='#d9b384';
     ctx.beginPath();ctx.arc(p.x,p.y,hw,0,7);ctx.fill();
   }
@@ -507,9 +589,9 @@ function drawStartExit(){
   const L=G.level;
   const st=pathFrame(L.path,8);
   ctx.fillStyle='#1c1512';
-  ctx.beginPath();ctx.ellipse(st.x,st.y,halfWidthAt(L,8)*0.85,halfWidthAt(L,8)*0.7,0,0,7);ctx.fill();
+  ctx.beginPath();ctx.ellipse(st.x,st.y,halfWidthAt(L,8,G.time)*0.85,halfWidthAt(L,8,G.time)*0.7,0,0,7);ctx.fill();
   ctx.fillStyle='#a1887f';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
-  ctx.fillText('起点',st.x,st.y+halfWidthAt(L,8)+22);
+  ctx.fillText('起点',st.x,st.y+halfWidthAt(L,8,G.time)+22);
   const en=pathFrame(L.path,L.path.len-8);
   const g=ctx.createRadialGradient(en.x,en.y,4,en.x,en.y,52);
   g.addColorStop(0,'rgba(255,249,196,.95)');g.addColorStop(1,'rgba(255,249,196,0)');
@@ -523,7 +605,7 @@ function drawStartExit(){
 function drawCamera(){
   const L=G.level,f=pathFrame(L.path,52);
   const ang=Math.atan2(f.ty,f.tx);
-  const cx=f.x+f.nx*-(halfWidthAt(L,52)*0.4),cy=f.y+f.ny*-(halfWidthAt(L,52)*0.4);
+  const cx=f.x+f.nx*-(halfWidthAt(L,52,G.time)*0.4),cy=f.y+f.ny*-(halfWidthAt(L,52,G.time)*0.4);
   ctx.save();ctx.translate(cx,cy);
   ctx.font='30px sans-serif';ctx.textAlign='center';
   ctx.fillText('📷',0,0);
@@ -540,21 +622,36 @@ function drawCamera(){
 function drawSkull(pin){
   const L=G.level,f=pathFrame(L.path,pin.s);
   const ang=Math.atan2(f.ty,f.tx);
-  const ph=pin.half;
+  const st=chompState(pin,G.time);
+  const mh=pin.chomp?(pin.half+(6-pin.half)*(1-st.open)):pin.half; // 夹子开合：嘴巴张大/夹紧
   ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);
+  if(st.warn){ // 预警：红光+抖动
+    ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*16))+')';
+    ctx.beginPath();ctx.arc(0,0,54,0,7);ctx.fill();
+    ctx.translate(Math.sin(G.time*40)*3,0);
+  }
   // 头
   ctx.fillStyle='#eceff1';ctx.strokeStyle='#616161';ctx.lineWidth=3;
   ctx.beginPath();ctx.arc(0,0,40,0,7);ctx.fill();ctx.stroke();
   // 嘴巴通道（隧道从这里穿过）
   ctx.fillStyle='#d9b384';
-  rr(-48,-ph,96,ph*2,10);ctx.fill();
-  // 牙齿（只画在头圆以内）
+  rr(-48,-mh,96,mh*2,10);ctx.fill();
+  // 牙齿/尖刺（只画在头圆以内）
   ctx.save();
   ctx.beginPath();ctx.arc(0,0,40,0,7);ctx.clip();
-  ctx.fillStyle='#fafafa';ctx.strokeStyle='#9e9e9e';ctx.lineWidth=1.5;
-  for(let i=-3;i<=3;i++){
-    ctx.fillRect(i*13-5,-ph-13,10,13);ctx.strokeRect(i*13-5,-ph-13,10,13);
-    ctx.fillRect(i*13-5,ph,10,13);ctx.strokeRect(i*13-5,ph,10,13);
+  if(pin.spikes){
+    ctx.fillStyle='#90a4ae';ctx.strokeStyle='#546e7a';ctx.lineWidth=1.5;
+    for(let i=-3;i<=3;i++){
+      const sx=i*13;
+      ctx.beginPath();ctx.moveTo(sx-6,-mh);ctx.lineTo(sx+6,-mh);ctx.lineTo(sx,-mh+15);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx-6,mh);ctx.lineTo(sx+6,mh);ctx.lineTo(sx,mh-15);ctx.closePath();ctx.fill();ctx.stroke();
+    }
+  }else{
+    ctx.fillStyle='#fafafa';ctx.strokeStyle='#9e9e9e';ctx.lineWidth=1.5;
+    for(let i=-3;i<=3;i++){
+      ctx.fillRect(i*13-5,-mh-13,10,13);ctx.strokeRect(i*13-5,-mh-13,10,13);
+      ctx.fillRect(i*13-5,mh,10,13);ctx.strokeRect(i*13-5,mh,10,13);
+    }
   }
   ctx.restore();
   // 眼睛（嘴巴上方）
@@ -566,7 +663,7 @@ function drawSkull(pin){
 
 function drawBow(b){
   const L=G.level,f=pathFrame(L.path,b.s);
-  const hw=halfWidthAt(L,b.s);
+  const hw=halfWidthAt(L,b.s,G.time);
   const bx=f.x+f.nx*b.side*(hw+4),by=f.y+f.ny*b.side*(hw+4);
   const ang=Math.atan2(-f.ny*b.side,-f.nx*b.side);
   const tele=b.timer<0.7;
@@ -595,7 +692,7 @@ function drawBow(b){
 
 function drawSling(b){
   const L=G.level,f=pathFrame(L.path,b.s);
-  const hw=halfWidthAt(L,b.s);
+  const hw=halfWidthAt(L,b.s,G.time);
   const bx=f.x+f.nx*b.side*(hw+4),by=f.y+f.ny*b.side*(hw+4);
   const ang=Math.atan2(-f.ny*b.side,-f.nx*b.side);
   const tele=b.timer<0.8;
@@ -717,7 +814,8 @@ function draw(){
 
 /* ---------- HUD ---------- */
 function hud(){
-  document.getElementById('hHeart').textContent='❤'.repeat(Math.max(0,G.hearts))||'💔';
+  const hh=Math.max(0,G.hearts);
+  document.getElementById('hHeart').innerHTML=hh>0?'<span style="color:#ff8a80;">'+'❤'.repeat(hh)+'</span>':'💔';
   document.getElementById('hStar').textContent='⭐ '+G.starGot;
   document.getElementById('hLevel').textContent=G.level.def.name.split(' ').slice(0,3).join(' ');
 }
@@ -736,12 +834,26 @@ document.getElementById('startBtn').addEventListener('click',()=>{
   banner(G.level.def.hint,3000);
 });
 document.getElementById('againBtn').addEventListener('click',()=>{
-  totalStars=0;loadLevel(0);
+  totalStars=0;setHearts(3);loadLevel(0);
 });
 document.getElementById('exchangeBtn').addEventListener('click',doExchange);
 document.getElementById('feedBtn').addEventListener('click',doFeed);
-document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;loadLevel(0);});
+document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;setHearts(3);loadLevel(0);});
 document.getElementById('evoOkBtn').addEventListener('click',()=>{document.getElementById('evoOv').style.display='none';});
+document.getElementById('heartBtn').addEventListener('click',()=>{
+  if(!(Pet.stars>=20&&runHearts<3))return;
+  Pet.stars-=20;petSave();setHearts(runHearts+1);updateHeartShop();sfxStar();
+});
+document.getElementById('reviveBtn').addEventListener('click',()=>{
+  if(Pet.stars<20)return;
+  Pet.stars-=20;petSave();setHearts(1);
+  document.getElementById('overOv').style.display='none';
+  loadLevel(G.idx);
+});
+document.getElementById('restartBtn').addEventListener('click',()=>{
+  document.getElementById('overOv').style.display='none';
+  totalStars=0;setHearts(3);loadLevel(0);
+});
 resize();loadLevel(0);
 requestAnimationFrame(loop);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
@@ -749,6 +861,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 if(typeof module!=='undefined'&&typeof process!=='undefined'){
   module.exports._t={getG:function(){return G},loadLevel:loadLevel,showIntro:showIntro,update:update,
     clickStart:function(){document.getElementById('startBtn').click();},
-    getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,updatePetUI:updatePetUI};
+    getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,updatePetUI:updatePetUI,
+    setHearts:setHearts,gameOver:gameOver};
 }
 })();
