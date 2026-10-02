@@ -22,7 +22,7 @@ A tiny finger-drag cave-maze game. The rules were dictated by 5-year-old Steven 
 - 💀 从**骷髅头的嘴巴**里穿过去 / Thread through the skull's mouth
 - 🏹 躲开**弓箭**（射箭）和**弹弓**（一次撒三颗石子）——红光和 `!` 是预警 / Dodge bows and slingshots; red glow + `!` is the warning
 - ⭐ 吃星星，走到发光的出口过关 / Collect stars, reach the glowing exit to pass
-- ❤️ 3 颗心，被打中会短暂无敌；心用完就重来这一关 / 3 hearts, brief invincibility after a hit; lose all hearts and the level restarts
+- ❤️ 3 颗心，整局 8 关一共只有 3 颗（过关不回满，心是浅红色的）；被打中会短暂无敌；心用完小刺猬晕倒——可以用 20 颗星星换 1 颗心（每关开始前，或晕倒后）接着玩 / 3 light-red hearts for the whole 8-level run (no refill); brief invincibility after a hit; at 0 hearts the hedgehog faints — trade 20 ⭐ for 1 ❤️ to continue
 
 ## 🗺️ 关卡 / Levels
 
@@ -32,7 +32,9 @@ A tiny finger-drag cave-maze game. The rules were dictated by 5-year-old Steven 
 | 2 | 骷髅头的嘴巴 | 1 个骷髅 + 2 张弓 |
 | 3 | 箭雨大冒险 | 2 个骷髅 + 3 张弓 + 2 个弹弓 |
 | 4 | 弯弯大山洞 | 山洞更窄更弯，箭更多 |
-| 5 | 终极大冒险 | 3 个骷髅，箭像雨一样 |
+| 6 | 骷髅大夹子 | 长着尖刺的夹子会突然夹人！ |
+| 7 | 双夹子 | 两个夹子，一快一慢 |
+| 8 | 终极夹子阵 | 三个夹子，各有各的节奏 |
 
 ## 🛠️ 技术 / Tech
 
