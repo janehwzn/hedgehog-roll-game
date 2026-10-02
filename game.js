@@ -195,7 +195,120 @@ const sfxHit=()=>{tone(160,0.25,'sawtooth',0.12);tone(110,0.3,'sawtooth',0.1,0.0
 const sfxShoot=()=>tone(240,0.08,'square',0.05);
 const sfxWin=()=>{[523,659,784,1047,1319].forEach((f,i)=>tone(f,0.22,'triangle',0.14,i*0.15));};
 const sfxLevel=()=>{[392,523,659].forEach((f,i)=>tone(f,0.18,'triangle',0.13,i*0.12));};
+const sfxFeed=()=>{tone(880,0.09,'sine',0.14);tone(1174,0.14,'sine',0.14,0.09);};
 document.addEventListener('pointerdown',()=>{const a=ac();if(a&&a.resume)a.resume();});
+
+/* ---------- 宠物小鸟泥 Birdie（照着 Steven 的画画的） ---------- */
+const PET_KEY='birdie-pet-v1';
+let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0};
+try{
+  const raw=localStorage.getItem(PET_KEY);
+  if(raw){const p=JSON.parse(raw);for(const k in Pet){if(typeof p[k]===typeof Pet[k])Pet[k]=p[k];}}
+}catch(e){}
+function petSave(){try{localStorage.setItem(PET_KEY,JSON.stringify(Pet));}catch(e){}}
+
+// 照着 Steven 的画：圆滚滚绿身体 + 小圆头 + 豆豆眼 + 右边尖嘴 + 左边尖尾巴
+function drawBirdie(c,x,y,s,t,opt){
+  opt=opt||{};
+  const bob=Math.sin(t*3)*3*s;
+  let hop=0;
+  if(opt.happy>0)hop=Math.abs(Math.sin(t*9))*16*s*Math.min(1,opt.happy);
+  y=y+bob-hop;
+  const bodyC=opt.ghost?'#455a64':'#9ccc65';
+  const darkC=opt.ghost?'#263238':'#7cb342';
+  c.save();c.translate(x,y);
+  c.fillStyle=darkC; // 尾巴
+  c.beginPath();c.moveTo(-19*s,-2*s);c.lineTo(-35*s,-9*s);c.lineTo(-30*s,7*s);c.closePath();c.fill();
+  c.fillStyle=bodyC;c.strokeStyle=darkC;c.lineWidth=3*s; // 身体
+  c.beginPath();c.ellipse(0,0,22*s,19*s,0,0,7);c.fill();c.stroke();
+  c.beginPath();c.arc(13*s,-16*s,11*s,0,7);c.fill();c.stroke(); // 头
+  const blink=(t%3.6)<0.15;
+  c.fillStyle=opt.ghost?'#cfd8dc':'#212121';
+  if(blink){c.fillRect(13*s,-18*s,7*s,2.6*s);}
+  else{c.beginPath();c.arc(17*s,-17*s,2.6*s,0,7);c.fill();}
+  c.fillStyle=opt.ghost?'#546e7a':'#ffa726'; // 嘴巴
+  c.beginPath();c.moveTo(22*s,-18*s);c.lineTo(33*s,-14*s);c.lineTo(22*s,-10*s);c.closePath();c.fill();
+  c.restore();
+  if(opt.happy>0){
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px sans-serif';c.textAlign='center';
+    c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
+  }
+}
+
+let petT0=Date.now(),petHappyUntil=0,petRAF=0;
+function drawPetScene(){
+  const cv=document.getElementById('petCv');if(!cv)return;
+  const c=cv.getContext('2d');if(!c)return;
+  const W=cv.width||360,H=cv.height||230;
+  const t=(Date.now()-petT0)/1000;
+  const happy=Math.max(0,(petHappyUntil-Date.now())/900);
+  const g=c.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#b3e5fc');g.addColorStop(0.72,'#e8f5e9');g.addColorStop(1,'#c8e6c9');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle='#ffeb3b';c.beginPath();c.arc(W-46,42,24,0,7);c.fill();
+  c.fillStyle='rgba(255,255,255,.92)';
+  c.beginPath();c.ellipse(80,52,36,14,0,0,7);c.fill();
+  c.beginPath();c.ellipse(212,84,26,11,0,0,7);c.fill();
+  c.fillStyle='#a5d6a7';c.fillRect(0,H-52,W,52);
+  c.fillStyle='#ef9a9a';
+  for(const fx of [40,W-30]){c.beginPath();c.arc(fx,H-30,5,0,7);c.fill();}
+  c.fillStyle='#fff59d';
+  for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
+  c.font='66px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.fillText('🦔',112,H-56);
+  drawBirdie(c,198,H-112,1.15,t,{happy:happy});
+  c.fillStyle='#4e342e';c.font='bold 15px sans-serif';
+  c.fillText('小鸟泥 Birdie',198,26);
+  c.textBaseline='alphabetic';
+}
+function updatePetUI(){
+  document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖鸟食 x'+Pet.food;
+  document.getElementById('petFedTxt').textContent=Pet.fed>=10?
+    '小鸟泥吃饱啦！等 Steven 画出长大的样子吧 🎨':
+    '已经喂了 '+Pet.fed+' / 10 份鸟食';
+  document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<10);
+  document.getElementById('exchangeBtn').disabled=!(Pet.stars>=10);
+}
+function showPet(first){
+  G.phase='pet';
+  document.getElementById('winOv').style.display='none';
+  document.getElementById('petOv').style.display='flex';
+  document.getElementById('petTitle').textContent=first?'🎉 获得宠物！':'🐦 小鸟泥的小家';
+  document.getElementById('petCeremonyTxt').style.display=first?'block':'none';
+  updatePetUI();
+  petT0=Date.now();
+  try{cancelAnimationFrame(petRAF);}catch(e){}
+  const loop=()=>{
+    if(document.getElementById('petOv').style.display==='none')return;
+    drawPetScene();
+    petRAF=requestAnimationFrame(loop);
+  };
+  loop();
+}
+function hidePet(){document.getElementById('petOv').style.display='none';}
+function doExchange(){
+  if(Pet.stars<10)return;
+  Pet.stars-=10;Pet.food++;petSave();updatePetUI();sfxStar();
+}
+function doFeed(){
+  if(!(Pet.food>0&&Pet.fed<10))return;
+  Pet.food--;Pet.fed++;petSave();
+  petHappyUntil=Date.now()+900;
+  updatePetUI();sfxFeed();
+  if(Pet.fed>=10)setTimeout(showEvo,1000);
+}
+function showEvo(){
+  document.getElementById('evoOv').style.display='flex';
+  const cv=document.getElementById('evoCv');
+  if(cv&&cv.getContext){
+    const c=cv.getContext('2d'),W=cv.width||200,H=cv.height||160;
+    c.fillStyle='#eceff1';c.fillRect(0,0,W,H);
+    drawBirdie(c,W/2,H/2+12,1.3,1.2,{ghost:true});
+    c.fillStyle='#37474f';c.font='bold 34px sans-serif';c.textAlign='center';
+    c.fillText('?',W/2,46);
+  }
+  sfxWin();
+}
 
 /* ---------- 状态 ---------- */
 let G=null,totalStars=0;
@@ -340,16 +453,16 @@ function update(dt){
   // 星星
   for(const s of L.stars){
     if(!s.got&&circleHit(s.x,s.y,10,h.x,h.y,h.r+4)){
-      s.got=true;G.starGot++;totalStars++;sfxStar();
+      s.got=true;G.starGot++;totalStars++;Pet.stars++;petSave();sfxStar();
     }
   }
   // 到出口？
   if(G.sMax>=L.path.len-30){
     G.phase='done';sfxWin();
     if(G.idx>=LEVELS.length-1){
-      document.getElementById('winStats').innerHTML=
-        '🦔 小刺猬走出了所有的山洞！<br>⭐ 一共吃到 <b>'+totalStars+'</b> 颗小星星';
-      document.getElementById('winOv').style.display='flex';
+      const first=!Pet.unlocked;
+      Pet.unlocked=true;petSave();
+      showPet(first);
     }else{
       banner('🎉 '+L.def.name+'通过！',2200);
       sfxLevel();
@@ -625,12 +738,17 @@ document.getElementById('startBtn').addEventListener('click',()=>{
 document.getElementById('againBtn').addEventListener('click',()=>{
   totalStars=0;loadLevel(0);
 });
+document.getElementById('exchangeBtn').addEventListener('click',doExchange);
+document.getElementById('feedBtn').addEventListener('click',doFeed);
+document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;loadLevel(0);});
+document.getElementById('evoOkBtn').addEventListener('click',()=>{document.getElementById('evoOv').style.display='none';});
 resize();loadLevel(0);
 requestAnimationFrame(loop);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 // Node 测试钩子：浏览器里 module 未定义，无影响
 if(typeof module!=='undefined'&&typeof process!=='undefined'){
   module.exports._t={getG:function(){return G},loadLevel:loadLevel,showIntro:showIntro,update:update,
-    clickStart:function(){document.getElementById('startBtn').click();}};
+    clickStart:function(){document.getElementById('startBtn').click();},
+    getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,updatePetUI:updatePetUI};
 }
 })();
