@@ -260,7 +260,7 @@ document.addEventListener('pointerdown',()=>{const a=ac();if(a&&a.resume)a.resum
 
 /* ---------- 宠物小鸟泥 Birdie（照着 Steven 的画画的） ---------- */
 const PET_KEY='birdie-pet-v1';
-let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0};
+let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,wesley:false};
 try{
   const raw=localStorage.getItem(PET_KEY);
   if(raw){const p=JSON.parse(raw);for(const k in Pet){if(typeof p[k]===typeof Pet[k])Pet[k]=p[k];}}
@@ -295,7 +295,42 @@ function drawBirdie(c,x,y,s,t,opt){
   }
 }
 
-let petT0=Date.now(),petHappyUntil=0,petRAF=0;
+let petT0=Date.now(),petHappyUntil=0,petRAF=0,petCont=null;
+// 照着 Steven 的画：黄黄的小猫，尖耳朵，笑眯眯，卷尾巴
+function drawWesley(c,x,y,s,t){
+  const bob=Math.sin(t*2.4+1)*2.5*s;
+  y=y+bob;
+  const fur='#ffee58',dark='#8d6e63',belly='#ffb74d';
+  c.save();c.translate(x,y);
+  const sway=Math.sin(t*2)*4*s;
+  c.lineCap='round'; // 卷卷的尾巴
+  c.strokeStyle=fur;c.lineWidth=9*s;
+  c.beginPath();c.moveTo(20*s,10*s);
+  c.quadraticCurveTo(46*s,6*s+sway,40*s,-24*s+sway);c.stroke();
+  c.strokeStyle=dark;c.lineWidth=2.5*s;
+  c.beginPath();c.moveTo(20*s,10*s);
+  c.quadraticCurveTo(46*s,6*s+sway,40*s,-24*s+sway);c.stroke();
+  c.fillStyle=fur;c.strokeStyle=dark;c.lineWidth=3*s;
+  c.beginPath();c.ellipse(0,14*s,20*s,24*s,0,0,7);c.fill();c.stroke(); // 身体
+  c.fillStyle=belly; // 肚皮
+  c.beginPath();c.ellipse(0,18*s,10*s,14*s,0,0,7);c.fill();
+  c.fillStyle=fur; // 胳膊
+  c.beginPath();c.ellipse(-20*s,12*s,6*s,12*s,0.5,0,7);c.fill();c.stroke();
+  c.beginPath();c.ellipse(20*s,12*s,6*s,12*s,-0.5,0,7);c.fill();c.stroke();
+  c.beginPath();c.ellipse(-10*s,38*s,9*s,5*s,0,0,7);c.fill();c.stroke(); // 脚
+  c.beginPath();c.ellipse(10*s,38*s,9*s,5*s,0,0,7);c.fill();c.stroke();
+  c.beginPath();c.arc(0,-22*s,20*s,0,7);c.fill();c.stroke(); // 头
+  c.beginPath();c.moveTo(-16*s,-34*s);c.lineTo(-11*s,-50*s);c.lineTo(-4*s,-36*s);c.closePath();c.fill();c.stroke();
+  c.beginPath();c.moveTo(16*s,-34*s);c.lineTo(11*s,-50*s);c.lineTo(4*s,-36*s);c.closePath();c.fill();c.stroke();
+  const blink=(t%4.1)<0.15;
+  c.fillStyle='#212121';
+  if(blink){c.fillRect(-11*s,-26*s,7*s,2.6*s);c.fillRect(4*s,-26*s,7*s,2.6*s);}
+  else{c.beginPath();c.arc(-8*s,-25*s,2.6*s,0,7);c.fill();c.beginPath();c.arc(8*s,-25*s,2.6*s,0,7);c.fill();}
+  c.beginPath();c.arc(0,-19*s,2.2*s,0,7);c.fill();
+  c.strokeStyle='#212121';c.lineWidth=2*s;
+  c.beginPath();c.arc(0,-19*s,7*s,0.3,Math.PI-0.3);c.stroke();
+  c.restore();
+}
 function drawPetScene(){
   const cv=document.getElementById('petCv');if(!cv)return;
   const c=cv.getContext('2d');if(!c)return;
@@ -315,13 +350,19 @@ function drawPetScene(){
   c.fillStyle='#fff59d';
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
   c.font='66px sans-serif';c.textAlign='center';c.textBaseline='middle';
-  c.fillText('🦔',112,H-56);
-  drawBirdie(c,198,H-112,1.15,t,{happy:happy});
+  c.fillText('🦔',100,H-56);
+  if(Pet.unlocked)drawBirdie(c,186,H-112,1.15,t,{happy:happy});
+  if(Pet.wesley)drawWesley(c,286,H-92,1.0,t);
   c.fillStyle='#4e342e';c.font='bold 15px sans-serif';
-  c.fillText('小鸟泥 Birdie',198,26);
+  const nm=[];if(Pet.unlocked)nm.push('小鸟泥');if(Pet.wesley)nm.push('Wesley');
+  c.fillText(nm.join(' ＋ '),200,26);
   c.textBaseline='alphabetic';
 }
 function updatePetUI(){
+  const names=[];
+  if(Pet.unlocked)names.push('🐦 小鸟泥 Birdie');
+  if(Pet.wesley)names.push('🐱 小猫 Wesley');
+  document.getElementById('petNames').innerHTML=names.join(' ｜ ');
   document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖鸟食 x'+Pet.food;
   document.getElementById('petFedTxt').textContent=Pet.fed>=10?
     '小鸟泥吃饱啦！等 Steven 画出长大的样子吧 🎨':
@@ -329,12 +370,22 @@ function updatePetUI(){
   document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<10);
   document.getElementById('exchangeBtn').disabled=!(Pet.stars>=10);
 }
-function showPet(first){
+function showPet(which,first,contIdx){
   G.phase='pet';
+  petCont=contIdx;
+  const isW=which==='wesley';
   document.getElementById('winOv').style.display='none';
   document.getElementById('petOv').style.display='flex';
-  document.getElementById('petTitle').textContent=first?'🎉 获得宠物！':'🐦 小鸟泥的小家';
-  document.getElementById('petCeremonyTxt').style.display=first?'block':'none';
+  document.getElementById('petTitle').textContent=
+    isW?(first?'🎉 获得新宠物！':'🐱 宠物小家'):(first?'🎉 获得宠物！':'🐦 宠物小家');
+  const cer=document.getElementById('petCeremonyTxt');
+  cer.style.display=first?'block':'none';
+  cer.innerHTML=isW?
+    '打通了全部 8 关，太厉害了！<br>一只小猫从草丛里跑了出来——':
+    '小刺猬走出了第 5 个山洞！<br>一只小鸟从天而降，成为了它的好朋友——';
+  document.getElementById('petNextBtn').style.display=contIdx!=null?'':'none';
+  if(contIdx!=null)document.getElementById('petNextBtn').textContent='继续第 '+(contIdx+1)+' 关 ▶';
+  document.getElementById('petAgainBtn').style.display=contIdx!=null?'none':'';
   updatePetUI();
   petT0=Date.now();
   try{cancelAnimationFrame(petRAF);}catch(e){}
@@ -541,10 +592,14 @@ function update(dt){
   // 到出口？
   if(G.sMax>=L.path.len-30){
     G.phase='done';sfxWin();
-    if(G.idx>=LEVELS.length-1){
-      const first=!Pet.unlocked;
+    if(G.idx===4){
+      const first=!Pet.unlocked;      // 第 5 关：小鸟泥
       Pet.unlocked=true;petSave();
-      showPet(first);
+      showPet('birdie',first,5);
+    }else if(G.idx>=LEVELS.length-1){
+      const first=!Pet.wesley;        // 第 8 关：小猫 Wesley
+      Pet.wesley=true;Pet.unlocked=true;petSave();
+      showPet('wesley',first,null);
     }else{
       banner('🎉 '+L.def.name+'通过！',2200);
       sfxLevel();
@@ -839,6 +894,10 @@ document.getElementById('againBtn').addEventListener('click',()=>{
 document.getElementById('exchangeBtn').addEventListener('click',doExchange);
 document.getElementById('feedBtn').addEventListener('click',doFeed);
 document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;setHearts(3);loadLevel(0);});
+document.getElementById('petNextBtn').addEventListener('click',()=>{
+  if(petCont==null)return;
+  hidePet();loadLevel(petCont);
+});
 document.getElementById('evoOkBtn').addEventListener('click',()=>{document.getElementById('evoOv').style.display='none';});
 document.getElementById('heartBtn').addEventListener('click',()=>{
   if(!(Pet.stars>=20&&runHearts<3))return;
