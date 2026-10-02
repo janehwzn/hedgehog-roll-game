@@ -28,6 +28,7 @@
   .btn.sm{font-size:17px;padding:10px 20px;margin:6px 4px;}
   .btnrow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
   .btn:disabled{opacity:.4;box-shadow:none;}
+  .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#4e342e;border-radius:999px;padding:6px 8px 6px 18px;margin:8px 0;font-size:15px;color:#ffecb3;box-shadow:0 2px 6px rgba(0,0,0,.3);}
   #petOv{justify-content:flex-start;padding-top:30px;overflow-y:auto;}
   #petCv{border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.3);max-width:92vw;height:auto;}
   #evoCv{border-radius:16px;box-shadow:0 3px 10px rgba(0,0,0,.3);}
@@ -55,10 +56,26 @@
     🦔 你是一只小刺猬，<b>用手指挪着它走</b><br>
     ➡️ 跟着<b>蓝色箭头</b>，钻进山洞往上走<br>
     💀 从<b>骷髅头的嘴巴</b>钻过去再爬出来<br>
+    🦷 第 6 关起，<b>骷髅夹子</b>会突然夹人，看准时机冲！<br>
     🏹 从<b>第 2 关</b>开始有<b>弓箭</b>和<b>弹弓</b>，小心别被打到！<br>
     ⭐ 吃到小星星加分，走到<b>出口</b>就过关！
   </div>
+  <div class="shoprow" id="heartShop">
+    <span id="shopInfo"></span>
+    <button class="btn sm" id="heartBtn">20⭐ 换 1❤️</button>
+  </div>
   <button class="btn" id="startBtn">开始滚跑！</button>
+</div>
+
+<div class="overlay" id="overOv" style="display:none;">
+  <div class="big">😵</div>
+  <h1>小刺猬晕倒了！</h1>
+  <p id="overStars"></p>
+  <p>3 颗心用完了。用星星换心可以接着玩！</p>
+  <div class="btnrow">
+    <button class="btn sm" id="reviveBtn">20⭐ 换 1❤️<br><span style="font-size:13px;">本关继续</span></button>
+    <button class="btn sm" id="restartBtn">从第 1 关<br><span style="font-size:13px;">重新开始</span></button>
+  </div>
 </div>
 
 <div class="overlay" id="winOv" style="display:none;">
