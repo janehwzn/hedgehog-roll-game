@@ -1,0 +1,8 @@
+node_modules/
+www/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/hedgehog-release.keystore
+android/keystore.properties

@@ -1,0 +1,68 @@
+name: Build Android APK
+
+# 游戏文件或打包配置有更新时自动打 APK，也可以手动触发
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'index.html'
+      - 'game.js'
+      - 'manifest.json'
+      - 'sw.js'
+      - 'icon-*.png'
+      - 'apk/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Sync web files into Capacitor www
+        run: ./apk/sync-www.sh
+
+      - name: Install npm deps
+        working-directory: apk
+        run: npm ci
+
+      - name: Capacitor sync
+        working-directory: apk
+        run: npx cap sync android
+
+      - name: Restore release keystore
+        working-directory: apk/android
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > hedgehog-release.keystore
+          cat > keystore.properties <<EOF
+          storeFile=hedgehog-release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      - name: Build release APK
+        working-directory: apk/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hedgehog-roll-apk
+          path: apk/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
