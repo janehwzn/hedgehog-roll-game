@@ -261,12 +261,13 @@ document.addEventListener('pointerdown',()=>{const a=ac();if(a&&a.resume)a.resum
 
 /* ---------- 宠物小鸟泥 Birdie（照着 Steven 的画画的） ---------- */
 const PET_KEY='birdie-pet-v1';
-let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,wesley:false};
+let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,wesley:false,catfood:0,catfed:0,wstage:0};
 try{
   const raw=localStorage.getItem(PET_KEY);
   if(raw){const p=JSON.parse(raw);for(const k in Pet){if(typeof p[k]===typeof Pet[k])Pet[k]=p[k];}}
 }catch(e){}
 if(Pet.fed>=10&&Pet.stage<1){Pet.stage=1;petSave();} // 老玩家：喂满过直接进化
+if(Pet.catfed>=10&&Pet.wstage<1){Pet.wstage=1;petSave();} // 老玩家：猫喂满过直接进化
 function petSave(){try{localStorage.setItem(PET_KEY,JSON.stringify(Pet));}catch(e){}}
 
 // 照着 Steven 的画：圆滚滚绿身体 + 小圆头 + 豆豆眼 + 右边尖嘴 + 左边尖尾巴
@@ -366,6 +367,44 @@ function drawEvolvedBirdie(c,x,y,s,t,opt){
   c.fillRect(-8*s,14*s,6*s,5*s);c.fillRect(4*s,14*s,6*s,5*s);
   c.restore();
 }
+// 照着 Steven 的画：净化版 Wesley——金黄大脑袋 + 尖耳朵橙内耳 + 粉红肚皮 + 深色小爪子，比之前大一圈
+function drawEvolvedWesley(c,x,y,s,t){
+  const bob=Math.sin(t*2.4+1)*2.5*s;
+  y=y+bob;
+  const fur='#ffdf6b',dark='#5d4037',belly='#f48fb1',inner='#ffab91',paw='#4e342e';
+  c.save();c.translate(x,y);
+  c.fillStyle=fur;c.strokeStyle=dark;c.lineWidth=3*s;
+  c.beginPath();c.ellipse(-26*s,30*s,16*s,8*s,-0.4,0,7);c.fill();c.stroke(); // 腿：坐姿张开
+  c.beginPath();c.ellipse(26*s,30*s,16*s,8*s,0.4,0,7);c.fill();c.stroke();
+  c.fillStyle=paw; // 深色脚尖
+  c.beginPath();c.arc(-39*s,31*s,5*s,0,7);c.fill();
+  c.beginPath();c.arc(39*s,31*s,5*s,0,7);c.fill();
+  c.fillStyle=fur; // 身体
+  c.beginPath();c.ellipse(0,12*s,24*s,26*s,0,0,7);c.fill();c.stroke();
+  c.fillStyle=belly; // 粉红肚皮
+  c.beginPath();c.ellipse(0,16*s,13*s,17*s,0,0,7);c.fill();
+  c.fillStyle=fur; // 胳膊张开
+  c.beginPath();c.ellipse(-26*s,8*s,7*s,14*s,0.5,0,7);c.fill();c.stroke();
+  c.beginPath();c.ellipse(26*s,8*s,7*s,14*s,-0.5,0,7);c.fill();c.stroke();
+  c.fillStyle=paw; // 深色手尖
+  c.beginPath();c.arc(-31*s,19*s,4.5*s,0,7);c.fill();
+  c.beginPath();c.arc(31*s,19*s,4.5*s,0,7);c.fill();
+  c.fillStyle=fur; // 金黄大脑袋
+  c.beginPath();c.arc(0,-24*s,22*s,0,7);c.fill();c.stroke();
+  c.beginPath();c.moveTo(-18*s,-38*s);c.lineTo(-13*s,-57*s);c.lineTo(-4*s,-40*s);c.closePath();c.fill();c.stroke();
+  c.beginPath();c.moveTo(18*s,-38*s);c.lineTo(13*s,-57*s);c.lineTo(4*s,-40*s);c.closePath();c.fill();c.stroke();
+  c.fillStyle=inner; // 橙色内耳
+  c.beginPath();c.moveTo(-15*s,-41*s);c.lineTo(-12*s,-51*s);c.lineTo(-7*s,-42*s);c.closePath();c.fill();
+  c.beginPath();c.moveTo(15*s,-41*s);c.lineTo(12*s,-51*s);c.lineTo(7*s,-42*s);c.closePath();c.fill();
+  const blink=(t%4.1)<0.15;
+  c.fillStyle='#212121';
+  if(blink){c.fillRect(-12*s,-28*s,7*s,2.6*s);c.fillRect(5*s,-28*s,7*s,2.6*s);}
+  else{c.beginPath();c.arc(-9*s,-27*s,2.8*s,0,7);c.fill();c.beginPath();c.arc(9*s,-27*s,2.8*s,0,7);c.fill();}
+  c.beginPath();c.arc(0,-21*s,2.4*s,0,7);c.fill(); // 小鼻子
+  c.strokeStyle='#212121';c.lineWidth=2*s; // 笑嘴
+  c.beginPath();c.arc(0,-21*s,8*s,0.3,Math.PI-0.3);c.stroke();
+  c.restore();
+}
 function drawPetScene(){
   const cv=document.getElementById('petCv');if(!cv)return;
   const c=cv.getContext('2d');if(!c)return;
@@ -390,7 +429,10 @@ function drawPetScene(){
     if(Pet.stage>=1)drawEvolvedBirdie(c,186,H-112,1.35,t,{happy:happy});
     else drawBirdie(c,186,H-112,1.15,t,{happy:happy});
   }
-  if(Pet.wesley)drawWesley(c,286,H-92,1.0,t);
+  if(Pet.wesley){
+    if(Pet.wstage>=1)drawEvolvedWesley(c,286,H-96,1.15,t);
+    else drawWesley(c,286,H-92,1.0,t);
+  }
   c.fillStyle='#4e342e';c.font='bold 15px sans-serif';
   const nm=[];if(Pet.unlocked)nm.push('小鸟泥');if(Pet.wesley)nm.push('Wesley');
   c.fillText(nm.join(' ＋ '),200,26);
@@ -401,12 +443,18 @@ function updatePetUI(){
   if(Pet.unlocked)names.push('🐦 小鸟泥 Birdie');
   if(Pet.wesley)names.push('🐱 小猫 Wesley');
   document.getElementById('petNames').innerHTML=names.join(' ｜ ');
-  document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖鸟食 x'+Pet.food;
+  document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖鸟食 x'+Pet.food+' ｜ 🐟猫食 x'+Pet.catfood;
   document.getElementById('petFedTxt').textContent=Pet.fed>=10?
     (Pet.stage>=1?'小鸟泥净化成功，长大啦！✨':'小鸟泥吃饱啦！'):
     '已经喂了 '+Pet.fed+' / 10 份鸟食';
+  document.getElementById('petCatFedTxt').textContent=!Pet.wesley?'':
+    (Pet.catfed>=10?(Pet.wstage>=1?'Wesley 净化成功，长大啦！✨':'Wesley 吃饱啦！'):
+    '已经喂了 '+Pet.catfed+' / 10 份猫食');
+  document.getElementById('catRow').style.display=Pet.wesley?'':'none';
   document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<10);
   document.getElementById('exchangeBtn').disabled=!(Pet.stars>=10);
+  document.getElementById('feedCatBtn').disabled=!(Pet.wesley&&Pet.catfood>0&&Pet.catfed<10);
+  document.getElementById('exchangeCatBtn').disabled=!(Pet.stars>=10);
 }
 function showPet(which,first,contIdx){
   G.phase='pet';
@@ -445,9 +493,27 @@ function doFeed(){
   if(Pet.fed>=10){Pet.stage=1;petSave();}
   petHappyUntil=Date.now()+900;
   updatePetUI();sfxFeed();
-  if(Pet.fed>=10)setTimeout(showEvo,1000);
+  if(Pet.fed>=10)setTimeout(()=>showEvo('birdie'),1000);
 }
-function showEvo(){
+function doExchangeCat(){
+  if(Pet.stars<10)return;
+  Pet.stars-=10;Pet.catfood++;petSave();updatePetUI();sfxStar();
+}
+function doFeedCat(){
+  if(!(Pet.wesley&&Pet.catfood>0&&Pet.catfed<10))return;
+  Pet.catfood--;Pet.catfed++;petSave();
+  if(Pet.catfed>=10){Pet.wstage=1;petSave();}
+  petHappyUntil=Date.now()+900;
+  updatePetUI();sfxFeed();
+  if(Pet.catfed>=10)setTimeout(()=>showEvo('wesley'),1000);
+}
+function showEvo(which){
+  const isW=which==='wesley';
+  document.getElementById('evoOv').style.display='flex';
+  document.getElementById('evoTitle').textContent=isW?'✨ Wesley 净化成功！':'✨ 小鸟泥净化成功！';
+  document.getElementById('evoTxt').innerHTML=isW?
+    '吃了 10 份猫食，Wesley 长大了！<br>金色的身子，粉红色的肚皮，超可爱！':
+    '吃了 10 份鸟食，小鸟泥长大了！<br>黑色的身子，金色的头和羽毛，超帅！';
   document.getElementById('evoOv').style.display='flex';
   const cv=document.getElementById('evoCv');
   if(cv&&cv.getContext){
@@ -455,7 +521,8 @@ function showEvo(){
     const g=c.createLinearGradient(0,0,0,H);
     g.addColorStop(0,'#fff8e1');g.addColorStop(1,'#ffecb3');
     c.fillStyle=g;c.fillRect(0,0,W,H);
-    drawEvolvedBirdie(c,W/2-8,H/2+18,1.05,1.2,{});
+    if(isW)drawEvolvedWesley(c,W/2,H/2+26,0.95,1.2);
+    else drawEvolvedBirdie(c,W/2-8,H/2+18,1.05,1.2,{});
     c.fillStyle='#f9a825';c.font='bold 15px sans-serif';c.textAlign='center';
     c.fillText('✨ 净化成功 ✨',W/2,22);
   }
@@ -934,6 +1001,8 @@ document.getElementById('againBtn').addEventListener('click',()=>{
 });
 document.getElementById('exchangeBtn').addEventListener('click',doExchange);
 document.getElementById('feedBtn').addEventListener('click',doFeed);
+document.getElementById('exchangeCatBtn').addEventListener('click',doExchangeCat);
+document.getElementById('feedCatBtn').addEventListener('click',doFeedCat);
 document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;setHearts(3);loadLevel(0);});
 document.getElementById('petNextBtn').addEventListener('click',()=>{
   if(petCont==null)return;
@@ -961,7 +1030,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 if(typeof module!=='undefined'&&typeof process!=='undefined'){
   module.exports._t={getG:function(){return G},loadLevel:loadLevel,showIntro:showIntro,update:update,
     clickStart:function(){document.getElementById('startBtn').click();},
-    getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,updatePetUI:updatePetUI,
+    getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,doExchangeCat:doExchangeCat,doFeedCat:doFeedCat,updatePetUI:updatePetUI,
     setHearts:setHearts,gameOver:gameOver};
 }
 })();
