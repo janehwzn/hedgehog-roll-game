@@ -39,7 +39,7 @@ jobs:
           $SDK/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Sync web files into Capacitor www
-        run: ./apk/sync-www.sh
+        run: bash ./apk/sync-www.sh
 
       - name: Install npm deps
         working-directory: apk
