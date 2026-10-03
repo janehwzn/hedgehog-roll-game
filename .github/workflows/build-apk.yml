@@ -50,10 +50,10 @@ jobs:
         run: npx cap sync android
 
       - name: Restore release keystore
-        working-directory: apk/android
+        working-directory: apk/android/app
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > hedgehog-release.keystore
-          cat > keystore.properties <<EOF
+          cat > ../keystore.properties <<EOF
           storeFile=hedgehog-release.keystore
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.KEY_ALIAS }}
