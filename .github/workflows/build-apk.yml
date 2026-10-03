@@ -62,7 +62,7 @@ jobs:
 
       - name: Build release APK
         working-directory: apk/android
-        run: ./gradlew assembleRelease --no-daemon
+        run: bash gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
