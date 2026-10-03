@@ -240,7 +240,8 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 
 /* ---------- 音效 ---------- */
 let AC=null;
-function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}return AC;}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+}return AC;}
 function tone(f,d,type,v,when){
   try{
     const a=ac();if(!a)return;
@@ -265,6 +266,7 @@ try{
   const raw=localStorage.getItem(PET_KEY);
   if(raw){const p=JSON.parse(raw);for(const k in Pet){if(typeof p[k]===typeof Pet[k])Pet[k]=p[k];}}
 }catch(e){}
+if(Pet.fed>=10&&Pet.stage<1){Pet.stage=1;petSave();} // 老玩家：喂满过直接进化
 function petSave(){try{localStorage.setItem(PET_KEY,JSON.stringify(Pet));}catch(e){}}
 
 // 照着 Steven 的画：圆滚滚绿身体 + 小圆头 + 豆豆眼 + 右边尖嘴 + 左边尖尾巴
@@ -331,6 +333,39 @@ function drawWesley(c,x,y,s,t){
   c.beginPath();c.arc(0,-19*s,7*s,0.3,Math.PI-0.3);c.stroke();
   c.restore();
 }
+// 照着 Steven 的画：净化后的小鸟泥——黑色长身子 + 金色圆头 + 金色羽冠 + 金色羽毛，比之前大一圈
+function drawEvolvedBirdie(c,x,y,s,t,opt){
+  opt=opt||{};
+  const bob=Math.sin(t*3)*3*s;
+  let hop=0;
+  if(opt.happy>0)hop=Math.abs(Math.sin(t*9))*16*s*Math.min(1,opt.happy);
+  y=y+bob-hop;
+  const black='#212121',gold='#fdd835',goldD='#f9a825';
+  c.save();c.translate(x,y);
+  c.fillStyle=black; // 小尾巴
+  c.beginPath();c.moveTo(-28*s,-2*s);c.lineTo(-43*s,-9*s);c.lineTo(-36*s,4*s);c.closePath();c.fill();
+  c.beginPath();c.ellipse(0,0,32*s,17*s,0,0,7);c.fill(); // 黑色长身子
+  c.strokeStyle=gold;c.lineWidth=3*s;c.lineCap='round'; // 金色羽毛纹路
+  for(const yy of [-6,0,6]){
+    c.beginPath();c.moveTo(-18*s,yy*s);c.quadraticCurveTo(0,(yy-4)*s,18*s,yy*s);c.stroke();
+  }
+  c.fillStyle=gold; // 金色肚皮光斑
+  c.beginPath();c.ellipse(2*s,2*s,10*s,6*s,0,0,7);c.fill();
+  c.fillStyle=gold;c.strokeStyle=black;c.lineWidth=3*s; // 金色圆头
+  c.beginPath();c.arc(30*s,-16*s,13*s,0,7);c.fill();c.stroke();
+  c.strokeStyle=goldD;c.lineWidth=3.5*s; // 头顶金色羽冠
+  c.beginPath();c.moveTo(26*s,-28*s);c.quadraticCurveTo(30*s,-43*s,41*s,-37*s);c.stroke();
+  c.beginPath();c.moveTo(33*s,-28*s);c.quadraticCurveTo(39*s,-41*s,47*s,-33*s);c.stroke();
+  c.fillStyle='#ff9800'; // 尖嘴
+  c.beginPath();c.moveTo(41*s,-18*s);c.lineTo(55*s,-13*s);c.lineTo(41*s,-8*s);c.closePath();c.fill();
+  const blink=(t%3.6)<0.15; // 眨眼
+  c.fillStyle=black;
+  if(blink){c.fillRect(29*s,-20*s,7*s,2.6*s);}
+  else{c.beginPath();c.arc(33*s,-18*s,2.8*s,0,7);c.fill();}
+  c.fillStyle=goldD; // 小脚
+  c.fillRect(-8*s,14*s,6*s,5*s);c.fillRect(4*s,14*s,6*s,5*s);
+  c.restore();
+}
 function drawPetScene(){
   const cv=document.getElementById('petCv');if(!cv)return;
   const c=cv.getContext('2d');if(!c)return;
@@ -351,7 +386,10 @@ function drawPetScene(){
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
   c.font='66px sans-serif';c.textAlign='center';c.textBaseline='middle';
   c.fillText('🦔',100,H-56);
-  if(Pet.unlocked)drawBirdie(c,186,H-112,1.15,t,{happy:happy});
+  if(Pet.unlocked){
+    if(Pet.stage>=1)drawEvolvedBirdie(c,186,H-112,1.35,t,{happy:happy});
+    else drawBirdie(c,186,H-112,1.15,t,{happy:happy});
+  }
   if(Pet.wesley)drawWesley(c,286,H-92,1.0,t);
   c.fillStyle='#4e342e';c.font='bold 15px sans-serif';
   const nm=[];if(Pet.unlocked)nm.push('小鸟泥');if(Pet.wesley)nm.push('Wesley');
@@ -365,7 +403,7 @@ function updatePetUI(){
   document.getElementById('petNames').innerHTML=names.join(' ｜ ');
   document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖鸟食 x'+Pet.food;
   document.getElementById('petFedTxt').textContent=Pet.fed>=10?
-    '小鸟泥吃饱啦！等 Steven 画出长大的样子吧 🎨':
+    (Pet.stage>=1?'小鸟泥净化成功，长大啦！✨':'小鸟泥吃饱啦！'):
     '已经喂了 '+Pet.fed+' / 10 份鸟食';
   document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<10);
   document.getElementById('exchangeBtn').disabled=!(Pet.stars>=10);
@@ -404,6 +442,7 @@ function doExchange(){
 function doFeed(){
   if(!(Pet.food>0&&Pet.fed<10))return;
   Pet.food--;Pet.fed++;petSave();
+  if(Pet.fed>=10){Pet.stage=1;petSave();}
   petHappyUntil=Date.now()+900;
   updatePetUI();sfxFeed();
   if(Pet.fed>=10)setTimeout(showEvo,1000);
@@ -413,10 +452,12 @@ function showEvo(){
   const cv=document.getElementById('evoCv');
   if(cv&&cv.getContext){
     const c=cv.getContext('2d'),W=cv.width||200,H=cv.height||160;
-    c.fillStyle='#eceff1';c.fillRect(0,0,W,H);
-    drawBirdie(c,W/2,H/2+12,1.3,1.2,{ghost:true});
-    c.fillStyle='#37474f';c.font='bold 34px sans-serif';c.textAlign='center';
-    c.fillText('?',W/2,46);
+    const g=c.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#fff8e1');g.addColorStop(1,'#ffecb3');
+    c.fillStyle=g;c.fillRect(0,0,W,H);
+    drawEvolvedBirdie(c,W/2-8,H/2+18,1.05,1.2,{});
+    c.fillStyle='#f9a825';c.font='bold 15px sans-serif';c.textAlign='center';
+    c.fillText('✨ 净化成功 ✨',W/2,22);
   }
   sfxWin();
 }
