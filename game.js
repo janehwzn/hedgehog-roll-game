@@ -228,8 +228,9 @@ const LEVELS=[
              {frac:0.66,side:-1,period:3.8,speed:280}],
     starN:9 },
   { name:'第 9 关 · 会跑的夹子',
-    sub:'夹子长腿了，会跑！',
-    hint:'🔭 镜头说：骷髅夹子会沿着山洞滑来滑去，算好时机再钻！',
+    sub:'夹子长腿了，会跑！限时 75 秒！',
+    hint:'🔭 镜头说：骷髅夹子会沿着山洞滑来滑去，算好时机再钻！只有 75 秒，别磨蹭！',
+    timeLimit:75,
     waypoints:[[80,690],[80,590],[270,590],[270,480],[110,480],[110,380],[290,380],[290,270],[130,270],[130,160],[250,160]],
     half:48,
     pinches:[{frac:0.35,half:28,len:60,skull:true,spikes:true,shutHalf:16,
@@ -244,8 +245,9 @@ const LEVELS=[
     slings:[{frac:0.5,side:-1,period:3.6,speed:250}],
     starN:8 },
   { name:'第 10 关 · 黑黑大山洞',
-    sub:'洞里太黑了，抓萤火虫照亮！',
-    hint:'🔭 镜头说：多抓萤火虫，光圈就会变大！Wesley 攒的萤火虫也能帮忙哦！',
+    sub:'洞里太黑了，抓萤火虫照亮！限时 80 秒！',
+    hint:'🔭 镜头说：多抓萤火虫，光圈就会变大！Wesley 攒的萤火虫也能帮忙哦！只有 80 秒！',
+    timeLimit:80,
     waypoints:[[70,690],[70,600],[280,600],[280,500],[120,500],[120,400],[300,400],[300,300],[140,300],[140,200],[260,200],[260,120]],
     half:50,
     dark:true,fireflyN:8,
@@ -813,7 +815,7 @@ function loadLevel(idx){
   if(def.door)level.door={s:def.door.frac*path.len,open:false};
   const st=pathFrame(path,14);
   G={idx:idx,level:level,phase:'intro',time:0,hearts:runHearts,starGot:0,
-     hasKey:false,lightGot:0,
+     hasKey:false,lightGot:0,timeLeft:def.timeLimit||0,
      hed:{x:st.x,y:st.y,tx:st.x,ty:st.y,r:HEDGE_R,face:1},
      projs:[],invuln:0,sMax:0};
   showIntro(idx,false);
@@ -995,6 +997,19 @@ function update(dt){
   G.time+=dt;
   const L=G.level,h=G.hed;
   G.invuln=Math.max(0,G.invuln-dt);
+  // 限时关：倒计时
+  if(G.timeLeft>0){
+    G.timeLeft-=dt;
+    if(G.timeLeft<=0){
+      G.timeLeft=0;
+      setHearts(runHearts-1);sfxHit();
+      if(runHearts<=0){gameOver();G.phase='over';return;}
+      banner('⏱️ 时间到！扣 1 颗心，重来这一关',2200);
+      setTimeout(()=>{loadLevel(G.idx);showIntro(G.idx,false);},1400);
+      G.phase='done';
+      return;
+    }
+  }
   // 刺猬跟随手指
   const k=Math.min(1,dt*9);
   const px=h.x,py=h.y;
@@ -1481,7 +1496,13 @@ function hud(){
   const hh=Math.max(0,G.hearts);
   document.getElementById('hHeart').innerHTML=hh>0?'<span style="color:#ff8a80;">'+'❤'.repeat(hh)+'</span>':'💔';
   document.getElementById('hStar').textContent='⭐ '+G.starGot;
-  document.getElementById('hLevel').textContent=G.level.def.name.split(' ').slice(0,3).join(' ');
+  let lv=G.level.def.name.split(' ').slice(0,3).join(' ');
+  if(G.timeLeft>0){
+    const s=Math.ceil(G.timeLeft);
+    const urg=s<=15?' style="color:#ef5350;"':'';
+    lv+=' <span'+urg+'>⏱️'+s+'</span>';
+  }
+  document.getElementById('hLevel').innerHTML=lv;
 }
 
 /* ---------- 主循环 ---------- */
