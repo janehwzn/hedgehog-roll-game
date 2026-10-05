@@ -61,6 +61,15 @@ function chompState(pin,t){
   if(cyc<c.open+(c.warn==null?0.6:c.warn))return {open:1,warn:true};
   return {open:0,warn:false};
 }
+// 会跑的夹子：夹子沿山洞滑动，位置 s 随时间变化
+function pinchS(pin,t){
+  t=(t==null?0:t);
+  if(pin.slide){
+    const ph=2*Math.PI*t/pin.slide.period+(pin.slide.phase||0);
+    return pin.baseS+pin.slide.amp*Math.sin(ph);
+  }
+  return pin.s;
+}
 // 隧道半宽（带收窄点；chomp 夹子会随时间开合）
 function halfWidthAt(level,s,t){
   t=(t==null?0:t);
@@ -68,7 +77,7 @@ function halfWidthAt(level,s,t){
   const pinches=level.pinches||[];
   for(let k=0;k<pinches.length;k++){
     const pin=pinches[k];
-    const d=Math.abs(s-pin.s);
+    const d=Math.abs(s-pinchS(pin,t));
     if(d<pin.len){
       const tt=1-d/pin.len;
       const sm=tt*tt*(3-2*tt);
@@ -79,6 +88,13 @@ function halfWidthAt(level,s,t){
         ph=pin.half+(shut-pin.half)*(1-st.open);
       }
       hw=Math.min(hw,level.half+(ph-level.half)*sm);
+    }
+  }
+  if(level.alcoveS!=null){ // L11 岔路小山洞：隧道鼓成圆形房间
+    const d=Math.abs(s-level.alcoveS);
+    if(d<level.alcoveR){
+      const bulge=level.alcoveR*(0.55+0.45*Math.cos(d/level.alcoveR*Math.PI/2));
+      hw=Math.max(hw,bulge);
     }
   }
   return hw;
@@ -211,12 +227,64 @@ const LEVELS=[
     slings:[{frac:0.42,side:1,period:3.4,speed:260},
              {frac:0.66,side:-1,period:3.8,speed:280}],
     starN:9 },
+  { name:'第 9 关 · 会跑的夹子',
+    sub:'夹子长腿了，会跑！',
+    hint:'🔭 镜头说：骷髅夹子会沿着山洞滑来滑去，算好时机再钻！',
+    waypoints:[[80,690],[80,590],[270,590],[270,480],[110,480],[110,380],[290,380],[290,270],[130,270],[130,160],[250,160]],
+    half:48,
+    pinches:[{frac:0.35,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.4,open:1.8,warn:0.5,phase:0},
+              slide:{amp:110,period:7,phase:0}},
+             {frac:0.68,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:4.2,open:2.4,warn:0.6,phase:2.1},
+              slide:{amp:90,period:9,phase:3.1}}],
+    bows:[{frac:0.18,side:1,period:2.4,speed:340},
+           {frac:0.52,side:-1,period:2.8,speed:360},
+           {frac:0.85,side:1,period:2.4,speed:340}],
+    slings:[{frac:0.5,side:-1,period:3.6,speed:250}],
+    starN:8 },
+  { name:'第 10 关 · 黑黑大山洞',
+    sub:'洞里太黑了，抓萤火虫照亮！',
+    hint:'🔭 镜头说：多抓萤火虫，光圈就会变大！Wesley 攒的萤火虫也能帮忙哦！',
+    waypoints:[[70,690],[70,600],[280,600],[280,500],[120,500],[120,400],[300,400],[300,300],[140,300],[140,200],[260,200],[260,120]],
+    half:50,
+    dark:true,fireflyN:8,
+    pinches:[{frac:0.5,half:28,len:70,skull:true}],
+    bows:[{frac:0.25,side:1,period:2.6,speed:320},
+           {frac:0.75,side:-1,period:2.6,speed:340}],
+    slings:[{frac:0.6,side:1,period:3.8,speed:240}],
+    starN:6 },
+  { name:'第 11 关 · 钥匙开门',
+    sub:'出口被石门挡住了！',
+    hint:'🔭 镜头说：先去岔路的小山洞里找到钥匙，再回来开石门！',
+    waypoints:[[90,690],[90,600],[300,600],[300,500],[130,500],[130,400],[310,400],[310,300],[150,300],[150,180]],
+    half:48,
+    alcove:{frac:0.42,r:75},key:{frac:0.42,off:38},door:{frac:0.93},
+    pinches:[{frac:0.25,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.6,open:2.0,warn:0.6,phase:0}}],
+    bows:[{frac:0.18,side:1,period:2.4,speed:340},
+           {frac:0.65,side:-1,period:2.8,speed:360}],
+    slings:[{frac:0.82,side:1,period:3.6,speed:250}],
+    starN:8 },
+  { name:'第 12 关 · 大骷髅王',
+    sub:'最终决战，大骷髅王！',
+    hint:'🔭 镜头说：超大骷髅头，嘴巴是双重夹子，还会吐小骷髅兵！冲过去！',
+    waypoints:[[80,690],[80,590],[260,590],[260,480],[100,480],[100,380],[280,380],[280,260],[120,260],[120,150]],
+    half:48,
+    pinches:[{frac:0.55,half:26,len:130,skull:true,spikes:true,shutHalf:10,boss:true,
+              spit:{period:4.5},
+              chomp:{period:3.2,open:1.8,warn:0.5,phase:0},
+              chomp2:{period:3.2,open:1.8,warn:0.5,phase:1.6}}],
+    bows:[{frac:0.2,side:1,period:2.4,speed:340},
+           {frac:0.85,side:-1,period:2.4,speed:360}],
+    slings:[{frac:0.35,side:-1,period:3.6,speed:250}],
+    starN:8 },
 ];
 
 if(typeof module!=='undefined'){
   module.exports={buildPath:buildPath,pathFrame:pathFrame,
     nearestOnPath:nearestOnPath,halfWidthAt:halfWidthAt,chompState:chompState,
-    clampToTunnel:clampToTunnel,stepProjectile:stepProjectile,
+    pinchS:pinchS,clampToTunnel:clampToTunnel,stepProjectile:stepProjectile,
     circleHit:circleHit,LEVELS:LEVELS};
 }
 
@@ -261,13 +329,26 @@ document.addEventListener('pointerdown',()=>{const a=ac();if(a&&a.resume)a.resum
 
 /* ---------- 宠物小鸟泥 Birdie（照着 Steven 的画画的） ---------- */
 const PET_KEY='birdie-pet-v1';
-let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,wesley:false,catfood:0,catfed:0,wstage:0};
+let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,
+  wesley:false,catfood:0,catfed:0,wstage:0,
+  fireflies:0,lastBreakfast:'',
+  lastFedB:0,lastFedW:0,levelsSinceSleep:0,
+  doubleFeed:false,
+  sleepUntil:0,sleepTogether:false,
+  nest:false,hat:false,scarf:false,pajamas:false,
+  equipHat:false,equipScarf:false,equipPajamas:false,
+  limited:[]};
 try{
   const raw=localStorage.getItem(PET_KEY);
   if(raw){const p=JSON.parse(raw);for(const k in Pet){if(typeof p[k]===typeof Pet[k])Pet[k]=p[k];}}
 }catch(e){}
-if(Pet.fed>=10&&Pet.stage<1){Pet.stage=1;petSave();} // 老玩家：喂满过直接进化
-if(Pet.catfed>=10&&Pet.wstage<1){Pet.wstage=1;petSave();} // 老玩家：猫喂满过直接进化
+// 老存档迁移：以前的"进化"(stage=1，黑金大鸟)就是现在的成年体(stage=2)
+if(Pet.stage===1){Pet.stage=2;if(Pet.fed<20)Pet.fed=20;petSave();}
+if(Pet.fed>=20&&Pet.stage<2){Pet.stage=2;petSave();}
+else if(Pet.fed>=10&&Pet.stage<1){Pet.stage=1;petSave();}
+if(Pet.catfed>=10&&Pet.wstage<1){Pet.wstage=1;petSave();} // 老玩家：猫喂满过直接长大
+if(Pet.unlocked&&!Pet.lastFedB)Pet.lastFedB=Date.now();
+if(Pet.wesley&&!Pet.lastFedW)Pet.lastFedW=Date.now();
 function petSave(){try{localStorage.setItem(PET_KEY,JSON.stringify(Pet));}catch(e){}}
 
 // 照着 Steven 的画：圆滚滚绿身体 + 小圆头 + 豆豆眼 + 右边尖嘴 + 左边尖尾巴
@@ -298,7 +379,7 @@ function drawBirdie(c,x,y,s,t,opt){
   }
 }
 
-let petT0=Date.now(),petHappyUntil=0,petRAF=0,petCont=null;
+let petT0=Date.now(),petHappyUntil=0,petHappyWUntil=0,petRAF=0,petCont=null;
 // 照着 Steven 的画：黄黄的小猫，尖耳朵，笑眯眯，卷尾巴
 function drawWesley(c,x,y,s,t){
   const bob=Math.sin(t*2.4+1)*2.5*s;
@@ -367,6 +448,34 @@ function drawEvolvedBirdie(c,x,y,s,t,opt){
   c.fillRect(-8*s,14*s,6*s,5*s);c.fillRect(4*s,14*s,6*s,5*s);
   c.restore();
 }
+// 少年小鸟泥（过渡期，Steven 还没画，先用代码版）：身体变大、墨绿带金，头顶冒出金色小羽冠
+function drawTeenBirdie(c,x,y,s,t,opt){
+  opt=opt||{};
+  const bob=Math.sin(t*3)*3*s;
+  let hop=0;
+  if(opt.happy>0)hop=Math.abs(Math.sin(t*9))*16*s*Math.min(1,opt.happy);
+  y=y+bob-hop;
+  const bodyC='#6b8f3e',darkC='#4a6b2a',gold='#fdd835';
+  c.save();c.translate(x,y);
+  c.fillStyle=darkC; // 尾巴变长
+  c.beginPath();c.moveTo(-24*s,-2*s);c.lineTo(-42*s,-10*s);c.lineTo(-36*s,6*s);c.closePath();c.fill();
+  c.fillStyle=bodyC;c.strokeStyle=darkC;c.lineWidth=3*s; // 身体：比宝宝大
+  c.beginPath();c.ellipse(0,0,27*s,21*s,0,0,7);c.fill();c.stroke();
+  c.beginPath();c.arc(17*s,-18*s,13*s,0,7);c.fill();c.stroke(); // 头
+  c.strokeStyle=gold;c.lineWidth=3*s;c.lineCap='round'; // 冒出金色小羽冠
+  c.beginPath();c.moveTo(14*s,-30*s);c.quadraticCurveTo(17*s,-40*s,26*s,-36*s);c.stroke();
+  const blink=(t%3.6)<0.15;
+  c.fillStyle='#212121';
+  if(blink){c.fillRect(17*s,-20*s,7*s,2.6*s);}
+  else{c.beginPath();c.arc(21*s,-19*s,2.6*s,0,7);c.fill();}
+  c.fillStyle='#ffa726'; // 嘴巴
+  c.beginPath();c.moveTo(28*s,-20*s);c.lineTo(40*s,-15*s);c.lineTo(28*s,-10*s);c.closePath();c.fill();
+  c.restore();
+  if(opt.happy>0){
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px sans-serif';c.textAlign='center';
+    c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
+  }
+}
 // 照着 Steven 的画：净化版 Wesley——金黄大脑袋 + 尖耳朵橙内耳 + 粉红肚皮 + 深色小爪子，比之前大一圈
 function drawEvolvedWesley(c,x,y,s,t){
   const bob=Math.sin(t*2.4+1)*2.5*s;
@@ -425,18 +534,114 @@ function drawPetScene(){
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
   c.font='66px sans-serif';c.textAlign='center';c.textBaseline='middle';
   c.fillText('🦔',100,H-56);
-  if(Pet.unlocked){
-    if(Pet.stage>=1)drawEvolvedBirdie(c,186,H-112,1.35,t,{happy:happy});
-    else drawBirdie(c,186,H-112,1.15,t,{happy:happy});
+  const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
+  if(Pet.unlocked&&!sleeping){
+    const bx=186,by=H-112;
+    if(Pet.stage>=2)drawEvolvedBirdie(c,bx,by,1.35,t,{happy:happy});
+    else if(Pet.stage>=1)drawTeenBirdie(c,bx,by,1.25,t,{happy:happy});
+    else drawBirdie(c,bx,by,1.15,t,{happy:happy});
+    drawPetAcc(c,'birdie',bx,by,t);
+    drawPetStatus(c,bx,by-70,'birdie',t);
   }
-  if(Pet.wesley){
-    if(Pet.wstage>=1)drawEvolvedWesley(c,286,H-96,1.15,t);
-    else drawWesley(c,286,H-92,1.0,t);
+  if(Pet.wesley&&!sleeping){
+    const wx=286,wy=H-96;
+    if(Pet.wstage>=1)drawEvolvedWesley(c,wx,wy,1.15,t,{happy:happyW});
+    else drawWesley(c,wx,wy,1.0,t,{happy:happyW});
+    drawPetAcc(c,'wesley',wx,wy,t);
+    drawPetStatus(c,wx,wy-70,'wesley',t);
   }
+  if(sleeping)drawSleeping(c,W,H,t);
   c.fillStyle='#4e342e';c.font='bold 15px sans-serif';
-  const nm=[];if(Pet.unlocked)nm.push('小鸟泥');if(Pet.wesley)nm.push('Wesley');
+  const nm=[];
+  if(Pet.unlocked)nm.push('小鸟泥'+['(宝宝)','(少年)','(大鸟)'][Pet.stage]||'');
+  if(Pet.wesley)nm.push('Wesley'+(Pet.wstage>=1?'(大猫)':'(小猫)'));
   c.fillText(nm.join(' ＋ '),200,26);
   c.textBaseline='alphabetic';
+}
+// 宠物头顶状态：饿了冒饭碗，困了冒 Zzz
+function drawPetStatus(c,x,y,which,t){
+  const hungry=petHungry(which),sleepy=petSleepy();
+  c.font='22px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  if(hungry){
+    c.fillText('🍚',x+30,y-14+Math.sin(t*5)*3);
+  }
+  if(sleepy){
+    c.fillText('💤',x-32,y-16+Math.sin(t*2)*2);
+  }
+  c.textBaseline='alphabetic';
+}
+function petHungry(which){
+  const last=which==='birdie'?Pet.lastFedB:Pet.lastFedW;
+  const has=which==='birdie'?Pet.unlocked:Pet.wesley;
+  return has&&(Date.now()-last>2*3600*1000);
+}
+function petSleepy(){return Pet.levelsSinceSleep>=3;}
+// 睡觉中：鸟巢里两只挤在一起，冒 Zzz / 打呼
+function drawSleeping(c,W,H,t){
+  const cx=W/2,cy=H-80;
+  // 鸟巢
+  c.fillStyle='#8d6e63';
+  c.beginPath();c.ellipse(cx,cy,90,34,0,0,7);c.fill();
+  c.fillStyle='#a1887f';
+  c.beginPath();c.ellipse(cx,cy-8,76,26,0,0,7);c.fill();
+  c.fillStyle='#6d4c41';
+  for(let i=-3;i<=3;i++){
+    c.fillRect(cx+i*22-3,cy-26,6,20);
+  }
+  // 睡着的宠物（简化小圆球）
+  const br=Math.sin(t*1.5)*2;
+  if(Pet.unlocked){
+    c.fillStyle=Pet.stage>=2?'#212121':(Pet.stage>=1?'#6b8f3e':'#9ccc65');
+    c.beginPath();c.arc(cx-32,cy-30+br,22,0,7);c.fill();
+  }
+  if(Pet.wesley){
+    c.fillStyle=Pet.wstage>=1?'#ffdf6b':'#ffee58';
+    c.beginPath();c.arc(cx+32,cy-28-br,24,0,7);c.fill();
+  }
+  // Zzz / 打呼
+  c.font='20px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  const z1=(t%3),z2=((t+1.5)%3);
+  c.fillStyle='rgba(92,107,192,'+(1-z1/3)+')';
+  c.fillText('Z',cx-60-z1*8,cy-70-z1*14);
+  c.fillStyle='rgba(92,107,192,'+(1-z2/3)+')';
+  c.fillText('Z',cx+60+z2*8,cy-70-z2*14);
+  if(Pet.sleepTogether){
+    c.font='18px sans-serif';
+    c.fillText('💤 呼噜呼噜…',cx,cy-96+Math.sin(t*3)*3);
+  }
+  c.textBaseline='alphabetic';
+}
+// 装扮：帽子/围巾/睡衣（穿上才画）
+function drawPetAcc(c,which,x,y,t){
+  c.save();c.translate(x,y);
+  const hatY=which==='birdie'?-32:-44, scY=which==='birdie'?-8:-2;
+  if(Pet.equipHat){
+    c.fillStyle='#e53935';
+    c.beginPath();c.moveTo(hatY-14+14,hatY);c.lineTo(hatY+14+14,hatY);c.lineTo(hatY+14,hatY-20);c.closePath();c.fill();
+    c.fillStyle='#fff';c.beginPath();c.arc(hatY+14,hatY-20,5,0,7);c.fill();
+  }
+  if(Pet.equipScarf){
+    c.strokeStyle='#42a5f5';c.lineWidth=7;c.lineCap='round';
+    c.beginPath();c.moveTo(-18,scY);c.quadraticCurveTo(0,scY+6,18,scY);c.stroke();
+  }
+  if(Pet.equipPajamas){
+    c.fillStyle='rgba(156,39,176,.30)';
+    c.beginPath();c.ellipse(0,scY+12,24,18,0,0,7);c.fill();
+  }
+  // 限定装扮
+  for(const li of (Pet.limited||[])){
+    if(li==='starhair'){
+      c.fillStyle='#ffd54f';
+      c.beginPath();
+      for(let i=0;i<5;i++){
+        const a=-Math.PI/2+i*2*Math.PI/5, a2=a+Math.PI/5;
+        c.lineTo(Math.cos(a)*14,hatY-8+Math.sin(a)*14);
+        c.lineTo(Math.cos(a2)*6,hatY-8+Math.sin(a2)*6);
+      }
+      c.closePath();c.fill();
+    }
+  }
+  c.restore();
 }
 function updatePetUI(){
   const names=[];
@@ -444,21 +649,34 @@ function updatePetUI(){
   if(Pet.wesley)names.push('🐱 小猫 Wesley');
   document.getElementById('petNames').innerHTML=names.join(' ｜ ');
   document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖鸟食 x'+Pet.food+' ｜ 🐟猫食 x'+Pet.catfood;
-  document.getElementById('petFedTxt').textContent=Pet.fed>=10?
-    (Pet.stage>=1?'小鸟泥净化成功，长大啦！✨':'小鸟泥吃饱啦！'):
-    '已经喂了 '+Pet.fed+' / 10 份鸟食';
+  document.getElementById('petFedTxt').textContent=Pet.fed>=20?
+    '小鸟泥长成大鸟啦！✨ 每天早上会叼回 1 颗星星当早餐！':
+    (Pet.fed>=10?'小鸟泥是少年啦！再喂 '+(20-Pet.fed)+' 份长成大鸟':
+    '已经喂了 '+Pet.fed+' / 20 份鸟食'+(Pet.fed>=10?'':'（10 份长成少年）'));
   document.getElementById('petCatFedTxt').textContent=!Pet.wesley?'':
     (Pet.catfed>=10?(Pet.wstage>=1?'Wesley 净化成功，长大啦！✨':'Wesley 吃饱啦！'):
     '已经喂了 '+Pet.catfed+' / 10 份猫食');
   document.getElementById('catRow').style.display=Pet.wesley?'':'none';
-  document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<10);
+  document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<20);
   document.getElementById('exchangeBtn').disabled=!(Pet.stars>=10);
   document.getElementById('feedCatBtn').disabled=!(Pet.wesley&&Pet.catfood>0&&Pet.catfed<10);
   document.getElementById('exchangeCatBtn').disabled=!(Pet.stars>=10);
+  // 萤火虫库存
+  const ff=document.getElementById('petFirefly');
+  if(ff)ff.textContent=Pet.wesley?('✨ 萤火虫 x'+(Pet.fireflies||0)+'（照亮黑黑大山洞）'):'';
+  updateShopUI();
+}
+function checkBreakfast(){
+  if(Pet.stage<2||!Pet.unlocked)return null; // 大鸟才行
+  const today=new Date().toDateString();
+  if(Pet.lastBreakfast===today)return null;
+  Pet.lastBreakfast=today;Pet.stars++;petSave();
+  return '🐦 大鸟小鸟泥叼回了早餐！+1 ⭐';
 }
 function showPet(which,first,contIdx){
   G.phase='pet';
   petCont=contIdx;
+  const bk=checkBreakfast(); // 大鸟每日早餐
   const isW=which==='wesley';
   document.getElementById('winOv').style.display='none';
   document.getElementById('petOv').style.display='flex';
@@ -467,13 +685,22 @@ function showPet(which,first,contIdx){
   const cer=document.getElementById('petCeremonyTxt');
   cer.style.display=first?'block':'none';
   cer.innerHTML=isW?
-    '打通了全部 8 关，太厉害了！<br>一只小猫从草丛里跑了出来——':
+    '打通了第 8 关，太厉害了！<br>一只小猫从草丛里跑了出来——':
     '小刺猬走出了第 5 个山洞！<br>一只小鸟从天而降，成为了它的好朋友——';
   document.getElementById('petNextBtn').style.display=contIdx!=null?'':'none';
   if(contIdx!=null)document.getElementById('petNextBtn').textContent='继续第 '+(contIdx+1)+' 关 ▶';
   document.getElementById('petAgainBtn').style.display=contIdx!=null?'none':'';
   updatePetUI();
+  if(bk)setTimeout(()=>banner(bk,2600),600);
   petT0=Date.now();
+  // 点宠物：开心地跳
+  document.getElementById('petCv').onclick=function(e){
+    const cv=e.target,rc=cv.getBoundingClientRect();
+    const x=(e.clientX-rc.left)*(cv.width/rc.width),y=(e.clientY-rc.top)*(cv.height/rc.height);
+    const H=cv.height||230;
+    if(Pet.unlocked&&Math.hypot(x-186,y-(H-112))<55){petHappyUntil=Date.now()+1500;sfxFeed();}
+    if(Pet.wesley&&Math.hypot(x-286,y-(H-96))<55){petHappyWUntil=Date.now()+1500;sfxFeed();}
+  };
   try{cancelAnimationFrame(petRAF);}catch(e){}
   const loop=()=>{
     if(document.getElementById('petOv').style.display==='none')return;
@@ -488,12 +715,16 @@ function doExchange(){
   Pet.stars-=10;Pet.food++;petSave();updatePetUI();sfxStar();
 }
 function doFeed(){
-  if(!(Pet.food>0&&Pet.fed<10))return;
-  Pet.food--;Pet.fed++;petSave();
-  if(Pet.fed>=10){Pet.stage=1;petSave();}
+  if(!(Pet.food>0&&Pet.fed<20))return;
+  const gain=Pet.doubleFeed?2:1; // 一起睡醒来：快乐加倍
+  if(Pet.doubleFeed){Pet.doubleFeed=false;}
+  Pet.food--;Pet.fed=Math.min(20,Pet.fed+gain);
+  Pet.lastFedB=Date.now();petSave();
+  const ns=Pet.fed>=20?2:(Pet.fed>=10?1:0);
   petHappyUntil=Date.now()+900;
   updatePetUI();sfxFeed();
-  if(Pet.fed>=10)setTimeout(()=>showEvo('birdie'),1000);
+  if(gain>1)banner('💖 快乐加倍！这次喂食算 2 份！',2000);
+  if(ns>Pet.stage){Pet.stage=ns;petSave();setTimeout(()=>showEvo('birdie'),1000);}
 }
 function doExchangeCat(){
   if(Pet.stars<10)return;
@@ -501,19 +732,31 @@ function doExchangeCat(){
 }
 function doFeedCat(){
   if(!(Pet.wesley&&Pet.catfood>0&&Pet.catfed<10))return;
-  Pet.catfood--;Pet.catfed++;petSave();
-  if(Pet.catfed>=10){Pet.wstage=1;petSave();}
-  petHappyUntil=Date.now()+900;
+  const gain=Pet.doubleFeed?2:1;
+  if(Pet.doubleFeed){Pet.doubleFeed=false;}
+  Pet.catfood--;Pet.catfed=Math.min(10,Pet.catfed+gain);
+  Pet.lastFedW=Date.now();petSave();
+  petHappyWUntil=Date.now()+900;
   updatePetUI();sfxFeed();
-  if(Pet.catfed>=10)setTimeout(()=>showEvo('wesley'),1000);
+  if(gain>1)banner('💖 快乐加倍！这次喂食算 2 份！',2000);
+  if(Pet.catfed>=10&&Pet.wstage<1){Pet.wstage=1;petSave();setTimeout(()=>showEvo('wesley'),1000);}
 }
 function showEvo(which){
   const isW=which==='wesley';
   document.getElementById('evoOv').style.display='flex';
-  document.getElementById('evoTitle').textContent=isW?'✨ Wesley 净化成功！':'✨ 小鸟泥净化成功！';
-  document.getElementById('evoTxt').innerHTML=isW?
-    '吃了 10 份猫食，Wesley 长大了！<br>金色的身子，粉红色的肚皮，超可爱！':
-    '吃了 10 份鸟食，小鸟泥长大了！<br>黑色的身子，金色的头和羽毛，超帅！';
+  if(isW){
+    document.getElementById('evoTitle').textContent='✨ Wesley 长大啦！';
+    document.getElementById('evoTxt').innerHTML=
+      '吃了 10 份猫食，Wesley 从小猫长成了大猫！<br>金色的身子，粉红色的肚皮，超可爱！<br>🐟 大猫晚上睡觉会抓萤火虫，攒下来照亮黑黑大山洞！';
+  }else if(Pet.stage>=2){
+    document.getElementById('evoTitle').textContent='✨ 小鸟泥长成大鸟啦！';
+    document.getElementById('evoTxt').innerHTML=
+      '吃了 20 份鸟食，小鸟泥从少年长成了大鸟！<br>黑色的身子，金色的头和羽毛，超帅！<br>🌅 大鸟每天早上会叼回 1 颗星星当"早餐"！';
+  }else{
+    document.getElementById('evoTitle').textContent='✨ 小鸟泥长成少年啦！';
+    document.getElementById('evoTxt').innerHTML=
+      '吃了 10 份鸟食，小鸟泥从宝宝长成了少年！<br>身体变大，冒出了金色小羽冠！<br>再吃 10 份就能长成大鸟了！';
+  }
   document.getElementById('evoOv').style.display='flex';
   const cv=document.getElementById('evoCv');
   if(cv&&cv.getContext){
@@ -530,7 +773,7 @@ function showEvo(which){
 }
 
 /* ---------- 状态 ---------- */
-let G=null,totalStars=0,runHearts=3; // runHearts：整局 8 关一共只有 3 颗心，不过关不回满
+let G=null,totalStars=0,runHearts=3; // runHearts：整局 12 关一共只有 3 颗心，不过关不回满
 function setHearts(n){runHearts=Math.max(0,Math.min(3,n));if(G)G.hearts=runHearts;}
 const HEDGE_R=16;
 
@@ -539,19 +782,38 @@ function loadLevel(idx){
   const path=buildPath(def.waypoints);
   const level={
     def:def,path:path,half:def.half,
-    pinches:(def.pinches||[]).map(p=>({s:p.frac*path.len,half:p.half,len:p.len,skull:!!p.skull,
-      spikes:!!p.spikes,shutHalf:p.shutHalf,chomp:p.chomp})),
+    pinches:(def.pinches||[]).map(p=>({s:p.frac*path.len,baseS:p.frac*path.len,slide:p.slide,
+      half:p.half,len:p.len,skull:!!p.skull,
+      spikes:!!p.spikes,shutHalf:p.shutHalf,chomp:p.chomp,chomp2:p.chomp2,boss:!!p.boss})),
     bows:(def.bows||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:1.1+i*0.8})),
     slings:(def.slings||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:2.0+i*1.1})),
-    stars:[]
+    stars:[],
+    fireflies:[],key:null,door:null,minions:[],spitT:3.5
   };
   for(let i=0;i<def.starN;i++){
     const f=pathFrame(path,(i+1)/(def.starN+1)*path.len);
     const off=(i%2===0?1:-1)*def.half*0.35;
     level.stars.push({x:f.x+f.nx*off,y:f.y+f.ny*off,got:false,ph:Math.random()*6});
   }
+  if(def.dark){ // L10 黑黑大山洞：萤火虫
+    const n=def.fireflyN||6;
+    for(let i=0;i<n;i++){
+      const f=pathFrame(path,(i+1)/(n+1)*path.len);
+      const off=(i%2===0?1:-1)*def.half*0.3;
+      level.fireflies.push({x:f.x+f.nx*off,y:f.y+f.ny*off,got:false,ph:Math.random()*6});
+    }
+  }
+  if(def.key){ // L11 钥匙开门：钥匙藏在岔路小山洞
+    const kf=pathFrame(path,def.key.frac*path.len);
+    const off=def.key.off||38;
+    level.key={x:kf.x+kf.nx*off,y:kf.y+kf.ny*off,got:false};
+    level.alcoveS=def.key.frac*path.len;
+    level.alcoveR=(def.alcove&&def.alcove.r)||75;
+  }
+  if(def.door)level.door={s:def.door.frac*path.len,open:false};
   const st=pathFrame(path,14);
   G={idx:idx,level:level,phase:'intro',time:0,hearts:runHearts,starGot:0,
+     hasKey:false,lightGot:0,
      hed:{x:st.x,y:st.y,tx:st.x,ty:st.y,r:HEDGE_R,face:1},
      projs:[],invuln:0,sMax:0};
   showIntro(idx,false);
@@ -576,6 +838,92 @@ function gameOver(){
   document.getElementById('overStars').textContent='⭐ '+Pet.stars;
   document.getElementById('reviveBtn').style.display=Pet.stars>=20?'':'none';
   document.getElementById('overOv').style.display='flex';
+}
+/* ---------- 全部 12 关通关 ---------- */
+function showWin(){
+  document.getElementById('winStats').innerHTML=
+    '⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/3<br>'+
+    '打败了大骷髅王，你是真正的滚跑大师！👑';
+  document.getElementById('winOv').style.display='flex';
+}
+/* ---------- 哄睡 ---------- */
+function doSleep(){
+  if(!petSleepy())return;
+  if(!Pet.nest){banner('🪹 先去百宝箱买个鸟巢，宠物才能睡觉哦！',2600);return;}
+  const together=Pet.unlocked&&Pet.wesley;
+  Pet.sleepTogether=together;
+  Pet.sleepUntil=Date.now()+6000;
+  petSave();updatePetUI();
+  banner(together?'💤 两只挤在鸟巢里睡着了…':'💤 睡着了…',2000);
+  setTimeout(wakeUp,6200);
+}
+function wakeUp(){
+  Pet.sleepUntil=0;
+  const together=Pet.sleepTogether;
+  Pet.sleepTogether=false;
+  Pet.levelsSinceSleep=0;
+  const roll=Math.random();
+  let gift;
+  if(roll<0.12){
+    if(!Pet.limited.includes('starhair'))Pet.limited.push('starhair');
+    gift='🎁 美梦礼物：限定装扮「星星头饰」！';
+  }else if(roll<0.42){
+    Pet.stars++;gift='🎁 美梦礼物：1 颗星星 ⭐！';
+  }else if(Pet.wesley&&Math.random()<0.5){
+    Pet.catfood++;gift='🎁 美梦礼物：1 份猫食 🐟！';
+  }else{
+    Pet.food++;gift='🎁 美梦礼物：1 份鸟食 🍖！';
+  }
+  let ff='';
+  if(Pet.wesley&&Pet.wstage>=1){Pet.fireflies=(Pet.fireflies||0)+1;ff=' 🐱 大猫 Wesley 抓到了 1 只萤火虫！';}
+  if(together){Pet.doubleFeed=true;gift+=' 💤 一起睡心情超好，下次喂食快乐加倍！';}
+  petSave();updatePetUI();
+  banner(gift+ff,3400);
+  sfxFeed();
+}
+/* ---------- 百宝箱 ---------- */
+const SHOP=[
+  {id:'nest',name:'🪹 鸟巢',price:15},
+  {id:'hat',name:'🎩 小帽子',price:15},
+  {id:'scarf',name:'🧣 围巾',price:20},
+  {id:'pajamas',name:'🌙 睡衣',price:25},
+];
+function buyAcc(id){
+  const it=SHOP.find(s=>s.id===id);
+  if(!it||Pet[it.id]||Pet.stars<it.price)return;
+  Pet.stars-=it.price;Pet[it.id]=true;petSave();
+  updatePetUI();sfxStar();
+  banner('🎁 买到了'+it.name+'！',2000);
+}
+function toggleAcc(id){
+  if(id==='hat')Pet.equipHat=!Pet.equipHat;
+  if(id==='scarf')Pet.equipScarf=!Pet.equipScarf;
+  if(id==='pajamas')Pet.equipPajamas=!Pet.equipPajamas;
+  petSave();updateShopUI();
+}
+function updateShopUI(){
+  for(const it of SHOP){
+    const btn=document.getElementById('shop_'+it.id);
+    if(!btn)continue;
+    if(Pet[it.id]){
+      if(it.id==='nest'){btn.innerHTML='🪹 已有鸟巢';btn.disabled=true;btn.onclick=null;}
+      else{
+        const eq=(it.id==='hat'&&Pet.equipHat)||(it.id==='scarf'&&Pet.equipScarf)||(it.id==='pajamas'&&Pet.equipPajamas);
+        btn.innerHTML=it.name+(eq?'<br><span style="font-size:13px;">✓ 穿着（点脱下）</span>':'<br><span style="font-size:13px;">点穿上</span>');
+        btn.disabled=false;btn.onclick=()=>toggleAcc(it.id);
+      }
+    }else{
+      btn.innerHTML=it.name+'<br><span style="font-size:13px;">'+it.price+' ⭐</span>';
+      btn.disabled=!(Pet.stars>=it.price);
+      btn.onclick=()=>buyAcc(it.id);
+    }
+  }
+  const slp=document.getElementById('sleepBtn');
+  if(slp){
+    const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
+    slp.style.display=(petSleepy()&&!sleeping)?'':'none';
+    slp.innerHTML='😴 哄睡<br><span style="font-size:13px;">'+(Pet.nest?'放进鸟巢':'先买鸟巢')+'</span>';
+  }
 }
 /* ---------- 每关开始前：20⭐ 换 1❤️ ---------- */
 function updateHeartShop(){
@@ -655,6 +1003,59 @@ function update(dt){
   const c=clampToTunnel(L.path,L,h.x,h.y,h.r,G.time);
   h.x=c.x;h.y=c.y;
   if(c.s>G.sMax)G.sMax=c.s;
+  // L11 石门：没钥匙不能过去
+  if(L.door&&!L.door.open){
+    if(c.s>L.door.s-26){
+      const df=pathFrame(L.path,L.door.s-26);
+      h.x=df.x;h.y=df.y;h.tx=df.x;h.ty=df.y;
+      if(!G._doorHint||G.time-G._doorHint>4){
+        G._doorHint=G.time;
+        banner('🚪 石门挡住了去路！先去岔路找钥匙 🔑',2200);
+      }
+    }
+  }
+  // L11 捡钥匙
+  if(L.key&&!L.key.got&&circleHit(L.key.x,L.key.y,12,h.x,h.y,h.r+6)){
+    L.key.got=true;G.hasKey=true;if(L.door)L.door.open=true;
+    banner('🔑 找到钥匙了！石门开了！',2200);sfxStar();
+  }
+  // L10 抓萤火虫：光圈变大
+  for(const fl of L.fireflies){
+    if(!fl.got&&circleHit(fl.x,fl.y,10,h.x,h.y,h.r+6)){
+      fl.got=true;G.lightGot++;sfxStar();
+      banner('✨ 抓到萤火虫！光圈变大了',1500);
+    }
+  }
+  // L12 大骷髅王吐小骷髅兵
+  for(const pin of L.pinches){
+    if(pin.boss&&pin.spit){
+      L.spitT-=dt;
+      if(L.spitT<=0){
+        L.spitT=pin.spit.period;
+        const bf=pathFrame(L.path,pinchS(pin,G.time));
+        const a=Math.random()*Math.PI*2;
+        L.minions.push({x:bf.x,y:bf.y,vx:Math.cos(a)*46,vy:Math.sin(a)*46,life:7,ph:Math.random()*6});
+        banner('💀 大骷髅王吐出了小骷髅兵！',1500);
+      }
+    }
+  }
+  const mkeep=[];
+  for(const m of L.minions){
+    m.life-=dt;m.ph+=dt*3;
+    m.x+=m.vx*dt;m.y+=m.vy*dt;
+    const mn=nearestOnPath(L.path,m.x,m.y);
+    const mhw=halfWidthAt(L,mn.s,G.time)-8;
+    if(mn.dist>mhw){m.vx*=-1;m.vy*=-1;}
+    if(m.life<=0)continue;
+    if(G.invuln<=0&&circleHit(m.x,m.y,12,h.x,h.y,h.r)){
+      setHearts(runHearts-1);G.invuln=1.6;sfxHit();
+      if(runHearts<=0){gameOver();G.phase='over';return;}
+      banner('哎呀！被小骷髅兵撞到了，还剩 '+'❤'.repeat(runHearts),1800);
+      continue;
+    }
+    mkeep.push(m);
+  }
+  L.minions=mkeep;
   // 弓箭 / 弹弓
   for(const b of L.bows){
     b.timer-=dt;
@@ -683,8 +1084,11 @@ function update(dt){
   // 骷髅夹子夹人：夹紧的一瞬间如果刺猬在嘴里，就会被夹到
   for(const pin of L.pinches){
     if(!pin.chomp)continue;
+    const ps=pinchS(pin,G.time);
     const cst=chompState(pin,G.time);
-    if(cst.open===0&&Math.abs(c.s-pin.s)<pin.len*0.85&&G.invuln<=0){
+    const cst2=pin.chomp2?chompState({chomp:pin.chomp2},G.time):null;
+    const shut=(cst.open===0||(cst2&&cst2.open===0));
+    if(shut&&Math.abs(c.s-ps)<pin.len*0.85&&G.invuln<=0){
       setHearts(runHearts-1);G.invuln=1.6;sfxHit();
       if(runHearts<=0){gameOver();G.phase='over';return;}
       banner('啊呜！被骷髅夹子夹到了，还剩 '+'❤'.repeat(runHearts),1800);
@@ -700,14 +1104,17 @@ function update(dt){
   // 到出口？
   if(G.sMax>=L.path.len-30){
     G.phase='done';sfxWin();
+    Pet.levelsSinceSleep=(Pet.levelsSinceSleep||0)+1;petSave(); // 玩一关，困意+1
     if(G.idx===4){
       const first=!Pet.unlocked;      // 第 5 关：小鸟泥
       Pet.unlocked=true;petSave();
       showPet('birdie',first,5);
-    }else if(G.idx>=LEVELS.length-1){
+    }else if(G.idx===7){
       const first=!Pet.wesley;        // 第 8 关：小猫 Wesley
       Pet.wesley=true;Pet.unlocked=true;petSave();
-      showPet('wesley',first,null);
+      showPet('wesley',first,8);
+    }else if(G.idx>=LEVELS.length-1){
+      showWin();                       // 第 12 关：打败大骷髅王，全部通关！
     }else{
       banner('🎉 '+L.def.name+'通过！',2200);
       sfxLevel();
@@ -783,11 +1190,12 @@ function drawCamera(){
 }
 
 function drawSkull(pin){
-  const L=G.level,f=pathFrame(L.path,pin.s);
+  const L=G.level,f=pathFrame(L.path,pinchS(pin,G.time));
   const ang=Math.atan2(f.ty,f.tx);
   const st=chompState(pin,G.time);
+  const bs=pin.boss?1.7:1; // Boss 骷髅王：1.7 倍大
   const mh=pin.chomp?(pin.half+(6-pin.half)*(1-st.open)):pin.half; // 夹子开合：嘴巴张大/夹紧
-  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);
+  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);ctx.scale(bs,bs);
   if(st.warn){ // 预警：红光+抖动
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*16))+')';
     ctx.beginPath();ctx.arc(0,0,54,0,7);ctx.fill();
@@ -817,6 +1225,19 @@ function drawSkull(pin){
     }
   }
   ctx.restore();
+  if(pin.chomp2){ // Boss 双重夹子：内层小嘴，节奏和外层错开
+    const st2=chompState({chomp:pin.chomp2},G.time);
+    const mh2=pin.half*0.5+(5-pin.half*0.5)*(1-st2.open);
+    ctx.fillStyle='#78909c';ctx.strokeStyle='#455a64';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,0,22,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#d9b384';
+    rr(-26,-mh2,52,mh2*2,8);ctx.fill();
+    ctx.fillStyle='#eceff1';
+    for(let i=-1;i<=1;i++){
+      ctx.fillRect(i*13-4,-mh2-10,8,10);
+      ctx.fillRect(i*13-4,mh2,8,10);
+    }
+  }
   // 眼睛（嘴巴上方）
   ctx.fillStyle='#212121';
   ctx.beginPath();ctx.arc(-13,-30,6,0,7);ctx.fill();
@@ -954,6 +1375,81 @@ function drawHedgehog(){
   ctx.restore();
 }
 
+function drawMinions(){
+  const L=G.level;
+  for(const m of L.minions){
+    ctx.save();ctx.translate(m.x,m.y+Math.sin(m.ph)*3);
+    ctx.fillStyle='#eceff1';ctx.strokeStyle='#616161';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,0,12,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#e53935'; // 红眼睛，坏坏的
+    ctx.beginPath();ctx.arc(-4,-3,3,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(4,-3,3,0,7);ctx.fill();
+    ctx.fillStyle='#fafafa';
+    ctx.fillRect(-6,5,4,5);ctx.fillRect(2,5,4,5);
+    ctx.restore();
+  }
+}
+function drawFireflies(){
+  const L=G.level;
+  for(const fl of L.fireflies){
+    if(fl.got)continue;
+    const tw=0.6+0.4*Math.sin(G.time*4+fl.ph);
+    ctx.save();ctx.translate(fl.x,fl.y+Math.sin(G.time*2+fl.ph)*4);
+    ctx.fillStyle='rgba(255,235,59,'+(0.25*tw)+')';
+    ctx.beginPath();ctx.arc(0,0,16*tw,0,7);ctx.fill();
+    ctx.fillStyle='#ffeb3b';
+    ctx.beginPath();ctx.arc(0,0,6,0,7);ctx.fill();
+    ctx.fillStyle='#fffde7';
+    ctx.beginPath();ctx.arc(-1.5,-1.5,2.5,0,7);ctx.fill();
+    ctx.restore();
+  }
+}
+function drawKey(){
+  const L=G.level;
+  if(!L.key||L.key.got)return;
+  const bob=Math.sin(G.time*3)*4;
+  ctx.save();ctx.translate(L.key.x,L.key.y+bob);
+  ctx.fillStyle='rgba(255,213,79,.3)';
+  ctx.beginPath();ctx.arc(0,0,20+Math.sin(G.time*4)*3,0,7);ctx.fill();
+  ctx.fillStyle='#ffd54f';ctx.strokeStyle='#ff8f00';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(-8,0,8,0,7);ctx.fill();ctx.stroke();
+  ctx.fillRect(-8,-3,22,6);
+  ctx.fillRect(8,-3,5,10);ctx.fillRect(15,-3,5,8);
+  ctx.restore();
+}
+function drawDoor(){
+  const L=G.level;
+  if(!L.door||L.door.open)return;
+  const f=pathFrame(L.path,L.door.s);
+  const ang=Math.atan2(f.ty,f.tx);
+  const hw=halfWidthAt(L,L.door.s,G.time);
+  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);
+  ctx.fillStyle='#78909c';ctx.strokeStyle='#455a64';ctx.lineWidth=3;
+  rr(-8,-hw,8,hw,4);ctx.fill();ctx.stroke();
+  rr(0,-hw,8,hw,4);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#546e7a';ctx.lineWidth=1.5;
+  for(let y=-hw+10;y<hw-5;y+=18){
+    ctx.beginPath();ctx.moveTo(-8,y);ctx.lineTo(8,y);ctx.stroke();
+  }
+  ctx.fillStyle='#37474f';
+  ctx.beginPath();ctx.arc(0,0,6,0,7);ctx.fill();
+  ctx.restore();
+}
+// L10 黑暗：只有刺猬周围的光圈看得见
+function lightRadius(){
+  if(!G||!G.level.def.dark)return 0;
+  return 100+G.lightGot*14+(Pet.fireflies||0)*8;
+}
+function drawDark(){
+  const r=lightRadius();
+  if(r<=0)return;
+  const h=G.hed;
+  const g=ctx.createRadialGradient(h.x,h.y,Math.max(1,r*0.35),h.x,h.y,r);
+  g.addColorStop(0,'rgba(5,5,15,0)');
+  g.addColorStop(1,'rgba(5,5,15,0.93)');
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,LW,LH);
+}
 function draw(){
   const W=window.innerWidth,H=window.innerHeight;
   ctx.fillStyle='#201a18';ctx.fillRect(0,0,W,H);
@@ -967,11 +1463,16 @@ function draw(){
   drawCamera();
   const L=G.level;
   for(const pin of L.pinches)if(pin.skull)drawSkull(pin);
+  drawDoor();
   drawStars();
+  drawKey();
   for(const b of L.bows)drawBow(b);
   for(const b of L.slings)drawSling(b);
   drawProjs();
+  drawMinions();
   drawHedgehog();
+  if(L.def.dark)drawDark();
+  drawFireflies(); // 萤火虫在黑暗上层发光
   ctx.restore();
 }
 
@@ -1003,6 +1504,7 @@ document.getElementById('exchangeBtn').addEventListener('click',doExchange);
 document.getElementById('feedBtn').addEventListener('click',doFeed);
 document.getElementById('exchangeCatBtn').addEventListener('click',doExchangeCat);
 document.getElementById('feedCatBtn').addEventListener('click',doFeedCat);
+document.getElementById('sleepBtn').addEventListener('click',doSleep);
 document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;setHearts(3);loadLevel(0);});
 document.getElementById('petNextBtn').addEventListener('click',()=>{
   if(petCont==null)return;
