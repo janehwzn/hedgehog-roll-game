@@ -376,7 +376,7 @@ function drawBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(22*s,-18*s);c.lineTo(33*s,-14*s);c.lineTo(22*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Baloo 2", sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -474,7 +474,7 @@ function drawTeenBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(28*s,-20*s);c.lineTo(40*s,-15*s);c.lineTo(28*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Baloo 2", sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -534,7 +534,7 @@ function drawPetScene(){
   for(const fx of [40,W-30]){c.beginPath();c.arc(fx,H-30,5,0,7);c.fill();}
   c.fillStyle='#fff59d';
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
-  c.font='66px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='66px "Baloo 2", sans-serif';c.textAlign='center';c.textBaseline='middle';
   c.fillText('🦔',100,H-56);
   const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
   if(Pet.unlocked&&!sleeping){
@@ -553,7 +553,7 @@ function drawPetScene(){
     drawPetStatus(c,wx,wy-70,'wesley',t);
   }
   if(sleeping)drawSleeping(c,W,H,t);
-  c.fillStyle='#4e342e';c.font='bold 15px sans-serif';
+  c.fillStyle='#4e342e';c.font='800 15px "Baloo 2", sans-serif';
   const nm=[];
   if(Pet.unlocked)nm.push('Birdie'+['(Baby)','(Teen)','(Adult)'][Pet.stage]||'');
   if(Pet.wesley)nm.push('Wesley'+(Pet.wstage>=1?'(Adult)':'(Kitten)'));
@@ -563,7 +563,7 @@ function drawPetScene(){
 // 宠物头顶状态：饿了冒饭碗，困了冒 Zzz
 function drawPetStatus(c,x,y,which,t){
   const hungry=petHungry(which),sleepy=petSleepy();
-  c.font='22px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='22px "Baloo 2", sans-serif';c.textAlign='center';c.textBaseline='middle';
   if(hungry){
     c.fillText('🍚',x+30,y-14+Math.sin(t*5)*3);
   }
@@ -601,14 +601,14 @@ function drawSleeping(c,W,H,t){
     c.beginPath();c.arc(cx+32,cy-28-br,24,0,7);c.fill();
   }
   // Zzz / 打呼
-  c.font='20px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='20px "Baloo 2", sans-serif';c.textAlign='center';c.textBaseline='middle';
   const z1=(t%3),z2=((t+1.5)%3);
   c.fillStyle='rgba(92,107,192,'+(1-z1/3)+')';
   c.fillText('Z',cx-60-z1*8,cy-70-z1*14);
   c.fillStyle='rgba(92,107,192,'+(1-z2/3)+')';
   c.fillText('Z',cx+60+z2*8,cy-70-z2*14);
   if(Pet.sleepTogether){
-    c.font='18px sans-serif';
+    c.font='18px "Baloo 2", sans-serif';
     c.fillText('💤 Snore snore…',cx,cy-96+Math.sin(t*3)*3);
   }
   c.textBaseline='alphabetic';
@@ -768,7 +768,7 @@ function showEvo(which){
     c.fillStyle=g;c.fillRect(0,0,W,H);
     if(isW)drawEvolvedWesley(c,W/2,H/2+26,0.95,1.2);
     else drawEvolvedBirdie(c,W/2-8,H/2+18,1.05,1.2,{});
-    c.fillStyle='#f9a825';c.font='bold 15px sans-serif';c.textAlign='center';
+    c.fillStyle='#f9a825';c.font='800 15px "Baloo 2", sans-serif';c.textAlign='center';
     c.fillText('✨ Grown Up! ✨',W/2,22);
   }
   sfxWin();
@@ -1175,7 +1175,7 @@ function drawStartExit(){
   const st=pathFrame(L.path,8);
   ctx.fillStyle='#1c1512';
   ctx.beginPath();ctx.ellipse(st.x,st.y,halfWidthAt(L,8,G.time)*0.85,halfWidthAt(L,8,G.time)*0.7,0,0,7);ctx.fill();
-  ctx.fillStyle='#a1887f';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#a1887f';ctx.font='800 15px "Baloo 2", sans-serif';ctx.textAlign='center';
   ctx.fillText('Start',st.x,st.y+halfWidthAt(L,8,G.time)+22);
   const en=pathFrame(L.path,L.path.len-8);
   const g=ctx.createRadialGradient(en.x,en.y,4,en.x,en.y,52);
@@ -1183,7 +1183,7 @@ function drawStartExit(){
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(en.x,en.y,52,0,7);ctx.fill();
   ctx.fillStyle='#fffde7';ctx.strokeStyle='#ffb300';ctx.lineWidth=4;
   ctx.beginPath();ctx.arc(en.x,en.y,26,0,7);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#e65100';ctx.font='bold 15px sans-serif';
+  ctx.fillStyle='#e65100';ctx.font='800 15px "Baloo 2", sans-serif';
   ctx.fillText('Exit',en.x,en.y+5);
 }
 
@@ -1192,14 +1192,14 @@ function drawCamera(){
   const ang=Math.atan2(f.ty,f.tx);
   const cx=f.x+f.nx*-(halfWidthAt(L,52,G.time)*0.4),cy=f.y+f.ny*-(halfWidthAt(L,52,G.time)*0.4);
   ctx.save();ctx.translate(cx,cy);
-  ctx.font='30px sans-serif';ctx.textAlign='center';
+  ctx.font='30px "Baloo 2", sans-serif';ctx.textAlign='center';
   ctx.fillText('📷',0,0);
   ctx.restore();
   ctx.save();ctx.translate(cx,cy-34);ctx.rotate(0);
   ctx.fillStyle='rgba(255,255,255,.94)';
   const tw=86;
   rr(-tw/2,-16,tw,28,13);ctx.fill();
-  ctx.fillStyle='#5d4037';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#5d4037';ctx.font='800 14px "Baloo 2", sans-serif';ctx.textAlign='center';
   ctx.fillText('This way!',0,3);
   ctx.restore();
 }
@@ -1270,7 +1270,7 @@ function drawBow(b){
   if(tele){
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*14))+')';
     ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='bold 20px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='800 20px "Baloo 2", sans-serif';ctx.textAlign='center';
     ctx.fillText('!',0,-30);
   }
   ctx.strokeStyle='#6d4c41';ctx.lineWidth=6;ctx.lineCap='round';
@@ -1299,7 +1299,7 @@ function drawSling(b){
   if(tele){
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*14))+')';
     ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='bold 20px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='800 20px "Baloo 2", sans-serif';ctx.textAlign='center';
     ctx.fillText('!',0,-30);
   }
   ctx.strokeStyle='#6d4c41';ctx.lineWidth=7;ctx.lineCap='round';
@@ -1348,7 +1348,7 @@ function drawStars(){
     if(s.got)continue;
     const bob=Math.sin(G.time*4+s.ph)*3;
     ctx.save();ctx.translate(s.x,s.y+bob);
-    ctx.font='26px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='26px "Baloo 2", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('⭐',0,0);
     ctx.restore();
   }
