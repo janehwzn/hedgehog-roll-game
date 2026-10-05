@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>🦔 刺猬滚跑</title>
+<title>🦔 Hedgehog Roll</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3e2723">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,95 +42,95 @@
 
 <div id="hud">
   <div class="pill" id="hHeart">❤❤❤</div>
-  <div class="pill" id="hLevel">第 1 关</div>
+  <div class="pill" id="hLevel">Level 1</div>
   <div class="pill" id="hStar">⭐ 0</div>
 </div>
 <div id="warn"><span id="warnTxt"></span></div>
 
 <div class="overlay" id="startOv">
   <div class="big">🦔</div>
-  <h1 id="introTitle">刺猬滚跑</h1>
-  <h2 id="introLevel">第 1 关 · 跟着箭头走</h2>
-  <p id="introSub">山洞探险开始！</p>
-  <div class="hint" id="introHint">🔭 镜头说：跟着蓝色箭头，钻进山洞，一直往上走！</div>
+  <h1 id="introTitle">Hedgehog Roll</h1>
+  <h2 id="introLevel">Level 1 · Follow the Arrows</h2>
+  <p id="introSub">The cave adventure begins!</p>
+  <div class="hint" id="introHint">🔭 Camera says: Follow the blue arrows through the cave, all the way up!</div>
   <div class="rule" id="introRules">
-    🦔 你是一只小刺猬，<b>用手指挪着它走</b><br>
-    ➡️ 跟着<b>蓝色箭头</b>，钻进山洞往上走<br>
-    💀 从<b>骷髅头的嘴巴</b>钻过去再爬出来<br>
-    🦷 第 6 关起，<b>骷髅夹子</b>会突然夹人，看准时机冲！<br>
-    🏹 从<b>第 2 关</b>开始有<b>弓箭</b>和<b>弹弓</b>，小心别被打到！<br>
-    🏃 第 9 关起，<b>夹子会跑</b>，算好时机钻过去！<br>
-    🔦 第 10 关<b>黑黑大山洞</b>：抓<b>萤火虫</b>让光圈变大！<br>
-    🔑 第 11 关：先找<b>钥匙</b>，再开<b>石门</b>！<br>
-    👑 第 12 关：<b>大骷髅王</b>，躲开双重夹子和小骷髅兵！<br>
-    ⭐ 吃到小星星加分，走到<b>出口</b>就过关！
+    🦔 You are a little hedgehog, <b>drag it with your finger</b><br>
+    ➡️ Follow the <b>blue arrows</b> through the cave, going up<br>
+    💀 Crawl through the <b>skull's mouth</b><br>
+    🦷 From Level 6, <b>skull clamps</b> snap shut — time your dash!<br>
+    🏹 From <b>Level 2</b>, <b>bows</b> and <b>slingshots</b> — watch out!<br>
+    🏃 From Level 9, <b>clamps run</b> — time it right!<br>
+    🔦 Level 10 <b>Dark Cave</b>: catch <b>fireflies</b> to grow your light!<br>
+    🔑 Level 11: find the <b>key</b> first, then open the <b>stone door</b>!<br>
+    👑 Level 12: <b>Skull King</b> — dodge the double jaws and mini skeletons!<br>
+    ⭐ Grab stars for points, reach the <b>exit</b> to clear!
   </div>
   <div class="shoprow" id="heartShop">
     <span id="shopInfo"></span>
-    <button class="btn sm" id="heartBtn">20⭐ 换 1❤️</button>
+    <button class="btn sm" id="heartBtn">20⭐ → 1❤️</button>
   </div>
-  <button class="btn" id="startBtn">开始滚跑！</button>
+  <button class="btn" id="startBtn">Start Rolling!</button>
 </div>
 
 <div class="overlay" id="overOv" style="display:none;">
   <div class="big">😵</div>
-  <h1>小刺猬晕倒了！</h1>
+  <h1>The hedgehog fainted!</h1>
   <p id="overStars"></p>
-  <p>3 颗心用完了。用星星换心可以接着玩！</p>
+  <p>Out of hearts! Trade stars for hearts to keep going!</p>
   <div class="btnrow">
-    <button class="btn sm" id="reviveBtn">20⭐ 换 1❤️<br><span style="font-size:13px;">本关继续</span></button>
-    <button class="btn sm" id="restartBtn">从第 1 关<br><span style="font-size:13px;">重新开始</span></button>
+    <button class="btn sm" id="reviveBtn">20⭐ → 1❤️<br><span style="font-size:13px;">Continue level</span></button>
+    <button class="btn sm" id="restartBtn">From Level 1<br><span style="font-size:13px;">Restart</span></button>
   </div>
 </div>
 
 <div class="overlay" id="winOv" style="display:none;">
   <div class="big">🎉</div>
-  <h1>全部过关！</h1>
+  <h1>All Levels Cleared!</h1>
   <p id="winStats"></p>
-  <p style="font-size:15px;color:#a1887f;">小刺猬滚得太棒啦！🦔💨</p>
-  <button class="btn" id="againBtn">再玩一次</button>
+  <p style="font-size:15px;color:#a1887f;">The hedgehog rolls amazingly! 🦔💨</p>
+  <button class="btn" id="againBtn">Play Again</button>
 </div>
 
 <div class="overlay" id="petOv" style="display:none;">
-  <h1 id="petTitle">🎉 获得宠物！</h1>
-  <p id="petCeremonyTxt">小刺猬走出了所有的山洞！<br>一只小鸟从天而降，成为了它的好朋友——</p>
+  <h1 id="petTitle">🎉 New Pet!</h1>
+  <p id="petCeremonyTxt">The hedgehog left all the caves!<br>A little bird fell from the sky and became its friend —</p>
   <canvas id="petCv" width="360" height="230"></canvas>
   <h2 id="petNames" style="font-size:20px;color:#ffcc80;margin:8px 0 0;"></h2>
   <p id="petStats"></p>
   <p id="petFedTxt"></p>
   <div class="btnrow">
-    <button class="btn sm" id="exchangeBtn">换鸟食<br><span style="font-size:13px;">10 ⭐ → 1 🍖</span></button>
-    <button class="btn sm" id="feedBtn">喂小鸟 🍖</button>
+    <button class="btn sm" id="exchangeBtn">Bird food<br><span style="font-size:13px;">10 ⭐ → 1 🍖</span></button>
+    <button class="btn sm" id="feedBtn">Feed Birdie 🍖</button>
   </div>
   <p id="petCatFedTxt"></p>
   <div class="btnrow" id="catRow" style="display:none;">
-    <button class="btn sm" id="exchangeCatBtn">换猫食<br><span style="font-size:13px;">10 ⭐ → 1 🐟</span></button>
-    <button class="btn sm" id="feedCatBtn">喂猫猫 🐟</button>
+    <button class="btn sm" id="exchangeCatBtn">Cat food<br><span style="font-size:13px;">10 ⭐ → 1 🐟</span></button>
+    <button class="btn sm" id="feedCatBtn">Feed Wesley 🐟</button>
   </div>
   <p id="petFirefly" style="font-size:14px;color:#9ccc65;"></p>
   <div class="btnrow">
-    <button class="btn sm" id="sleepBtn" style="display:none;background:#7e57c2;">😴 哄睡</button>
+    <button class="btn sm" id="sleepBtn" style="display:none;background:#7e57c2;">😴 Sleep</button>
   </div>
-  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🎁 百宝箱</h2>
-  <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">买下装扮，点一下穿上 / 脱下</p>
+  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🎁 Treasure Box</h2>
+  <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">Buy outfits, tap to wear / remove</p>
   <div class="btnrow">
-    <button class="btn sm" id="shop_nest">🪹 鸟巢</button>
-    <button class="btn sm" id="shop_hat">🎩 小帽子</button>
+    <button class="btn sm" id="shop_nest">🪹 Nest</button>
+    <button class="btn sm" id="shop_hat">🎩 Hat</button>
   </div>
   <div class="btnrow">
-    <button class="btn sm" id="shop_scarf">🧣 围巾</button>
-    <button class="btn sm" id="shop_pajamas">🌙 睡衣</button>
+    <button class="btn sm" id="shop_scarf">🧣 Scarf</button>
+    <button class="btn sm" id="shop_pajamas">🌙 Pajamas</button>
   </div>
-  <button class="btn" id="petNextBtn" style="display:none;background:#66bb6a;box-shadow:0 4px 12px rgba(102,187,106,.5);">继续 ▶</button>
-  <button class="btn" id="petAgainBtn">再玩一次</button>
+  <button class="btn" id="petNextBtn" style="display:none;background:#66bb6a;box-shadow:0 4px 12px rgba(102,187,106,.5);">Continue ▶</button>
+  <button class="btn" id="petAgainBtn">Play Again</button>
 </div>
 
 <div class="overlay" id="evoOv" style="display:none;">
   <div class="big">✨</div>
-  <h1 id="evoTitle">✨ 小鸟泥净化成功！</h1>
+  <h1 id="evoTitle">✨ Grown Up!</h1>
   <canvas id="evoCv" width="200" height="160"></canvas>
-  <p id="evoTxt">吃了 10 份鸟食，小鸟泥长大了！<br>黑色的身子，金色的头和羽毛，超帅！</p>
-  <button class="btn" id="evoOkBtn">太棒了！</button>
+  <p id="evoTxt">Ate 10 bird food and grew up!<br>Black body, golden head and feathers, so cool!</p>
+  <button class="btn" id="evoOkBtn">Awesome!</button>
 </div>
 
 <script src="game.js"></script>
