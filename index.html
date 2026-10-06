@@ -9,35 +9,35 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{width:100%;height:100%;overflow:hidden;background:#201a18;font-family:"Baloo 2","Nunito","PingFang SC","Microsoft YaHei",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#201a18;font-family:"Nunito","PingFang SC","Microsoft YaHei",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;}
   #cv{position:fixed;inset:0;display:block;touch-action:none;}
-  .pill{background:rgba(255,251,240,.94);backdrop-filter:blur(6px);border-radius:999px;padding:8px 16px;font-size:17px;font-weight:800;color:#5d4037;box-shadow:0 3px 10px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.7);border:2px solid rgba(255,255,255,.5);}
+  .pill{background:#ffca28;border:3px solid #fff;border-radius:999px;padding:8px 18px;font-family:"Luckiest Guy",cursive;font-size:18px;letter-spacing:1px;color:#5d4037;box-shadow:0 4px 10px rgba(0,0,0,.35);}
   #hud{position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:5;}
   #warn{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;text-align:center;z-index:6;pointer-events:none;opacity:0;transition:opacity .3s;padding:0 16px;}
   #warn.show{opacity:1;}
-  #warn span{display:inline-block;background:linear-gradient(135deg,#ef5350,#e53935);color:#fff;font-weight:800;font-size:16px;padding:10px 22px;border-radius:999px;box-shadow:0 4px 14px rgba(229,57,53,.45);border:2px solid rgba(255,255,255,.35);}
+  #warn span{display:inline-block;background:#e8341c;color:#fff;border:3px solid #fff;font-family:"Luckiest Guy",cursive;font-size:18px;letter-spacing:1px;padding:10px 24px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
   .overlay{position:fixed;inset:0;background:rgba(30,20,16,.96);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
-  .overlay h1{font-size:36px;font-weight:800;color:#ffcc80;margin:10px 0;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.25);}
-  .overlay h2{font-size:22px;font-weight:700;color:#ffab91;margin:4px 0 10px;}
-  .overlay p{font-size:16px;font-weight:600;color:#e8d5c4;line-height:1.7;margin:6px 0;max-width:340px;}
+  .overlay h1{font-family:"Luckiest Guy",cursive;font-size:40px;font-weight:400;color:#ffca28;margin:10px 0;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.35);}
+  .overlay h2{font-family:"Luckiest Guy",cursive;font-size:24px;font-weight:400;color:#ffab91;margin:4px 0 10px;letter-spacing:1px;text-shadow:0 2px 0 rgba(0,0,0,.3);}
+  .overlay p{font-size:16px;font-weight:700;color:#e8d5c4;line-height:1.7;margin:6px 0;max-width:340px;}
   .overlay .big{font-size:68px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));}
-  .btn{margin-top:18px;background:linear-gradient(180deg,#ffb74d,#ff9800);color:#fff;border:none;border-bottom:4px solid #e65100;font-family:inherit;font-size:22px;font-weight:800;padding:14px 52px;border-radius:999px;box-shadow:0 6px 16px rgba(255,152,0,.45);cursor:pointer;transition:transform .08s;}
-  .btn:active{transform:translateY(3px) scale(.97);border-bottom-width:1px;}
-  .rule{background:linear-gradient(160deg,#5d4037,#4e342e);border-radius:20px;padding:14px 20px;margin:8px 0;font-size:15px;font-weight:600;color:#ffecb3;text-align:left;box-shadow:0 4px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);max-width:360px;line-height:1.9;border:2px solid rgba(255,204,128,.25);}
-  .hint{background:linear-gradient(160deg,#558b2f,#33691e);border-radius:20px;padding:12px 20px;margin:8px 0;font-size:15px;font-weight:700;color:#f1f8e9;max-width:360px;line-height:1.7;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.2);}
-  .btn.sm{font-size:17px;font-weight:800;padding:10px 22px;margin:6px 4px;border-bottom-width:3px;}
+  .btn{margin-top:18px;background:linear-gradient(180deg,#ffca28,#ff9e00);color:#fff;border:3px solid #fff;font-family:"Luckiest Guy",cursive;font-size:24px;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.28);padding:14px 46px;border-radius:22px;box-shadow:0 5px 14px rgba(0,0,0,.4);cursor:pointer;transition:transform .1s;}
+  .btn:active{transform:scale(.93);}
+  .rule{background:#4e342e;border:3px solid #ffca28;border-radius:20px;padding:14px 20px;margin:8px 0;font-size:15px;font-weight:700;color:#ffecb3;text-align:left;box-shadow:0 4px 12px rgba(0,0,0,.4);max-width:360px;line-height:1.9;}
+  .hint{background:#33691e;border:3px solid #fff;border-radius:20px;padding:12px 20px;margin:8px 0;font-size:15px;font-weight:800;color:#f1f8e9;max-width:360px;line-height:1.7;box-shadow:0 4px 12px rgba(0,0,0,.35);}
+  .btn.sm{font-size:18px;padding:10px 22px;margin:6px 4px;}
   .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
-  .btn:disabled{opacity:.4;box-shadow:none;filter:grayscale(.4);}
-  .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:linear-gradient(160deg,#5d4037,#4e342e);border-radius:999px;padding:8px 10px 8px 20px;margin:8px 0;font-size:15px;font-weight:700;color:#ffecb3;box-shadow:0 4px 12px rgba(0,0,0,.35);border:2px solid rgba(255,204,128,.25);}
+  .btn:disabled{opacity:.45;box-shadow:none;filter:grayscale(.5);}
+  .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#4e342e;border:3px solid #ffca28;border-radius:999px;padding:8px 10px 8px 20px;margin:8px 0;font-size:15px;font-weight:800;color:#ffecb3;box-shadow:0 4px 12px rgba(0,0,0,.4);}
   #petOv{justify-content:flex-start;padding-top:30px;overflow-y:auto;}
-  #petCv{border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.4);max-width:92vw;height:auto;border:3px solid rgba(255,204,128,.3);}
-  #evoCv{border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.4);border:3px solid rgba(255,204,128,.3);}
-  #petStats{font-size:18px;font-weight:800;color:#ffcc80;margin:10px 0 2px;}
-  #petFedTxt{font-size:14px;font-weight:600;color:#d7ccc8;margin:6px 0 2px;}
-  #petCatFedTxt{font-size:14px;font-weight:600;color:#d7ccc8;margin:6px 0 2px;}
+  #petCv{border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.45);max-width:92vw;height:auto;border:4px solid #ffca28;}
+  #evoCv{border-radius:18px;box-shadow:0 6px 16px rgba(0,0,0,.45);border:4px solid #ffca28;}
+  #petStats{font-family:"Luckiest Guy",cursive;font-size:20px;letter-spacing:1px;color:#ffca28;margin:10px 0 2px;text-shadow:0 2px 0 rgba(0,0,0,.3);}
+  #petFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
+  #petCatFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
 </style>
 </head>
 <body>
