@@ -9,23 +9,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Gochi+Hand&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght@400;500;600;700&family=Gochi+Hand&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{width:100%;height:100%;overflow:hidden;background:#f3ead8;font-family:"Gochi Hand","PingFang SC","Microsoft YaHei",cursive;touch-action:none;user-select:none;-webkit-user-select:none;color:#3e2723;}
   #cv{position:fixed;inset:0;display:block;touch-action:none;}
-  .pill{background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:6px 18px;font-family:"Caveat",cursive;font-size:24px;font-weight:700;color:#3e2723;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(-.5deg);}
+  .pill{background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:6px 18px;font-family:"Shantell Sans",cursive;font-size:24px;font-weight:700;color:#3e2723;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(-.5deg);}
   #hud{position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:5;}
   #warn{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;text-align:center;z-index:6;pointer-events:none;opacity:0;transition:opacity .3s;padding:0 16px;}
   #warn.show{opacity:1;}
-  #warn span{display:inline-block;background:#fffdf5;color:#c62828;border:2.5px solid #3e2723;font-family:"Caveat",cursive;font-size:24px;font-weight:700;padding:8px 24px;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(.6deg);}
+  #warn span{display:inline-block;background:#fffdf5;color:#c62828;border:2.5px solid #3e2723;font-family:"Shantell Sans",cursive;font-size:24px;font-weight:700;padding:8px 24px;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(.6deg);}
   .overlay{position:fixed;inset:0;background:#f3ead8;background-image:radial-gradient(rgba(62,39,35,.06) 1.5px,transparent 1.5px);background-size:26px 26px;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#3e2723;}
-  .overlay h1{font-family:"Caveat",cursive;font-size:52px;font-weight:700;color:#3e2723;margin:10px 0;transform:rotate(-1.2deg);}
+  .overlay h1{font-family:"Shantell Sans",cursive;font-size:52px;font-weight:700;color:#3e2723;margin:10px 0;transform:rotate(-1.2deg);}
   .overlay h1 .hl{background:linear-gradient(transparent 55%,#ffca28 55%,#ffca28 92%,transparent 92%);padding:0 8px;}
-  .overlay h2{font-family:"Caveat",cursive;font-size:32px;font-weight:700;color:#5d4037;margin:4px 0 10px;transform:rotate(.8deg);}
+  .overlay h2{font-family:"Shantell Sans",cursive;font-size:32px;font-weight:700;color:#5d4037;margin:4px 0 10px;transform:rotate(.8deg);}
   .overlay p{font-size:21px;color:#4e342e;line-height:1.6;margin:6px 0;max-width:360px;}
   .overlay .big{font-size:68px;filter:drop-shadow(2px 3px 0 rgba(62,39,35,.2));}
-  .btn{margin-top:18px;background:#ffca28;color:#3e2723;border:3px solid #3e2723;font-family:"Caveat",cursive;font-size:32px;font-weight:700;padding:8px 44px;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;box-shadow:3px 4px 0 rgba(62,39,35,.35);cursor:pointer;transition:transform .1s;transform:rotate(-1deg);}
+  .btn{margin-top:18px;background:#ffca28;color:#3e2723;border:3px solid #3e2723;font-family:"Shantell Sans",cursive;font-size:32px;font-weight:700;padding:8px 44px;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;box-shadow:3px 4px 0 rgba(62,39,35,.35);cursor:pointer;transition:transform .1s;transform:rotate(-1deg);}
   .btn:nth-of-type(even){transform:rotate(1deg);}
   .btn:active{transform:rotate(-1deg) scale(.94);box-shadow:1px 2px 0 rgba(62,39,35,.35);}
   .rule{background:#fffdf5;border:3px solid #3e2723;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;padding:14px 20px;margin:8px 0;font-size:20px;color:#4e342e;text-align:left;box-shadow:3px 4px 0 rgba(62,39,35,.2);max-width:380px;line-height:1.7;transform:rotate(-.6deg);}
@@ -36,7 +36,7 @@
   .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:8px 10px 8px 20px;margin:8px 0;font-size:20px;color:#4e342e;box-shadow:2px 3px 0 rgba(62,39,35,.2);}
   #petCv{border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:3px 4px 0 rgba(62,39,35,.3);max-width:92vw;height:auto;border:3px solid #3e2723;}
   #evoCv{border-radius:225px 15px 255px 15px/15px 255px 15px 225px;box-shadow:3px 4px 0 rgba(62,39,35,.3);border:3px solid #3e2723;}
-  #petStats{font-family:"Caveat",cursive;font-size:30px;font-weight:700;color:#3e2723;margin:10px 0 2px;transform:rotate(-.8deg);}
+  #petStats{font-family:"Shantell Sans",cursive;font-size:30px;font-weight:700;color:#3e2723;margin:10px 0 2px;transform:rotate(-.8deg);}
   #petFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
   #petCatFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
 </style>
