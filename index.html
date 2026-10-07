@@ -9,33 +9,34 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Gochi+Hand&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{width:100%;height:100%;overflow:hidden;background:#201a18;font-family:"Nunito","PingFang SC","Microsoft YaHei",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#f3ead8;font-family:"Gochi Hand","PingFang SC","Microsoft YaHei",cursive;touch-action:none;user-select:none;-webkit-user-select:none;color:#3e2723;}
   #cv{position:fixed;inset:0;display:block;touch-action:none;}
-  .pill{background:#ffca28;border:3px solid #fff;border-radius:999px;padding:8px 18px;font-family:"Luckiest Guy",cursive;font-size:18px;letter-spacing:1px;color:#5d4037;box-shadow:0 4px 10px rgba(0,0,0,.35);}
+  .pill{background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:6px 18px;font-family:"Caveat",cursive;font-size:24px;font-weight:700;color:#3e2723;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(-.5deg);}
   #hud{position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:5;}
   #warn{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;text-align:center;z-index:6;pointer-events:none;opacity:0;transition:opacity .3s;padding:0 16px;}
   #warn.show{opacity:1;}
-  #warn span{display:inline-block;background:#e8341c;color:#fff;border:3px solid #fff;font-family:"Luckiest Guy",cursive;font-size:18px;letter-spacing:1px;padding:10px 24px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-  .overlay{position:fixed;inset:0;background:rgba(30,20,16,.96);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
-  .overlay h1{font-family:"Luckiest Guy",cursive;font-size:40px;font-weight:400;color:#ffca28;margin:10px 0;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.35);}
-  .overlay h2{font-family:"Luckiest Guy",cursive;font-size:24px;font-weight:400;color:#ffab91;margin:4px 0 10px;letter-spacing:1px;text-shadow:0 2px 0 rgba(0,0,0,.3);}
-  .overlay p{font-size:16px;font-weight:700;color:#e8d5c4;line-height:1.7;margin:6px 0;max-width:340px;}
-  .overlay .big{font-size:68px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));}
-  .btn{margin-top:18px;background:linear-gradient(180deg,#ffca28,#ff9e00);color:#fff;border:3px solid #fff;font-family:"Luckiest Guy",cursive;font-size:24px;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.28);padding:14px 46px;border-radius:22px;box-shadow:0 5px 14px rgba(0,0,0,.4);cursor:pointer;transition:transform .1s;}
-  .btn:active{transform:scale(.93);}
-  .rule{background:#4e342e;border:3px solid #ffca28;border-radius:20px;padding:14px 20px;margin:8px 0;font-size:15px;font-weight:700;color:#ffecb3;text-align:left;box-shadow:0 4px 12px rgba(0,0,0,.4);max-width:360px;line-height:1.9;}
-  .hint{background:#33691e;border:3px solid #fff;border-radius:20px;padding:12px 20px;margin:8px 0;font-size:15px;font-weight:800;color:#f1f8e9;max-width:360px;line-height:1.7;box-shadow:0 4px 12px rgba(0,0,0,.35);}
-  .btn.sm{font-size:18px;padding:10px 22px;margin:6px 4px;}
+  #warn span{display:inline-block;background:#fffdf5;color:#c62828;border:2.5px solid #3e2723;font-family:"Caveat",cursive;font-size:24px;font-weight:700;padding:8px 24px;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(.6deg);}
+  .overlay{position:fixed;inset:0;background:#f3ead8;background-image:radial-gradient(rgba(62,39,35,.06) 1.5px,transparent 1.5px);background-size:26px 26px;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#3e2723;}
+  .overlay h1{font-family:"Caveat",cursive;font-size:52px;font-weight:700;color:#3e2723;margin:10px 0;transform:rotate(-1.2deg);}
+  .overlay h1 .hl{background:linear-gradient(transparent 55%,#ffca28 55%,#ffca28 92%,transparent 92%);padding:0 8px;}
+  .overlay h2{font-family:"Caveat",cursive;font-size:32px;font-weight:700;color:#5d4037;margin:4px 0 10px;transform:rotate(.8deg);}
+  .overlay p{font-size:21px;color:#4e342e;line-height:1.6;margin:6px 0;max-width:360px;}
+  .overlay .big{font-size:68px;filter:drop-shadow(2px 3px 0 rgba(62,39,35,.2));}
+  .btn{margin-top:18px;background:#ffca28;color:#3e2723;border:3px solid #3e2723;font-family:"Caveat",cursive;font-size:32px;font-weight:700;padding:8px 44px;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;box-shadow:3px 4px 0 rgba(62,39,35,.35);cursor:pointer;transition:transform .1s;transform:rotate(-1deg);}
+  .btn:nth-of-type(even){transform:rotate(1deg);}
+  .btn:active{transform:rotate(-1deg) scale(.94);box-shadow:1px 2px 0 rgba(62,39,35,.35);}
+  .rule{background:#fffdf5;border:3px solid #3e2723;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;padding:14px 20px;margin:8px 0;font-size:20px;color:#4e342e;text-align:left;box-shadow:3px 4px 0 rgba(62,39,35,.2);max-width:380px;line-height:1.7;transform:rotate(-.6deg);}
+  .hint{background:#fffdf5;border:3px solid #3e2723;border-radius:225px 15px 255px 15px/15px 255px 15px 225px;padding:12px 20px;margin:8px 0;font-size:20px;color:#2e7d32;max-width:380px;line-height:1.6;box-shadow:3px 4px 0 rgba(62,39,35,.2);transform:rotate(.6deg);}
+  .btn.sm{font-size:24px;padding:6px 22px;margin:6px 4px;}
   .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
   .btn:disabled{opacity:.45;box-shadow:none;filter:grayscale(.5);}
-  .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#4e342e;border:3px solid #ffca28;border-radius:999px;padding:8px 10px 8px 20px;margin:8px 0;font-size:15px;font-weight:800;color:#ffecb3;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-  #petOv{justify-content:flex-start;padding-top:30px;overflow-y:auto;}
-  #petCv{border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.45);max-width:92vw;height:auto;border:4px solid #ffca28;}
-  #evoCv{border-radius:18px;box-shadow:0 6px 16px rgba(0,0,0,.45);border:4px solid #ffca28;}
-  #petStats{font-family:"Luckiest Guy",cursive;font-size:20px;letter-spacing:1px;color:#ffca28;margin:10px 0 2px;text-shadow:0 2px 0 rgba(0,0,0,.3);}
+  .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:8px 10px 8px 20px;margin:8px 0;font-size:20px;color:#4e342e;box-shadow:2px 3px 0 rgba(62,39,35,.2);}
+  #petCv{border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:3px 4px 0 rgba(62,39,35,.3);max-width:92vw;height:auto;border:3px solid #3e2723;}
+  #evoCv{border-radius:225px 15px 255px 15px/15px 255px 15px 225px;box-shadow:3px 4px 0 rgba(62,39,35,.3);border:3px solid #3e2723;}
+  #petStats{font-family:"Caveat",cursive;font-size:30px;font-weight:700;color:#3e2723;margin:10px 0 2px;transform:rotate(-.8deg);}
   #petFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
   #petCatFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
 </style>
@@ -66,7 +67,8 @@
     🔦 Level 10 <b>Dark Cave</b>: catch <b>fireflies</b> to grow your light!<br>
     🔑 Level 11: find the <b>key</b> first, then open the <b>stone door</b>!<br>
     👑 Level 12: <b>Skull King</b> — dodge the double jaws and mini skeletons!<br>
-    ⭐ Grab stars for points, reach the <b>exit</b> to clear!
+    ⭐ Grab stars for points, reach the <b>exit</b> to clear!<br>
+    💖 Pets make <b>❤️</b> while you play — feed them to speed up!
   </div>
   <div class="shoprow" id="heartShop">
     <span id="shopInfo"></span>
@@ -77,7 +79,7 @@
 
 <div class="overlay" id="overOv" style="display:none;">
   <div class="big">😵</div>
-  <h1>The hedgehog fainted!</h1>
+  <h1><span class="hl">The hedgehog fainted!</span></h1>
   <p id="overStars"></p>
   <p>Out of hearts! Trade stars for hearts to keep going!</p>
   <div class="btnrow">
@@ -88,7 +90,7 @@
 
 <div class="overlay" id="winOv" style="display:none;">
   <div class="big">🎉</div>
-  <h1>All Levels Cleared!</h1>
+  <h1><span class="hl">All Levels Cleared!</span></h1>
   <p id="winStats"></p>
   <p style="font-size:15px;color:#a1887f;">The hedgehog rolls amazingly! 🦔💨</p>
   <button class="btn" id="againBtn">Play Again</button>
@@ -111,6 +113,7 @@
     <button class="btn sm" id="feedCatBtn">Feed Wesley 🐟</button>
   </div>
   <p id="petFirefly" style="font-size:14px;color:#9ccc65;"></p>
+  <p id="petHeartRate" style="font-size:14px;color:#ff8a80;font-weight:700;"></p>
   <div class="btnrow">
     <button class="btn sm" id="sleepBtn" style="display:none;background:#7e57c2;">😴 Sleep</button>
   </div>
