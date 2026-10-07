@@ -376,7 +376,7 @@ function drawBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(22*s,-18*s);c.lineTo(33*s,-14*s);c.lineTo(22*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Luckiest Guy", sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Caveat", sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -474,7 +474,7 @@ function drawTeenBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(28*s,-20*s);c.lineTo(40*s,-15*s);c.lineTo(28*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Luckiest Guy", sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Caveat", sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -534,7 +534,7 @@ function drawPetScene(){
   for(const fx of [40,W-30]){c.beginPath();c.arc(fx,H-30,5,0,7);c.fill();}
   c.fillStyle='#fff59d';
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
-  c.font='66px "Luckiest Guy", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='66px "Caveat", sans-serif';c.textAlign='center';c.textBaseline='middle';
   c.fillText('🦔',100,H-56);
   const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
   if(Pet.unlocked&&!sleeping){
@@ -563,7 +563,7 @@ function drawPetScene(){
 // 宠物头顶状态：饿了冒饭碗，困了冒 Zzz
 function drawPetStatus(c,x,y,which,t){
   const hungry=petHungry(which),sleepy=petSleepy();
-  c.font='22px "Luckiest Guy", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='22px "Caveat", sans-serif';c.textAlign='center';c.textBaseline='middle';
   if(hungry){
     c.fillText('🍚',x+30,y-14+Math.sin(t*5)*3);
   }
@@ -601,14 +601,14 @@ function drawSleeping(c,W,H,t){
     c.beginPath();c.arc(cx+32,cy-28-br,24,0,7);c.fill();
   }
   // Zzz / 打呼
-  c.font='20px "Luckiest Guy", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='20px "Caveat", sans-serif';c.textAlign='center';c.textBaseline='middle';
   const z1=(t%3),z2=((t+1.5)%3);
   c.fillStyle='rgba(92,107,192,'+(1-z1/3)+')';
   c.fillText('Z',cx-60-z1*8,cy-70-z1*14);
   c.fillStyle='rgba(92,107,192,'+(1-z2/3)+')';
   c.fillText('Z',cx+60+z2*8,cy-70-z2*14);
   if(Pet.sleepTogether){
-    c.font='18px "Luckiest Guy", sans-serif';
+    c.font='18px "Caveat", sans-serif';
     c.fillText('💤 Snore snore…',cx,cy-96+Math.sin(t*3)*3);
   }
   c.textBaseline='alphabetic';
@@ -666,6 +666,15 @@ function updatePetUI(){
   // 萤火虫库存
   const ff=document.getElementById('petFirefly');
   if(ff)ff.textContent=Pet.wesley?('✨ Fireflies x'+(Pet.fireflies||0)+'(lights the Dark Cave)'):'';
+  // 产心速度
+  const hrB=heartRateText('birdie'),hrW=heartRateText('wesley');
+  const hrEl=document.getElementById('petHeartRate');
+  if(hrEl){
+    const parts=[];
+    if(hrB)parts.push('🐦 Birdie: '+hrB);
+    if(hrW)parts.push('🐱 Wesley: '+hrW);
+    hrEl.textContent=parts.join(' ｜ ')+' — pets make ❤️ while you play!';
+  }
   updateShopUI();
 }
 function checkBreakfast(){
@@ -775,8 +784,9 @@ function showEvo(which){
 }
 
 /* ---------- 状态 ---------- */
-let G=null,totalStars=0,runHearts=3; // runHearts：整局 12 关一共只有 3 颗心，不过关不回满
-function setHearts(n){runHearts=Math.max(0,Math.min(3,n));if(G)G.hearts=runHearts;}
+const MAX_HEARTS=5;
+let G=null,totalStars=0,runHearts=3; // runHearts：整局 12 关基础 3 颗心，宠物产心可补到 5 颗上限
+function setHearts(n){runHearts=Math.max(0,Math.min(MAX_HEARTS,n));if(G)G.hearts=runHearts;}
 const HEDGE_R=16;
 
 function loadLevel(idx){
@@ -816,6 +826,7 @@ function loadLevel(idx){
   const st=pathFrame(path,14);
   G={idx:idx,level:level,phase:'intro',time:0,hearts:runHearts,starGot:0,
      hasKey:false,lightGot:0,timeLeft:def.timeLimit||0,
+     heartProgB:0,heartProgW:0,
      hed:{x:st.x,y:st.y,tx:st.x,ty:st.y,r:HEDGE_R,face:1},
      projs:[],invuln:0,sMax:0};
   showIntro(idx,false);
@@ -844,7 +855,7 @@ function gameOver(){
 /* ---------- 全部 12 关通关 ---------- */
 function showWin(){
   document.getElementById('winStats').innerHTML=
-    '⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/3<br>'+
+    '⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/'+MAX_HEARTS+'<br>'+
     'You beat the Skull King — a true Roll Master! 👑';
   document.getElementById('winOv').style.display='flex';
 }
@@ -927,9 +938,32 @@ function updateShopUI(){
     slp.innerHTML='😴 Sleep<br><span style="font-size:13px;">'+(Pet.nest?'Tuck into nest':'Buy nest first')+'</span>';
   }
 }
+/* ---------- 宠物产心 ---------- */
+// 每只宠物每隔 N 秒产 1 颗心（玩游戏时）。阶段越高速越快，穿装备再加速。
+function heartInterval(which){
+  let base;
+  if(which==='birdie'){
+    if(!Pet.unlocked)return 0;
+    base=Pet.stage>=2?180:(Pet.stage>=1?240:300); // 大鸟3分，少年4分，宝宝5分
+  }else{
+    if(!Pet.wesley)return 0;
+    base=Pet.wstage>=1?180:300; // 大猫3分，小猫5分
+  }
+  let mult=1;
+  if(Pet.equipHat)mult*=0.8;
+  if(Pet.equipScarf)mult*=0.8;
+  if(Pet.equipPajamas)mult*=0.8;
+  return base*mult;
+}
+function heartRateText(which){
+  const iv=heartInterval(which);
+  if(iv<=0)return '';
+  const m=Math.round(iv/60*10)/10;
+  return '❤️ every '+m+' min';
+}
 /* ---------- 每关开始前：20⭐ 换 1❤️ ---------- */
 function updateHeartShop(){
-  document.getElementById('shopInfo').innerHTML='⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/3';
+  document.getElementById('shopInfo').innerHTML='⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/'+MAX_HEARTS;
   document.getElementById('heartBtn').disabled=!(Pet.stars>=20&&runHearts<3);
 }
 
@@ -997,6 +1031,16 @@ function update(dt){
   G.time+=dt;
   const L=G.level,h=G.hed;
   G.invuln=Math.max(0,G.invuln-dt);
+  // 宠物产心：玩游戏时按速度攒，满了就补 1 颗（上限 5）
+  const ivB=heartInterval('birdie'),ivW=heartInterval('wesley');
+  if(ivB>0&&runHearts<MAX_HEARTS){
+    G.heartProgB+=dt;
+    if(G.heartProgB>=ivB){G.heartProgB=0;setHearts(runHearts+1);banner('💖 Birdie made a ❤️!',1800);sfxStar();}
+  }
+  if(ivW>0&&runHearts<MAX_HEARTS){
+    G.heartProgW+=dt;
+    if(G.heartProgW>=ivW){G.heartProgW=0;setHearts(runHearts+1);banner('💖 Wesley made a ❤️!',1800);sfxStar();}
+  }
   // 限时关：倒计时
   if(G.timeLeft>0){
     G.timeLeft-=dt;
@@ -1155,6 +1199,29 @@ function drawTunnel(){
     ctx.fillStyle='#d9b384';
     ctx.beginPath();ctx.arc(p.x,p.y,hw,0,7);ctx.fill();
   }
+  // 手绘风：隧道两边加抖动虚线描边
+  ctx.save();
+  ctx.strokeStyle='rgba(62,39,35,.55)';ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.setLineDash([14,10]);
+  const t0=G.time*0.7; // 虚线缓慢流动，像手绘
+  ctx.lineDashOffset=-t0*8;
+  for(const side of [-1,1]){
+    ctx.beginPath();
+    let started=false;
+    for(let s=0;s<L.path.len;s+=18){
+      const f=pathFrame(L.path,s);
+      const ang=Math.atan2(f.ty,f.tx);
+      const nx=-Math.sin(ang),ny=Math.cos(ang);
+      const hw=halfWidthAt(L,s,G.time);
+      // 加一点正弦抖动，模拟手绘不直
+      const wob=Math.sin(s*0.05+t0)*3;
+      const x=f.x+nx*(hw+4+wob)*side, y=f.y+ny*(hw+4+wob)*side;
+      if(!started){ctx.moveTo(x,y);started=true;}
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
   // 蓝色箭头（像 Steven 画里的）
   ctx.save();
   for(let s=70;s<L.path.len-50;s+=115){
@@ -1192,7 +1259,7 @@ function drawCamera(){
   const ang=Math.atan2(f.ty,f.tx);
   const cx=f.x+f.nx*-(halfWidthAt(L,52,G.time)*0.4),cy=f.y+f.ny*-(halfWidthAt(L,52,G.time)*0.4);
   ctx.save();ctx.translate(cx,cy);
-  ctx.font='30px "Luckiest Guy", sans-serif';ctx.textAlign='center';
+  ctx.font='30px "Caveat", sans-serif';ctx.textAlign='center';
   ctx.fillText('📷',0,0);
   ctx.restore();
   ctx.save();ctx.translate(cx,cy-34);ctx.rotate(0);
@@ -1348,7 +1415,7 @@ function drawStars(){
     if(s.got)continue;
     const bob=Math.sin(G.time*4+s.ph)*3;
     ctx.save();ctx.translate(s.x,s.y+bob);
-    ctx.font='26px "Luckiest Guy", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='26px "Caveat", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('⭐',0,0);
     ctx.restore();
   }
