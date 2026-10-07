@@ -376,7 +376,7 @@ function drawBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(22*s,-18*s);c.lineTo(33*s,-14*s);c.lineTo(22*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Caveat", sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Shantell Sans", sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -474,7 +474,7 @@ function drawTeenBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(28*s,-20*s);c.lineTo(40*s,-15*s);c.lineTo(28*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Caveat", sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Shantell Sans", sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -534,7 +534,7 @@ function drawPetScene(){
   for(const fx of [40,W-30]){c.beginPath();c.arc(fx,H-30,5,0,7);c.fill();}
   c.fillStyle='#fff59d';
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
-  c.font='66px "Caveat", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='66px "Shantell Sans", sans-serif';c.textAlign='center';c.textBaseline='middle';
   c.fillText('🦔',100,H-56);
   const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
   if(Pet.unlocked&&!sleeping){
@@ -563,7 +563,7 @@ function drawPetScene(){
 // 宠物头顶状态：饿了冒饭碗，困了冒 Zzz
 function drawPetStatus(c,x,y,which,t){
   const hungry=petHungry(which),sleepy=petSleepy();
-  c.font='22px "Caveat", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='22px "Shantell Sans", sans-serif';c.textAlign='center';c.textBaseline='middle';
   if(hungry){
     c.fillText('🍚',x+30,y-14+Math.sin(t*5)*3);
   }
@@ -601,14 +601,14 @@ function drawSleeping(c,W,H,t){
     c.beginPath();c.arc(cx+32,cy-28-br,24,0,7);c.fill();
   }
   // Zzz / 打呼
-  c.font='20px "Caveat", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='20px "Shantell Sans", sans-serif';c.textAlign='center';c.textBaseline='middle';
   const z1=(t%3),z2=((t+1.5)%3);
   c.fillStyle='rgba(92,107,192,'+(1-z1/3)+')';
   c.fillText('Z',cx-60-z1*8,cy-70-z1*14);
   c.fillStyle='rgba(92,107,192,'+(1-z2/3)+')';
   c.fillText('Z',cx+60+z2*8,cy-70-z2*14);
   if(Pet.sleepTogether){
-    c.font='18px "Caveat", sans-serif';
+    c.font='18px "Shantell Sans", sans-serif';
     c.fillText('💤 Snore snore…',cx,cy-96+Math.sin(t*3)*3);
   }
   c.textBaseline='alphabetic';
@@ -1259,7 +1259,7 @@ function drawCamera(){
   const ang=Math.atan2(f.ty,f.tx);
   const cx=f.x+f.nx*-(halfWidthAt(L,52,G.time)*0.4),cy=f.y+f.ny*-(halfWidthAt(L,52,G.time)*0.4);
   ctx.save();ctx.translate(cx,cy);
-  ctx.font='30px "Caveat", sans-serif';ctx.textAlign='center';
+  ctx.font='30px "Shantell Sans", sans-serif';ctx.textAlign='center';
   ctx.fillText('📷',0,0);
   ctx.restore();
   ctx.save();ctx.translate(cx,cy-34);ctx.rotate(0);
@@ -1415,7 +1415,7 @@ function drawStars(){
     if(s.got)continue;
     const bob=Math.sin(G.time*4+s.ph)*3;
     ctx.save();ctx.translate(s.x,s.y+bob);
-    ctx.font='26px "Caveat", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='26px "Shantell Sans", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('⭐',0,0);
     ctx.restore();
   }
