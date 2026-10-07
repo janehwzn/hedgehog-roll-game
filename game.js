@@ -553,7 +553,7 @@ function drawPetScene(){
     drawPetStatus(c,wx,wy-70,'wesley',t);
   }
   if(sleeping)drawSleeping(c,W,H,t);
-  c.fillStyle='#4e342e';c.font='15px \"Luckiest Guy\", sans-serif';
+  c.fillStyle='#4e342e';c.font='15px \"Shantell Sans\", sans-serif';
   const nm=[];
   if(Pet.unlocked)nm.push('Birdie'+['(Baby)','(Teen)','(Adult)'][Pet.stage]||'');
   if(Pet.wesley)nm.push('Wesley'+(Pet.wstage>=1?'(Adult)':'(Kitten)'));
@@ -777,7 +777,7 @@ function showEvo(which){
     c.fillStyle=g;c.fillRect(0,0,W,H);
     if(isW)drawEvolvedWesley(c,W/2,H/2+26,0.95,1.2);
     else drawEvolvedBirdie(c,W/2-8,H/2+18,1.05,1.2,{});
-    c.fillStyle='#f9a825';c.font='15px \"Luckiest Guy\", sans-serif';c.textAlign='center';
+    c.fillStyle='#f9a825';c.font='15px \"Shantell Sans\", sans-serif';c.textAlign='center';
     c.fillText('✨ Grown Up! ✨',W/2,22);
   }
   sfxWin();
@@ -1186,6 +1186,16 @@ function update(dt){
 /* ---------- 画画 ---------- */
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 
+/* ---------- 手绘风：墨线勾边 ---------- */
+const INK='#3e2723';
+// 手绘描边：当前路径描两遍，第二遍微偏移+半透明，模拟手抖的线条感
+function ink(w){
+  ctx.strokeStyle=INK;ctx.lineWidth=w||2.5;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.stroke();
+  ctx.save();ctx.globalAlpha*=0.28;ctx.translate(1.3,-1);
+  ctx.stroke();ctx.restore();
+}
+
 function drawTunnel(){
   const L=G.level,pts=L.path.pts;
   // 墙（深色 halo）+ 地面
@@ -1242,7 +1252,7 @@ function drawStartExit(){
   const st=pathFrame(L.path,8);
   ctx.fillStyle='#1c1512';
   ctx.beginPath();ctx.ellipse(st.x,st.y,halfWidthAt(L,8,G.time)*0.85,halfWidthAt(L,8,G.time)*0.7,0,0,7);ctx.fill();
-  ctx.fillStyle='#a1887f';ctx.font='15px \"Luckiest Guy\", sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#a1887f';ctx.font='15px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
   ctx.fillText('Start',st.x,st.y+halfWidthAt(L,8,G.time)+22);
   const en=pathFrame(L.path,L.path.len-8);
   const g=ctx.createRadialGradient(en.x,en.y,4,en.x,en.y,52);
@@ -1250,7 +1260,7 @@ function drawStartExit(){
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(en.x,en.y,52,0,7);ctx.fill();
   ctx.fillStyle='#fffde7';ctx.strokeStyle='#ffb300';ctx.lineWidth=4;
   ctx.beginPath();ctx.arc(en.x,en.y,26,0,7);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#e65100';ctx.font='15px \"Luckiest Guy\", sans-serif';
+  ctx.fillStyle='#e65100';ctx.font='15px \"Shantell Sans\", sans-serif';
   ctx.fillText('Exit',en.x,en.y+5);
 }
 
@@ -1266,7 +1276,7 @@ function drawCamera(){
   ctx.fillStyle='rgba(255,255,255,.94)';
   const tw=86;
   rr(-tw/2,-16,tw,28,13);ctx.fill();
-  ctx.fillStyle='#5d4037';ctx.font='14px \"Luckiest Guy\", sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#5d4037';ctx.font='14px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
   ctx.fillText('This way!',0,3);
   ctx.restore();
 }
@@ -1283,9 +1293,9 @@ function drawSkull(pin){
     ctx.beginPath();ctx.arc(0,0,54,0,7);ctx.fill();
     ctx.translate(Math.sin(G.time*40)*3,0);
   }
-  // 头
-  ctx.fillStyle='#eceff1';ctx.strokeStyle='#616161';ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(0,0,40,0,7);ctx.fill();ctx.stroke();
+  // 头（手绘墨线）
+  ctx.fillStyle='#eceff1';
+  ctx.beginPath();ctx.arc(0,0,40,0,7);ctx.fill();ink(3);
   // 嘴巴通道（隧道从这里穿过）
   ctx.fillStyle='#d9b384';
   rr(-48,-mh,96,mh*2,10);ctx.fill();
@@ -1293,25 +1303,25 @@ function drawSkull(pin){
   ctx.save();
   ctx.beginPath();ctx.arc(0,0,40,0,7);ctx.clip();
   if(pin.spikes){
-    ctx.fillStyle='#90a4ae';ctx.strokeStyle='#546e7a';ctx.lineWidth=1.5;
+    ctx.fillStyle='#90a4ae';
     for(let i=-3;i<=3;i++){
       const sx=i*13;
-      ctx.beginPath();ctx.moveTo(sx-6,-mh);ctx.lineTo(sx+6,-mh);ctx.lineTo(sx,-mh+15);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.beginPath();ctx.moveTo(sx-6,mh);ctx.lineTo(sx+6,mh);ctx.lineTo(sx,mh-15);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx-6,-mh);ctx.lineTo(sx+6,-mh);ctx.lineTo(sx,-mh+15);ctx.closePath();ctx.fill();ink(1.5);
+      ctx.beginPath();ctx.moveTo(sx-6,mh);ctx.lineTo(sx+6,mh);ctx.lineTo(sx,mh-15);ctx.closePath();ctx.fill();ink(1.5);
     }
   }else{
-    ctx.fillStyle='#fafafa';ctx.strokeStyle='#9e9e9e';ctx.lineWidth=1.5;
+    ctx.fillStyle='#fafafa';
     for(let i=-3;i<=3;i++){
-      ctx.fillRect(i*13-5,-mh-13,10,13);ctx.strokeRect(i*13-5,-mh-13,10,13);
-      ctx.fillRect(i*13-5,mh,10,13);ctx.strokeRect(i*13-5,mh,10,13);
+      ctx.beginPath();ctx.rect(i*13-5,-mh-13,10,13);ctx.fill();ink(1.5);
+      ctx.beginPath();ctx.rect(i*13-5,mh,10,13);ctx.fill();ink(1.5);
     }
   }
   ctx.restore();
   if(pin.chomp2){ // Boss 双重夹子：内层小嘴，节奏和外层错开
     const st2=chompState({chomp:pin.chomp2},G.time);
     const mh2=pin.half*0.5+(5-pin.half*0.5)*(1-st2.open);
-    ctx.fillStyle='#78909c';ctx.strokeStyle='#455a64';ctx.lineWidth=2;
-    ctx.beginPath();ctx.arc(0,0,22,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#78909c';
+    ctx.beginPath();ctx.arc(0,0,22,0,7);ctx.fill();ink(2);
     ctx.fillStyle='#d9b384';
     rr(-26,-mh2,52,mh2*2,8);ctx.fill();
     ctx.fillStyle='#eceff1';
@@ -1337,11 +1347,12 @@ function drawBow(b){
   if(tele){
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*14))+')';
     ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='20px \"Luckiest Guy\", sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='20px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
     ctx.fillText('!',0,-30);
   }
-  ctx.strokeStyle='#6d4c41';ctx.lineWidth=6;ctx.lineCap='round';
-  ctx.beginPath();ctx.arc(0,0,20,-1.15,1.15);ctx.stroke();
+  // 弓：手绘墨线
+  ctx.beginPath();ctx.arc(0,0,20,-1.15,1.15);
+  ink(5);
   const sx=Math.cos(-1.15)*20,sy=Math.sin(-1.15)*20;
   const ex=Math.cos(1.15)*20,ey=Math.sin(1.15)*20;
   const pull=tele?-10:2;
@@ -1366,15 +1377,15 @@ function drawSling(b){
   if(tele){
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*14))+')';
     ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='20px \"Luckiest Guy\", sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='20px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
     ctx.fillText('!',0,-30);
   }
-  ctx.strokeStyle='#6d4c41';ctx.lineWidth=7;ctx.lineCap='round';
+  // 弹弓：手绘墨线
   ctx.beginPath();
   ctx.moveTo(-15,0);ctx.lineTo(-1,0);
   ctx.moveTo(-1,0);ctx.lineTo(11,-10);
   ctx.moveTo(-1,0);ctx.lineTo(11,10);
-  ctx.stroke();
+  ink(6);
   ctx.strokeStyle='#d7ccc8';ctx.lineWidth=3;
   ctx.beginPath();ctx.moveTo(11,-10);
   if(tele)ctx.quadraticCurveTo(2,0,11,10);
@@ -1426,7 +1437,7 @@ function drawHedgehog(){
   const h=G.hed;
   ctx.save();ctx.translate(h.x,h.y);
   if(G.invuln>0&&Math.floor(G.time*10)%2===0)ctx.globalAlpha=0.35;
-  // 刺
+  // 刺（手绘勾边）
   ctx.fillStyle='#5d4037';
   for(let i=0;i<9;i++){
     const a=Math.PI*(0.08+i*0.21);
@@ -1437,14 +1448,14 @@ function drawHedgehog(){
     ctx.moveTo(Math.cos(pa)*12,-Math.sin(pa)*12);
     ctx.lineTo(x2,y2);
     ctx.lineTo(Math.cos(pb)*12,-Math.sin(pb)*12);
-    ctx.closePath();ctx.fill();
+    ctx.closePath();ctx.fill();ink(1.8);
   }
-  // 身体
+  // 身体（手绘勾边）
   ctx.fillStyle='#8d6e63';
-  ctx.beginPath();ctx.arc(0,0,16,0,7);ctx.fill();
-  // 脸
+  ctx.beginPath();ctx.arc(0,0,16,0,7);ctx.fill();ink(2.5);
+  // 脸（手绘勾边）
   ctx.fillStyle='#d7b98f';
-  ctx.beginPath();ctx.arc(h.face*8,4,9.5,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(h.face*8,4,9.5,0,7);ctx.fill();ink(2);
   // 眼睛
   ctx.fillStyle='#212121';
   ctx.beginPath();ctx.arc(h.face*10,-1,2.4,0,7);ctx.fill();
@@ -1493,10 +1504,11 @@ function drawKey(){
   ctx.save();ctx.translate(L.key.x,L.key.y+bob);
   ctx.fillStyle='rgba(255,213,79,.3)';
   ctx.beginPath();ctx.arc(0,0,20+Math.sin(G.time*4)*3,0,7);ctx.fill();
-  ctx.fillStyle='#ffd54f';ctx.strokeStyle='#ff8f00';ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(-8,0,8,0,7);ctx.fill();ctx.stroke();
-  ctx.fillRect(-8,-3,22,6);
-  ctx.fillRect(8,-3,5,10);ctx.fillRect(15,-3,5,8);
+  ctx.fillStyle='#ffd54f';
+  ctx.beginPath();ctx.arc(-8,0,8,0,7);ctx.fill();ink(2);
+  ctx.beginPath();ctx.rect(-8,-3,22,6);ctx.fill();ink(1.5);
+  ctx.beginPath();ctx.rect(8,-3,5,10);ctx.fill();ink(1.5);
+  ctx.beginPath();ctx.rect(15,-3,5,8);ctx.fill();ink(1.5);
   ctx.restore();
 }
 function drawDoor(){
@@ -1506,9 +1518,9 @@ function drawDoor(){
   const ang=Math.atan2(f.ty,f.tx);
   const hw=halfWidthAt(L,L.door.s,G.time);
   ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);
-  ctx.fillStyle='#78909c';ctx.strokeStyle='#455a64';ctx.lineWidth=3;
-  rr(-8,-hw,8,hw,4);ctx.fill();ctx.stroke();
-  rr(0,-hw,8,hw,4);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#78909c';
+  rr(-8,-hw,8,hw,4);ctx.fill();ink(2.5);
+  rr(0,-hw,8,hw,4);ctx.fill();ink(2.5);
   ctx.strokeStyle='#546e7a';ctx.lineWidth=1.5;
   for(let y=-hw+10;y<hw-5;y+=18){
     ctx.beginPath();ctx.moveTo(-8,y);ctx.lineTo(8,y);ctx.stroke();
