@@ -13,6 +13,7 @@
     "@capacitor/android": "^8.5.2",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
-    "@capgo/native-purchases": "^8.8.0"
+    "@capgo/native-purchases": "^8.8.0",
+    "@capacitor/ios": "^8.5.2"
   }
 }
