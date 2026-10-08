@@ -1616,6 +1616,98 @@ document.getElementById('restartBtn').addEventListener('click',()=>{
 resize();loadLevel(0);
 requestAnimationFrame(loop);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+/* ---------- In-App Purchases (Capacitor native app only) ---------- */
+const IAP_PRODUCTS = {
+  heart_pack_5: { hearts: 5, label: '💖 5 Hearts' },
+  bird_food_5: { birdFood: 5, label: '🍖 5 Bird Food' },
+  cat_food_5: { catFood: 5, label: '🐟 5 Cat Food' },
+};
+let iapReady = false;
+
+function isNativeApp(){
+  return typeof window!=='undefined' && window.Capacitor &&
+         window.Capacitor.isNativePlatform &&
+         window.Capacitor.isNativePlatform();
+}
+function getNativePurchases(){
+  if(typeof window==='undefined') return null;
+  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases)
+    return window.Capacitor.Plugins.NativePurchases;
+  return null;
+}
+async function initIAP(){
+  if(!isNativeApp()) return;
+  const NP = getNativePurchases();
+  if(!NP) return;
+  try {
+    const { isBillingSupported } = await NP.isBillingSupported();
+    if(!isBillingSupported){
+      document.getElementById('iapStatus').textContent = 'In-app purchases not available on this device.';
+      return;
+    }
+    // 加载商品价格
+    const ids = Object.keys(IAP_PRODUCTS);
+    for(const pid of ids){
+      try {
+        const { product } = await NP.getProduct({ productIdentifier: pid, productType: 'inapp' });
+        const btn = document.getElementById('iap_' + pid.replace(/_5$/, '').replace('heart_pack','heart_pack'));
+        // 更新按钮显示价格
+        const btnId = 'iap_' + (pid==='heart_pack_5' ? 'heart_pack' : pid==='bird_food_5' ? 'bird_food' : 'cat_food');
+        const b = document.getElementById(btnId);
+        if(b && product && product.priceString){
+          const base = IAP_PRODUCTS[pid].label;
+          b.textContent = base + ' — ' + product.priceString;
+        }
+      } catch(e){ console.log('IAP product load failed:', pid, e); }
+    }
+    document.getElementById('iapShop').style.display = 'block';
+    iapReady = true;
+  } catch(e){
+    console.log('IAP init failed:', e);
+  }
+}
+async function buyIAP(pid){
+  const NP = getNativePurchases();
+  if(!NP || !iapReady){
+    banner('Store not ready yet, try again soon!', 2000);
+    return;
+  }
+  const statusEl = document.getElementById('iapStatus');
+  try {
+    statusEl.textContent = 'Processing purchase…';
+    const result = await NP.purchaseProduct({ productIdentifier: pid, productType: 'inapp', quantity: 1 });
+    // 消耗型商品：consume 后才能再次购买
+    try { await NP.consumePurchase({ transactionId: result.transactionId }); } catch(e){}
+    try { await NP.finishTransaction({ transactionId: result.transactionId }); } catch(e){}
+    // 发货
+    const item = IAP_PRODUCTS[pid];
+    if(item.hearts){ setHearts(runHearts + item.hearts); }
+    if(item.birdFood){ Pet.birdFood = (Pet.birdFood||0) + item.birdFood; }
+    if(item.catFood){ Pet.catFood = (Pet.catFood||0) + item.catFood; }
+    petSave(); updatePetUI();
+    statusEl.textContent = 'Purchase successful! Enjoy! 🎉';
+    banner('🎉 Purchase successful!', 2000);
+    sfxStar();
+  } catch(e){
+    console.log('Purchase failed:', e);
+    statusEl.textContent = 'Purchase cancelled or failed.';
+  }
+}
+// 绑定购买按钮
+if(typeof document!=='undefined'){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    initIAP();
+    const bind = (id, pid)=>{
+      const b = document.getElementById(id);
+      if(b) b.addEventListener('click', ()=>buyIAP(pid));
+    };
+    bind('iap_heart_pack', 'heart_pack_5');
+    bind('iap_bird_food', 'bird_food_5');
+    bind('iap_cat_food', 'cat_food_5');
+  });
+}
+
 // Node 测试钩子：浏览器里 module 未定义，无影响
 if(typeof module!=='undefined'&&typeof process!=='undefined'){
   module.exports._t={getG:function(){return G},loadLevel:loadLevel,showIntro:showIntro,update:update,
