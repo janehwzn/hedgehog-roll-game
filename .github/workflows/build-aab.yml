@@ -1,8 +1,17 @@
 name: Build Android AAB (Play Store)
 
-# 打 Play 上架用的 AAB 包（signed），手动触发
+# 打 Play 上架用的 AAB 包（signed）：游戏文件更新时自动打，也可以手动触发
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'index.html'
+      - 'game.js'
+      - 'manifest.json'
+      - 'sw.js'
+      - 'icon-*.png'
+      - 'apk/**'
+      - '.github/workflows/build-aab.yml'
 
 jobs:
   build:
