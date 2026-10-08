@@ -283,11 +283,149 @@ const LEVELS=[
     starN:8 },
 ];
 
+/* ---------------- 程序化关卡 13-100 ----------------
+ * 用 seeded PRNG（mulberry32，种子=关卡号）生成，保证每次玩都一样。
+ * 关卡定义格式与手写关卡完全一致，可直接被 loadLevel 使用。
+ */
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+const GEN_NAMES=['Twisty Turny','Skull Alley','Arrow Storm','The Squeeze','Dark Depths',
+  'Bone Yard','Windy Whirl','Spike Party','Narrow Pass','Shadow Run','Pebble Dash',
+  'The Gauntlet','Silent Hollow','Jagged Way','Moon Cave','Thorny Trail','Echo Cave',
+  'The Spiral','Crystal Grotto','Misty Maze','Rocky Road','Deep Dark','Swift Stream',
+  'Curvy Cave','Wild Ride','Bumpy Road','Sneaky Path','Happy Hollow','Dizzy Drop',
+  'Starlight Den'];
+const GEN_SUBS=['Deeper into the caves!','Trickier than ever!','Stay sharp!',
+  'The adventure continues!','Can you roll through?','Watch your step!',
+  'Almost a maze master!','Keep rolling!','The caves go on and on!'];
+function genHint(n,hasPinch,hasBow,hasSling,isBoss,isDark,isTime,isKey){
+  const tips=[];
+  if(isBoss)tips.push('the Skull King is BACK — double jaws and mini skeletons');
+  if(isDark)tips.push('pitch dark — catch fireflies to see');
+  if(isTime)tips.push('beat the clock');
+  if(isKey)tips.push('find the key, then open the stone door');
+  if(hasPinch)tips.push('skull clamps snap shut');
+  if(hasBow)tips.push('bows fire fast');
+  if(hasSling)tips.push('slingshots spray pebbles');
+  if(!tips.length)tips.push('a twisty maze — follow the blue arrows');
+  return '\U0001F52D Camera says: '+tips.join(' · ')+'! You got this!';
+}
+function genLevel(n){
+  const rnd=mulberry32((n*2654435761)>>>0);
+  const R=(a,b)=>a+rnd()*(b-a);
+  const RI=(a,b)=>a+Math.floor(rnd()*(b-a+1));
+  const pick=arr=>arr[Math.floor(rnd()*arr.length)%arr.length];
+  // 蛇形路径：起点 [80,690]，竖直/水平交替，每段 120-220px
+  const wp=[[80,690]];
+  let x=80,y=690,dir=1;
+  const segs=RI(6,11);
+  for(let i=0;i<segs;i++){
+    if(i%2===0){ // 竖直向上
+      const ny=Math.max(110,y-R(120,200));
+      if(y-ny<80)break;
+      y=ny;
+    }else{ // 水平蛇形
+      let nx=x+dir*R(120,220);
+      nx=Math.max(60,Math.min(340,nx));
+      if(Math.abs(nx-x)<80)nx=Math.max(60,Math.min(340,x-dir*R(120,220)));
+      if(Math.abs(nx-x)<80)break;
+      x=Math.round(nx);dir=-dir;
+    }
+    wp.push([Math.round(x),Math.round(y)]);
+    if(y<=110&&i>=5)break;
+  }
+  const half=Math.round(Math.max(38,58-(n-13)*0.22));
+  const isBoss=n%10===0,isDark=n%7===0,isTime=n%9===0,isKey=n%11===0;
+  const pinches=[];
+  if(isBoss){ // Boss 关：大骷髅王
+    pinches.push({frac:0.55,half:26,len:130,skull:true,spikes:true,shutHalf:10,boss:true,
+      spit:{period:4.5},
+      chomp:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)},
+      chomp2:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)}});
+  }else{
+    const cnt=Math.min(5,Math.floor((n-10)/8));
+    const used=[];
+    for(let i=0;i<cnt;i++){
+      let f=0.5,ok=false;
+      for(let t=0;t<30&&!ok;t++){f=R(0.15,0.85);ok=used.every(u=>Math.abs(u-f)>=0.12);}
+      used.push(f);
+      const p={frac:+f.toFixed(3),half:26,len:60,skull:true,spikes:rnd()<0.6,shutHalf:16};
+      if(rnd()<0.55){
+        const open=+R(1.4,2.4).toFixed(2);
+        p.chomp={period:+(open+R(1.2,2.2)).toFixed(2),open:open,warn:0.5,phase:+R(0,3).toFixed(2)};
+      }
+      pinches.push(p);
+    }
+  }
+  const prog=Math.min(1,Math.max(0,(n-13)/87)); // 0→1 难度进度
+  const bows=[];
+  {
+    const cnt=Math.min(6,Math.floor((n-8)/6));
+    const used=[];
+    for(let i=0;i<cnt;i++){
+      let f=0.5,ok=false;
+      for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
+      used.push(f);
+      bows.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,
+        period:+Math.max(1.6,2.8-prog*1.0+R(-0.2,0.4)).toFixed(2),
+        speed:Math.round(300+prog*120+R(-20,20))});
+    }
+  }
+  const slings=[];
+  {
+    const cnt=Math.min(4,Math.floor((n-12)/9));
+    const used=[];
+    for(let i=0;i<cnt;i++){
+      let f=0.5,ok=false;
+      for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
+      used.push(f);
+      slings.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,
+        period:+R(3.2,4.2).toFixed(2),speed:Math.round(R(220,280))});
+    }
+  }
+  const lv={name:'Level '+n+' \u00B7 '+pick(GEN_NAMES),
+    sub:pick(GEN_SUBS),
+    hint:genHint(n,pinches.length>0,bows.length>0,slings.length>0,isBoss,isDark,isTime,isKey),
+    waypoints:wp,half:half,pinches:pinches,bows:bows,slings:slings,
+    starN:6+(n%4)};
+  if(isDark){lv.dark=true;lv.fireflyN=RI(6,10);}
+  if(isTime){lv.timeLimit=60+(n%3)*10;}
+  if(isKey){lv.alcove={frac:0.42,r:75};lv.key={frac:0.42,off:38};lv.door={frac:0.93};}
+  return lv;
+}
+function validLevel(lv){
+  const wp=lv.waypoints;
+  if(!wp||wp.length<3)return false;
+  for(const p of wp){if(p[0]<40||p[0]>380||p[1]<80||p[1]>720)return false;}
+  for(let i=1;i<wp.length;i++){
+    if(Math.hypot(wp[i][0]-wp[i-1][0],wp[i][1]-wp[i-1][1])<79)return false;
+  }
+  return true;
+}
+function safeLevel(n){ // 校验失败时的兜底关卡
+  return {name:'Level '+n+' \u00B7 Safe Path',sub:'A calm maze',
+    hint:'\U0001F52D Camera says: follow the blue arrows, nice and easy!',
+    waypoints:[[80,690],[80,500],[260,500],[260,320],[120,320],[120,150]],
+    half:50,pinches:[],bows:[],slings:[],starN:6};
+}
+for(let _n=13;_n<=100;_n++){
+  const _lv=genLevel(_n);
+  if(validLevel(_lv))LEVELS.push(_lv);
+  else{console.warn('[genLevel] invalid level '+_n+', using fallback');LEVELS.push(safeLevel(_n));}
+}
+
 if(typeof module!=='undefined'){
   module.exports={buildPath:buildPath,pathFrame:pathFrame,
     nearestOnPath:nearestOnPath,halfWidthAt:halfWidthAt,chompState:chompState,
     pinchS:pinchS,clampToTunnel:clampToTunnel,stepProjectile:stepProjectile,
-    circleHit:circleHit,LEVELS:LEVELS};
+    circleHit:circleHit,LEVELS:LEVELS,
+    mulberry32:mulberry32,genLevel:genLevel,validLevel:validLevel,safeLevel:safeLevel};
 }
 
 /* =====================================================================
@@ -333,6 +471,7 @@ document.addEventListener('pointerdown',()=>{const a=ac();if(a&&a.resume)a.resum
 const PET_KEY='birdie-pet-v1';
 let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,
   wesley:false,catfood:0,catfed:0,wstage:0,
+  sunStage:0,sunWater:0,shield:1,bomb:1,maxLv:0,
   fireflies:0,lastBreakfast:'',
   lastFedB:0,lastFedW:0,levelsSinceSleep:0,
   doubleFeed:false,
@@ -522,6 +661,7 @@ function drawPetScene(){
   const W=cv.width||360,H=cv.height||230;
   const t=(Date.now()-petT0)/1000;
   const happy=Math.max(0,(petHappyUntil-Date.now())/900);
+  const happyW=Math.max(0,(petHappyWUntil-Date.now())/900);
   const g=c.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#b3e5fc');g.addColorStop(0.72,'#e8f5e9');g.addColorStop(1,'#c8e6c9');
   c.fillStyle=g;c.fillRect(0,0,W,H);
@@ -553,6 +693,7 @@ function drawPetScene(){
     drawPetStatus(c,wx,wy-70,'wesley',t);
   }
   if(sleeping)drawSleeping(c,W,H,t);
+  drawSunflower(c,36,H-100,1.0,t); // 向日葵（植物不睡觉）
   c.fillStyle='#4e342e';c.font='15px \"Shantell Sans\", sans-serif';
   const nm=[];
   if(Pet.unlocked)nm.push('Birdie'+['(Baby)','(Teen)','(Adult)'][Pet.stage]||'');
@@ -676,6 +817,8 @@ function updatePetUI(){
     hrEl.textContent=parts.join(' ｜ ')+' — pets make ❤️ while you play!';
   }
   updateShopUI();
+  updateSunUI();
+  updateToolUI();
 }
 function checkBreakfast(){
   if(Pet.stage<2||!Pet.unlocked)return null; // 大鸟才行
@@ -785,7 +928,7 @@ function showEvo(which){
 
 /* ---------- 状态 ---------- */
 const MAX_HEARTS=5;
-let G=null,totalStars=0,runHearts=3; // runHearts：整局 12 关基础 3 颗心，宠物产心可补到 5 颗上限
+let G=null,totalStars=0,runHearts=3; // runHearts：整局 100 关基础 3 颗心，宠物/向日葵产心可补到 5 颗上限
 function setHearts(n){runHearts=Math.max(0,Math.min(MAX_HEARTS,n));if(G)G.hearts=runHearts;}
 const HEDGE_R=16;
 
@@ -796,7 +939,7 @@ function loadLevel(idx){
     def:def,path:path,half:def.half,
     pinches:(def.pinches||[]).map(p=>({s:p.frac*path.len,baseS:p.frac*path.len,slide:p.slide,
       half:p.half,len:p.len,skull:!!p.skull,
-      spikes:!!p.spikes,shutHalf:p.shutHalf,chomp:p.chomp,chomp2:p.chomp2,boss:!!p.boss})),
+      spikes:!!p.spikes,shutHalf:p.shutHalf,chomp:p.chomp,chomp2:p.chomp2,boss:!!p.boss,spit:p.spit})),
     bows:(def.bows||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:1.1+i*0.8})),
     slings:(def.slings||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:2.0+i*1.1})),
     stars:[],
@@ -826,7 +969,8 @@ function loadLevel(idx){
   const st=pathFrame(path,14);
   G={idx:idx,level:level,phase:'intro',time:0,hearts:runHearts,starGot:0,
      hasKey:false,lightGot:0,timeLeft:def.timeLimit||0,
-     heartProgB:0,heartProgW:0,
+     heartProgB:0,heartProgW:0,heartProgS:0,
+     shieldT:0,bombAim:false,combo:0,comboT:-99,floats:[],booms:[],
      hed:{x:st.x,y:st.y,tx:st.x,ty:st.y,r:HEDGE_R,face:1},
      projs:[],invuln:0,sMax:0};
   showIntro(idx,false);
@@ -849,6 +993,10 @@ function showIntro(idx,passed){
 function gameOver(){
   sfxHit();
   document.getElementById('overStars').textContent='⭐ '+Pet.stars;
+  let close='';
+  if(G&&G.level&&G.level.path.len>0&&G.sMax/G.level.path.len>0.8)
+    close='SO CLOSE! One more try? \U0001F4AA You almost had it!';
+  document.getElementById('overClose').textContent=close;
   document.getElementById('reviveBtn').style.display=Pet.stars>=20?'':'none';
   document.getElementById('overOv').style.display='flex';
 }
@@ -856,7 +1004,7 @@ function gameOver(){
 function showWin(){
   document.getElementById('winStats').innerHTML=
     '⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/'+MAX_HEARTS+'<br>'+
-    'You beat the Skull King — a true Roll Master! 👑';
+    'You cleared all 100 mazes — a true Roll Master! 👑';
   document.getElementById('winOv').style.display='flex';
 }
 /* ---------- 哄睡 ---------- */
@@ -976,12 +1124,15 @@ cv.addEventListener('pointerdown',e=>{
   e.preventDefault();pActive=true;
   try{cv.setPointerCapture(e.pointerId);}catch(err){}
   const p=toLogical(e);
-  if(G&&G.phase==='play'){G.hed.tx=p.x;G.hed.ty=p.y;}
+  if(G&&G.phase==='play'){
+    if(G.bombAim){bombTap(p.x,p.y);pActive=false;return;} // 炸弹瞄准模式：点危险物
+    G.hed.tx=p.x;G.hed.ty=p.y;
+  }
 });
 cv.addEventListener('pointermove',e=>{
   if(!pActive)return;
   const p=toLogical(e);
-  if(G&&G.phase==='play'){G.hed.tx=p.x;G.hed.ty=p.y;}
+  if(G&&G.phase==='play'&&!G.bombAim){G.hed.tx=p.x;G.hed.ty=p.y;}
 });
 const pEnd=()=>{pActive=false;};
 cv.addEventListener('pointerup',pEnd);
@@ -1031,6 +1182,11 @@ function update(dt){
   G.time+=dt;
   const L=G.level,h=G.hed;
   G.invuln=Math.max(0,G.invuln-dt);
+  G.shieldT=Math.max(0,(G.shieldT||0)-dt);
+  for(const f of G.floats)f.t+=dt;
+  G.floats=G.floats.filter(f=>f.t<1.2);
+  for(const b of G.booms)b.t+=dt;
+  G.booms=G.booms.filter(b=>b.t<0.6);
   // 宠物产心：玩游戏时按速度攒，满了就补 1 颗（上限 5）
   const ivB=heartInterval('birdie'),ivW=heartInterval('wesley');
   if(ivB>0&&runHearts<MAX_HEARTS){
@@ -1040,6 +1196,11 @@ function update(dt){
   if(ivW>0&&runHearts<MAX_HEARTS){
     G.heartProgW+=dt;
     if(G.heartProgW>=ivW){G.heartProgW=0;setHearts(runHearts+1);banner('💖 Wesley made a ❤️!',1800);sfxStar();}
+  }
+  // 向日葵产心：开花后每 8 分钟产 1 颗（玩游戏时）
+  if((Pet.sunStage||0)>=3&&runHearts<MAX_HEARTS){
+    G.heartProgS+=dt;
+    if(G.heartProgS>=480){G.heartProgS=0;setHearts(runHearts+1);banner('🌻 Sunflower made a ❤️!',1800);sfxStar();}
   }
   // 限时关：倒计时
   if(G.timeLeft>0){
@@ -1131,11 +1292,19 @@ function update(dt){
     const n=nearestOnPath(L.path,p.x,p.y);
     const hw=halfWidthAt(L,n.s,G.time);
     if(n.dist>hw+30)continue; // 打到对面墙上
-    if(G.invuln<=0&&circleHit(p.x,p.y,p.kind==='arrow'?6:7,h.x,h.y,h.r)){
+    const pr=p.kind==='arrow'?6:7;
+    const pd=Math.hypot(p.x-h.x,p.y-h.y);
+    if(G.invuln<=0&&pd<pr+h.r){
       setHearts(runHearts-1);G.invuln=1.6;sfxHit();
       if(runHearts<=0){gameOver();G.phase='over';return;}
       banner('Ouch! Hit! Hearts left: '+'❤'.repeat(runHearts),1800);
       continue;
+    }
+    if(pd<pr+h.r+30){ // 擦弹奖励：近而不中 +2⭐（每颗飞行物 1 秒冷却）
+      if(!p._nm||G.time-p._nm>1){
+        p._nm=G.time;Pet.stars+=2;totalStars+=2;petSave();
+        addFloat('Close! +2⭐',h.x,h.y-30,'#ffd54f');sfxStar();
+      }
     }
     keep.push(p);
   }
@@ -1147,23 +1316,35 @@ function update(dt){
     const cst=chompState(pin,G.time);
     const cst2=pin.chomp2?chompState({chomp:pin.chomp2},G.time):null;
     const shut=(cst.open===0||(cst2&&cst2.open===0));
-    if(shut&&Math.abs(c.s-ps)<pin.len*0.85&&G.invuln<=0){
+    const pds=Math.abs(c.s-ps);
+    if(shut&&pds<pin.len*0.85&&G.invuln<=0){
       setHearts(runHearts-1);G.invuln=1.6;sfxHit();
       if(runHearts<=0){gameOver();G.phase='over';return;}
       banner('Ow! Caught by the clamp! Hearts left: '+'❤'.repeat(runHearts),1800);
       break;
     }
+    if(shut&&pds<pin.len&&G.invuln<=0){ // 擦身而过 +2⭐（每个夹子 1 秒冷却）
+      if(!pin._nm||G.time-pin._nm>1){
+        pin._nm=G.time;Pet.stars+=2;totalStars+=2;petSave();
+        addFloat('Close! +2⭐',h.x,h.y-30,'#ffd54f');sfxStar();
+      }
+    }
   }
-  // 星星
+  // 星星（连击：2.5 秒内连吃星星，x2/x3… 星星价值翻倍）
   for(const s of L.stars){
     if(!s.got&&circleHit(s.x,s.y,10,h.x,h.y,h.r+4)){
-      s.got=true;G.starGot++;totalStars++;Pet.stars++;petSave();sfxStar();
+      s.got=true;G.starGot++;
+      if(G.time-G.comboT<2.5)G.combo=Math.min(9,G.combo+1);else G.combo=1;
+      G.comboT=G.time;
+      totalStars+=G.combo;Pet.stars+=G.combo;petSave();sfxStar();
+      if(G.combo>=2)addFloat('COMBO x'+G.combo+'!',s.x,s.y-26,'#ffca28');
     }
   }
   // 到出口？
   if(G.sMax>=L.path.len-30){
     G.phase='done';sfxWin();
-    Pet.levelsSinceSleep=(Pet.levelsSinceSleep||0)+1;petSave(); // 玩一关，困意+1
+    Pet.levelsSinceSleep=(Pet.levelsSinceSleep||0)+1;
+    Pet.maxLv=Math.max(Pet.maxLv||0,Math.min(99,G.idx+1));petSave(); // 解锁下一关（选关用）
     if(G.idx===4){
       const first=!Pet.unlocked;      // 第 5 关：小鸟泥
       Pet.unlocked=true;petSave();
@@ -1425,7 +1606,7 @@ function drawStars(){
 function drawHedgehog(){
   const h=G.hed;
   ctx.save();ctx.translate(h.x,h.y);
-  if(G.invuln>0&&Math.floor(G.time*10)%2===0)ctx.globalAlpha=0.35;
+  if(G.invuln>0&&G.shieldT<=0&&Math.floor(G.time*10)%2===0)ctx.globalAlpha=0.35;
   // 刺（手绘勾边）
   ctx.fillStyle='#5d4037';
   for(let i=0;i<9;i++){
@@ -1455,6 +1636,14 @@ function drawHedgehog(){
   ctx.fillStyle='rgba(239,154,154,.7)';
   ctx.beginPath();ctx.arc(h.face*6,8,2.6,0,7);ctx.fill();
   ctx.restore();
+  if(G.shieldT>0){ // 护盾气泡
+    ctx.save();ctx.translate(h.x,h.y);
+    ctx.fillStyle='rgba(66,165,245,.10)';
+    ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(66,165,245,.9)';ctx.lineWidth=3.5;
+    ctx.beginPath();ctx.arc(0,0,27+Math.sin(G.time*8)*2,0,7);ctx.stroke();
+    ctx.restore();
+  }
 }
 
 function drawMinions(){
@@ -1553,6 +1742,15 @@ function draw(){
   drawProjs();
   drawMinions();
   drawHedgehog();
+  drawBooms();
+  drawFloats();
+  if(G.bombAim){
+    ctx.save();ctx.textAlign='center';
+    ctx.font='700 22px "Shantell Sans", sans-serif';
+    ctx.fillStyle='#fff';
+    ctx.fillText('\U0001F4A3 Tap a skull, bow or slingshot!',LW/2,64+Math.sin(G.time*6)*4);
+    ctx.restore();
+  }
   if(L.def.dark)drawDark();
   drawFireflies(); // 萤火虫在黑暗上层发光
   ctx.restore();
@@ -1570,6 +1768,15 @@ function hud(){
     lv+=' <span'+urg+'>⏱️'+s+'</span>';
   }
   document.getElementById('hLevel').innerHTML=lv;
+  const tb=document.getElementById('toolBar');
+  if(tb){
+    tb.style.display=G.phase==='play'?'flex':'none';
+    document.getElementById('shieldN').textContent=Pet.shield||0;
+    document.getElementById('bombN').textContent=Pet.bomb||0;
+    const shB=document.getElementById('shieldBtn'),boB=document.getElementById('bombBtn');
+    if(shB)shB.disabled=!((Pet.shield||0)>0&&(G.shieldT||0)<=0);
+    if(boB){boB.disabled=!((Pet.bomb||0)>0);boB.classList.toggle('aim',!!G.bombAim);}
+  }
 }
 
 /* ---------- 主循环 ---------- */
@@ -1613,15 +1820,209 @@ document.getElementById('restartBtn').addEventListener('click',()=>{
   document.getElementById('overOv').style.display='none';
   totalStars=0;setHearts(3);loadLevel(0);
 });
+document.getElementById('waterBtn').addEventListener('click',waterSunflower);
+document.getElementById('buyShieldBtn').addEventListener('click',buyShield);
+document.getElementById('buyBombBtn').addEventListener('click',buyBomb);
+document.getElementById('shieldBtn').addEventListener('click',useShield);
+document.getElementById('bombBtn').addEventListener('click',useBomb);
+document.getElementById('lvSelBtn').addEventListener('click',showLvSel);
+document.getElementById('lvCloseBtn').addEventListener('click',()=>{document.getElementById('lvSelOv').style.display='none';});
 resize();loadLevel(0);
 requestAnimationFrame(loop);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 
+/* ---------- 向日葵 / 工具 / 选关 ---------- */
+function addFloat(txt,x,y,color){
+  if(!G)return;
+  G.floats.push({txt:txt,x:x,y:y,t:0,color:color||'#fff'});
+}
+function drawFloats(){
+  if(!G||!G.floats.length)return;
+  ctx.save();ctx.textAlign='center';ctx.font='700 20px "Shantell Sans", sans-serif';
+  for(const f of G.floats){
+    ctx.globalAlpha=Math.max(0,1-f.t/1.2);
+    ctx.fillStyle=f.color||'#fff';
+    ctx.fillText(f.txt,f.x,f.y-f.t*40);
+  }
+  ctx.restore();ctx.globalAlpha=1;
+}
+function drawBooms(){
+  if(!G||!G.booms.length)return;
+  for(const b of G.booms){
+    const r=10+b.t*90;
+    ctx.save();ctx.globalAlpha=Math.max(0,1-b.t/0.6);
+    ctx.fillStyle='#ff9800';ctx.beginPath();ctx.arc(b.x,b.y,r,0,7);ctx.fill();
+    ctx.fillStyle='#ffeb3b';ctx.beginPath();ctx.arc(b.x,b.y,r*0.6,0,7);ctx.fill();
+    ctx.restore();
+  }
+  ctx.globalAlpha=1;
+}
+// 向日葵：seed → sprout → bud → blooming（开花后玩游戏时每 8 分钟产 1 颗心）
+function drawSunflower(c,x,y,s,t){
+  const st=Pet.sunStage||0;
+  c.save();c.translate(x,y);c.scale(s,s);
+  c.fillStyle='#8d6e63';
+  c.beginPath();c.ellipse(0,26,30,10,0,0,7);c.fill();
+  c.fillStyle='#6d4c41';
+  c.beginPath();c.ellipse(0,22,22,7,0,0,7);c.fill();
+  if(st===0){
+    c.fillStyle='#5d4037';
+    c.beginPath();c.ellipse(0,14,7,9,0.3,0,7);c.fill();
+    c.fillStyle='#8d6e63';
+    c.beginPath();c.ellipse(-2,11,2.5,4,0.3,0,7);c.fill();
+  }else{
+    const sway=Math.sin(t*2)*3;
+    const hgt=st===1?34:(st===2?52:66);
+    c.strokeStyle='#43a047';c.lineWidth=5;c.lineCap='round';
+    c.beginPath();c.moveTo(0,22);c.quadraticCurveTo(sway,22-hgt/2,sway*1.5,22-hgt);c.stroke();
+    c.fillStyle='#66bb6a';
+    for(const sd of [-1,1]){
+      c.save();c.translate(sd*4,22-hgt*0.45);c.rotate(sd*0.7);
+      c.beginPath();c.ellipse(sd*10,0,12,6,0,0,7);c.fill();
+      c.restore();
+    }
+    const fx=sway*1.5,fy=22-hgt;
+    if(st===2){
+      c.fillStyle='#2e7d32';
+      c.beginPath();c.arc(fx,fy-6,9,0,7);c.fill();
+      c.fillStyle='#66bb6a';
+      c.beginPath();c.ellipse(fx,fy+2,11,5,0,0,7);c.fill();
+    }else if(st>=3){
+      for(let i=0;i<12;i++){
+        const a=i*Math.PI/6+Math.sin(t*1.5)*0.05;
+        c.fillStyle='#ffca28';
+        c.beginPath();c.ellipse(fx+Math.cos(a)*16,fy-8+Math.sin(a)*16,9,5.5,a,0,7);c.fill();
+      }
+      c.fillStyle='#8d6e63';
+      c.beginPath();c.arc(fx,fy-8,11,0,7);c.fill();
+      c.fillStyle='#5d4037';
+      for(let i=0;i<7;i++){
+        const a=i*2.4;
+        c.beginPath();c.arc(fx+Math.cos(a)*5,fy-8+Math.sin(a)*5,1.6,0,7);c.fill();
+      }
+      c.fillStyle='#3e2723';
+      c.beginPath();c.arc(fx-4,fy-10,1.8,0,7);c.fill();
+      c.beginPath();c.arc(fx+4,fy-10,1.8,0,7);c.fill();
+      c.strokeStyle='#3e2723';c.lineWidth=1.6;
+      c.beginPath();c.arc(fx,fy-7,4,0.3,Math.PI-0.3);c.stroke();
+    }
+  }
+  c.restore();
+}
+function waterSunflower(){
+  const st=Pet.sunStage||0;
+  if(st>=3){banner('🌻 Already blooming beautifully!',1600);return;}
+  if((Pet.sunWater||0)>0)Pet.sunWater--;
+  else if(Pet.stars>=5)Pet.stars-=5;
+  else{banner('Need 5⭐ or buy 💧 water in the Premium Shop!',1800);return;}
+  Pet.sunStage=st+1;petSave();updatePetUI();sfxFeed();
+  banner('💧 Glug glug… '+['','now a sprout! 🌱','now a bud! 🌿','BLOOMING! 🌻'][Pet.sunStage],1800);
+}
+function updateSunUI(){
+  const st=Pet.sunStage||0;
+  const names=['🌰 Seed','🌱 Sprout','🌿 Bud','🌻 Blooming!'];
+  const el=document.getElementById('sunTxt');
+  if(el)el.textContent=names[st]+' ｜ 💧 Water x'+(Pet.sunWater||0)+
+    (st>=3?' ｜ makes ❤️ every 8 min while you play!':' ｜ water to grow (5⭐ or 1 💧)');
+  const wb=document.getElementById('waterBtn');
+  if(wb)wb.disabled=!(st<3&&((Pet.sunWater||0)>0||Pet.stars>=5));
+}
+// 工具：护盾（2 秒无敌）/ 炸弹（炸掉一个危险物）
+function buyShield(){
+  if(Pet.stars<30){banner('Need 30⭐ for a shield!',1500);return;}
+  Pet.stars-=30;Pet.shield=(Pet.shield||0)+1;petSave();updatePetUI();sfxStar();
+  banner('🛡️ Got a shield! Tap 🛡️ in game for 2s protection.',1800);
+}
+function buyBomb(){
+  if(Pet.stars<25){banner('Need 25⭐ for a bomb!',1500);return;}
+  Pet.stars-=25;Pet.bomb=(Pet.bomb||0)+1;petSave();updatePetUI();sfxStar();
+  banner('💣 Got a bomb! Tap 💣 in game, then tap a hazard!',1800);
+}
+function updateToolUI(){
+  const sb=document.getElementById('buyShieldBtn'),bb=document.getElementById('buyBombBtn');
+  if(sb){sb.innerHTML='🛡️ Shield<br><span style="font-size:13px;">30 ⭐</span>';sb.disabled=!(Pet.stars>=30);sb.onclick=buyShield;}
+  if(bb){bb.innerHTML='💣 Bomb<br><span style="font-size:13px;">25 ⭐</span>';bb.disabled=!(Pet.stars>=25);bb.onclick=buyBomb;}
+  const ti=document.getElementById('toolInv');
+  if(ti)ti.textContent='Inventory: 🛡️ x'+(Pet.shield||0)+' ｜ 💣 x'+(Pet.bomb||0);
+}
+function useShield(){
+  if(!G||G.phase!=='play')return;
+  if((G.shieldT||0)>0)return;
+  if(!((Pet.shield||0)>0)){banner('No shields! Get some in the Pet Home 🐾',1600);return;}
+  Pet.shield--;petSave();
+  G.shieldT=2;G.invuln=2;
+  banner('🛡️ Shield up! 2 seconds of protection!',1500);sfxStar();
+}
+function useBomb(){
+  if(!G||G.phase!=='play')return;
+  if(G.bombAim){G.bombAim=false;banner('💣 Aim cancelled',1200);return;}
+  if(!((Pet.bomb||0)>0)){banner('No bombs! Get some in the Pet Home 🐾',1600);return;}
+  G.bombAim=true;
+  banner('💣 Tap a skull, bow or slingshot to blow it up!',2200);
+}
+function bombTap(x,y){
+  const L=G.level;
+  let best=null,bestKind='',bx=0,by=0,bestD=48;
+  for(const pin of L.pinches){
+    const f=pathFrame(L.path,pinchS(pin,G.time));
+    const d=Math.hypot(x-f.x,y-f.y);
+    if(d<bestD){bestD=d;best=pin;bestKind='pinch';bx=f.x;by=f.y;}
+  }
+  const shooters=[['bow',L.bows],['sling',L.slings]];
+  for(const pair of shooters){
+    const kind=pair[0],arr=pair[1];
+    for(const b of arr){
+      const f=pathFrame(L.path,b.s);
+      const hw=halfWidthAt(L,b.s,G.time);
+      const sx=f.x+f.nx*b.side*(hw+4),sy=f.y+f.ny*b.side*(hw+4);
+      const d=Math.hypot(x-sx,y-sy);
+      if(d<bestD){bestD=d;best=b;bestKind=kind;bx=sx;by=sy;}
+    }
+  }
+  if(!best){banner('💣 No target there — tap a skull, bow or slingshot!',1600);return;}
+  Pet.bomb--;petSave();
+  G.bombAim=false;
+  if(bestKind==='pinch')L.pinches.splice(L.pinches.indexOf(best),1);
+  else if(bestKind==='bow')L.bows.splice(L.bows.indexOf(best),1);
+  else L.slings.splice(L.slings.indexOf(best),1);
+  G.booms.push({x:bx,y:by,t:0});
+  tone(90,0.4,'sawtooth',0.18);tone(60,0.5,'square',0.12,0.05);
+  banner('💥 Boom! Hazard destroyed!',1500);
+  sfxStar();
+}
+// 选关：100 格，通一关解锁下一关
+function buildLvGrid(){
+  const grid=document.getElementById('lvGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const maxU=Math.min(99,Pet.maxLv||0);
+  for(let i=0;i<100;i++){
+    const b=document.createElement('button');
+    b.textContent=String(i+1);
+    b.className='lvbtn'+(i<=maxU?'':' locked');
+    if(i<=maxU){
+      (function(idx){
+        b.addEventListener('click',function(){
+          document.getElementById('lvSelOv').style.display='none';
+          loadLevel(idx);
+        });
+      })(i);
+    }else b.disabled=true;
+    grid.appendChild(b);
+  }
+}
+function showLvSel(){buildLvGrid();document.getElementById('lvSelOv').style.display='flex';}
+
 /* ---------- In-App Purchases (Capacitor native app only) ---------- */
+const IAP_BTNS={heart_pack_5:'iap_heart_pack',bird_food_5:'iap_bird_food',cat_food_5:'iap_cat_food',
+  water_pack_5:'iap_water_pack',shield_pack_3:'iap_shield_pack',bomb_pack_3:'iap_bomb_pack'};
 const IAP_PRODUCTS = {
   heart_pack_5: { hearts: 5, label: '💖 5 Hearts' },
   bird_food_5: { birdFood: 5, label: '🍖 5 Bird Food' },
   cat_food_5: { catFood: 5, label: '🐟 5 Cat Food' },
+  water_pack_5: { water: 5, label: '💧 5 Water' },
+  shield_pack_3: { shield: 3, label: '🛡️ 3 Shields' },
+  bomb_pack_3: { bomb: 3, label: '💣 3 Bombs' },
 };
 let iapReady = false;
 
@@ -1646,18 +2047,14 @@ async function initIAP(){
       document.getElementById('iapStatus').textContent = 'In-app purchases not available on this device.';
       return;
     }
-    // 加载商品价格
+    // 加载商品价格（显示商店实际价格）
     const ids = Object.keys(IAP_PRODUCTS);
     for(const pid of ids){
       try {
         const { product } = await NP.getProduct({ productIdentifier: pid, productType: 'inapp' });
-        const btn = document.getElementById('iap_' + pid.replace(/_5$/, '').replace('heart_pack','heart_pack'));
-        // 更新按钮显示价格
-        const btnId = 'iap_' + (pid==='heart_pack_5' ? 'heart_pack' : pid==='bird_food_5' ? 'bird_food' : 'cat_food');
-        const b = document.getElementById(btnId);
+        const b = document.getElementById(IAP_BTNS[pid]);
         if(b && product && product.priceString){
-          const base = IAP_PRODUCTS[pid].label;
-          b.textContent = base + ' — ' + product.priceString;
+          b.textContent = IAP_PRODUCTS[pid].label + ' — ' + product.priceString;
         }
       } catch(e){ console.log('IAP product load failed:', pid, e); }
     }
@@ -1683,8 +2080,11 @@ async function buyIAP(pid){
     // 发货
     const item = IAP_PRODUCTS[pid];
     if(item.hearts){ setHearts(runHearts + item.hearts); }
-    if(item.birdFood){ Pet.birdFood = (Pet.birdFood||0) + item.birdFood; }
-    if(item.catFood){ Pet.catFood = (Pet.catFood||0) + item.catFood; }
+    if(item.birdFood){ Pet.food = (Pet.food||0) + item.birdFood; }
+    if(item.catFood){ Pet.catfood = (Pet.catfood||0) + item.catFood; }
+    if(item.water){ Pet.sunWater = (Pet.sunWater||0) + item.water; }
+    if(item.shield){ Pet.shield = (Pet.shield||0) + item.shield; }
+    if(item.bomb){ Pet.bomb = (Pet.bomb||0) + item.bomb; }
     petSave(); updatePetUI();
     statusEl.textContent = 'Purchase successful! Enjoy! 🎉';
     banner('🎉 Purchase successful!', 2000);
@@ -1705,6 +2105,9 @@ if(typeof document!=='undefined'){
     bind('iap_heart_pack', 'heart_pack_5');
     bind('iap_bird_food', 'bird_food_5');
     bind('iap_cat_food', 'cat_food_5');
+    bind('iap_water_pack', 'water_pack_5');
+    bind('iap_shield_pack', 'shield_pack_3');
+    bind('iap_bomb_pack', 'bomb_pack_3');
   });
 }
 
@@ -1713,6 +2116,8 @@ if(typeof module!=='undefined'&&typeof process!=='undefined'){
   module.exports._t={getG:function(){return G},loadLevel:loadLevel,showIntro:showIntro,update:update,
     clickStart:function(){document.getElementById('startBtn').click();},
     getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,doExchangeCat:doExchangeCat,doFeedCat:doFeedCat,updatePetUI:updatePetUI,
-    setHearts:setHearts,gameOver:gameOver};
+    setHearts:setHearts,gameOver:gameOver,
+    waterSunflower:waterSunflower,buyShield:buyShield,buyBomb:buyBomb,useShield:useShield,useBomb:useBomb,
+    buildLvGrid:buildLvGrid,showLvSel:showLvSel,addFloat:addFloat,bombTap:bombTap,genLevel:genLevel};
 }
 })();
