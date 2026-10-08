@@ -1,0 +1,39 @@
+name: Commit iOS platform
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  commit-ios:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install deps + iOS platform
+        working-directory: apk
+        run: |
+          npm install
+          npm install @capacitor/ios@^8.5.2
+          # 更新 appName 为英文
+          python3 -c "
+          import json
+          with open('capacitor.config.json') as f: c = json.load(f)
+          c['appName'] = 'Hedgehog Roll'
+          with open('capacitor.config.json','w') as f: json.dump(c, f, indent=2)
+          "
+      - name: Sync web files
+        run: bash ./apk/sync-www.sh
+      - name: Add iOS platform
+        working-directory: apk
+        run: |
+          npx cap add ios || true
+          npx cap sync ios
+      - name: Commit
+        run: |
+          git config user.name "muse-bot"
+          git config user.email "muse-bot@users.noreply.github.com"
+          git add apk/ios apk/package.json apk/package-lock.json apk/capacitor.config.json
+          git diff --cached --quiet || git commit -m "Add Capacitor iOS platform (Hedgehog Roll)"
+          git push
