@@ -35,6 +35,13 @@
   .btn:disabled{opacity:.45;box-shadow:none;filter:grayscale(.5);}
   .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:8px 10px 8px 20px;margin:8px 0;font-size:20px;color:#4e342e;box-shadow:2px 3px 0 rgba(62,39,35,.2);}
   #petCv{border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:3px 4px 0 rgba(62,39,35,.3);max-width:92vw;height:auto;border:3px solid #3e2723;}
+  #toolBar{position:fixed;top:calc(64px + env(safe-area-inset-top));right:10px;display:none;flex-direction:column;gap:8px;z-index:5;}
+  #toolBar .btn{margin:0;font-size:22px;padding:6px 14px;}
+  #toolBar .btn.aim{background:#ef5350;color:#fff;}
+  #lvGrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;max-width:400px;width:92vw;max-height:50vh;overflow-y:auto;padding:10px;background:#fffdf5;border:3px solid #3e2723;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;}
+  .lvbtn{font-family:"Shantell Sans",cursive;font-weight:700;font-size:15px;background:#ffca28;border:2.5px solid #3e2723;border-radius:10px;padding:7px 0;cursor:pointer;color:#3e2723;}
+  .lvbtn.locked{background:#d7ccc8;color:#a1887f;cursor:default;}
+  #overClose{font-size:22px;color:#ef6c00;font-weight:700;margin:4px 0;}
   #evoCv{border-radius:225px 15px 255px 15px/15px 255px 15px 225px;box-shadow:3px 4px 0 rgba(62,39,35,.3);border:3px solid #3e2723;}
   #petStats{font-family:"Shantell Sans",cursive;font-size:30px;font-weight:700;color:#3e2723;margin:10px 0 2px;transform:rotate(-.8deg);}
   #petFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
@@ -50,6 +57,10 @@
   <div class="pill" id="hStar">⭐ 0</div>
 </div>
 <div id="warn"><span id="warnTxt"></span></div>
+<div id="toolBar">
+  <button class="btn sm" id="shieldBtn">🛡️<span id="shieldN">1</span></button>
+  <button class="btn sm" id="bombBtn">💣<span id="bombN">1</span></button>
+</div>
 
 <div class="overlay" id="startOv">
   <div class="big">🦔</div>
@@ -68,19 +79,24 @@
     🔑 Level 11: find the <b>key</b> first, then open the <b>stone door</b>!<br>
     👑 Level 12: <b>Skull King</b> — dodge the double jaws and mini skeletons!<br>
     ⭐ Grab stars for points, reach the <b>exit</b> to clear!<br>
-    💖 Pets make <b>❤️</b> while you play — feed them to speed up!
+    💖 Pets make <b>❤️</b> while you play — feed them to speed up!<br>
+    🗺️ <b>100 mazes</b> — tap 🗺️ Levels to jump to any unlocked maze!<br>
+    🛡️ <b>Shield</b> = 2s protection, 💣 <b>bomb</b> blows up one hazard — grab them in the Pet Home!<br>
+    🌻 Water the <b>sunflower</b> — it makes ❤️ while you play!
   </div>
   <div class="shoprow" id="heartShop">
     <span id="shopInfo"></span>
     <button class="btn sm" id="heartBtn">20⭐ → 1❤️</button>
   </div>
   <button class="btn" id="startBtn">Start Rolling!</button>
+  <button class="btn sm" id="lvSelBtn">🗺️ Levels</button>
 </div>
 
 <div class="overlay" id="overOv" style="display:none;">
   <div class="big">😵</div>
   <h1><span class="hl">The hedgehog fainted!</span></h1>
   <p id="overStars"></p>
+  <p id="overClose"></p>
   <p>Out of hearts! Trade stars for hearts to keep going!</p>
   <div class="btnrow">
     <button class="btn sm" id="reviveBtn">20⭐ → 1❤️<br><span style="font-size:13px;">Continue level</span></button>
@@ -90,7 +106,7 @@
 
 <div class="overlay" id="winOv" style="display:none;">
   <div class="big">🎉</div>
-  <h1><span class="hl">All Levels Cleared!</span></h1>
+  <h1><span class="hl">All 100 Mazes Cleared!</span></h1>
   <p id="winStats"></p>
   <p style="font-size:15px;color:#a1887f;">The hedgehog rolls amazingly! 🦔💨</p>
   <button class="btn" id="againBtn">Play Again</button>
@@ -112,6 +128,11 @@
     <button class="btn sm" id="exchangeCatBtn">Cat food<br><span style="font-size:13px;">10 ⭐ → 1 🐟</span></button>
     <button class="btn sm" id="feedCatBtn">Feed Wesley 🐟</button>
   </div>
+  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🌻 Sunflower</h2>
+  <p id="sunTxt" style="font-size:14px;color:#a1887f;margin:0 0 6px;"></p>
+  <div class="btnrow">
+    <button class="btn sm" id="waterBtn">💧 Water<br><span style="font-size:13px;">5 ⭐ / 1 💧</span></button>
+  </div>
   <p id="petFirefly" style="font-size:14px;color:#9ccc65;"></p>
   <p id="petHeartRate" style="font-size:14px;color:#ff8a80;font-weight:700;"></p>
   <div class="btnrow">
@@ -127,6 +148,13 @@
     <button class="btn sm" id="shop_scarf">🧣 Scarf</button>
     <button class="btn sm" id="shop_pajamas">🌙 Pajamas</button>
   </div>
+  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🧰 Tool Shed</h2>
+  <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">🛡️ Shield: 2s protection · 💣 Bomb: blow up one hazard</p>
+  <div class="btnrow">
+    <button class="btn sm" id="buyShieldBtn">🛡️ Shield</button>
+    <button class="btn sm" id="buyBombBtn">💣 Bomb</button>
+  </div>
+  <p id="toolInv" style="font-size:14px;color:#a1887f;margin:6px 0;"></p>
   <div id="iapShop" style="display:none;">
     <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">💎 Premium Shop</h2>
     <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">Real-money treats for your pets</p>
@@ -137,10 +165,23 @@
     <div class="btnrow">
       <button class="btn sm" id="iap_cat_food">🐟 5 Cat Food</button>
     </div>
+    <div class="btnrow">
+      <button class="btn sm" id="iap_water_pack">💧 5 Water</button>
+      <button class="btn sm" id="iap_shield_pack">🛡️ 3 Shields</button>
+      <button class="btn sm" id="iap_bomb_pack">💣 3 Bombs</button>
+    </div>
     <p id="iapStatus" style="font-size:12px;color:#a1887f;margin:6px 0;"></p>
   </div>
   <button class="btn" id="petNextBtn" style="display:none;background:#66bb6a;box-shadow:0 4px 12px rgba(102,187,106,.5);">Continue ▶</button>
   <button class="btn" id="petAgainBtn">Play Again</button>
+</div>
+
+<div class="overlay" id="lvSelOv" style="display:none;">
+  <div class="big">🗺️</div>
+  <h1>Pick a Maze</h1>
+  <p>Clear a maze to unlock the next one!</p>
+  <div id="lvGrid"></div>
+  <button class="btn" id="lvCloseBtn">Close</button>
 </div>
 
 <div class="overlay" id="evoOv" style="display:none;">
