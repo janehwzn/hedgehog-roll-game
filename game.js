@@ -762,31 +762,35 @@ function drawSleeping(c,W,H,t){
   c.textBaseline='alphabetic';
 }
 // 装扮：帽子/围巾/睡衣（穿上才画）
+// birdie 头中心 (13,-16) r=11；wesley 头中心 (0,-22) r=20
 function drawPetAcc(c,which,x,y,t){
   c.save();c.translate(x,y);
-  const hatY=which==='birdie'?-32:-44, scY=which==='birdie'?-8:-2;
+  const isB=which==='birdie';
+  const hx=isB?13:0, hy=isB?-27:-42; // 帽子底座：头顶位置
   if(Pet.equipHat){
     c.fillStyle='#e53935';
-    c.beginPath();c.moveTo(hatY-14+14,hatY);c.lineTo(hatY+14+14,hatY);c.lineTo(hatY+14,hatY-20);c.closePath();c.fill();
-    c.fillStyle='#fff';c.beginPath();c.arc(hatY+14,hatY-20,5,0,7);c.fill();
+    c.beginPath();c.moveTo(hx-14,hy);c.lineTo(hx+14,hy);c.lineTo(hx,hy-20);c.closePath();c.fill();
+    c.fillStyle='#fff';c.beginPath();c.arc(hx,hy-20,5,0,7);c.fill();
   }
+  const scY=isB?-6:0; // 围巾：脖子位置
   if(Pet.equipScarf){
     c.strokeStyle='#42a5f5';c.lineWidth=7;c.lineCap='round';
-    c.beginPath();c.moveTo(-18,scY);c.quadraticCurveTo(0,scY+6,18,scY);c.stroke();
+    c.beginPath();c.moveTo(hx-18,scY);c.quadraticCurveTo(hx,scY+6,hx+18,scY);c.stroke();
   }
   if(Pet.equipPajamas){
     c.fillStyle='rgba(156,39,176,.30)';
-    c.beginPath();c.ellipse(0,scY+12,24,18,0,0,7);c.fill();
+    const py=isB?2:12; // 睡衣：身体中央
+    c.beginPath();c.ellipse(0,py,isB?24:22,isB?18:20,0,0,7);c.fill();
   }
-  // 限定装扮
+  // 限定装扮：星星发饰戴在头顶
   for(const li of (Pet.limited||[])){
     if(li==='starhair'){
       c.fillStyle='#ffd54f';
       c.beginPath();
       for(let i=0;i<5;i++){
         const a=-Math.PI/2+i*2*Math.PI/5, a2=a+Math.PI/5;
-        c.lineTo(Math.cos(a)*14,hatY-8+Math.sin(a)*14);
-        c.lineTo(Math.cos(a2)*6,hatY-8+Math.sin(a2)*6);
+        c.lineTo(hx+Math.cos(a)*14,hy-6+Math.sin(a)*14);
+        c.lineTo(hx+Math.cos(a2)*6,hy-6+Math.sin(a2)*6);
       }
       c.closePath();c.fill();
     }
@@ -1401,8 +1405,8 @@ function update(dt){
     }
     if(pd<pr+h.r+30){ // 擦弹奖励：近而不中 +2⭐（每颗飞行物 1 秒冷却）
       if(!p._nm||G.time-p._nm>1){
-        p._nm=G.time;Pet.stars+=2;totalStars+=2;petSave();
-        addFloat('Close! +2⭐',h.x,h.y-30,'#ffd54f');sfxStar();
+        p._nm=G.time;Pet.stars+=1;totalStars+=1;petSave();
+        addFloat('Close! +1⭐',h.x,h.y-30,'#ffd54f');sfxStar();
       }
     }
     keep.push(p);
@@ -1424,8 +1428,8 @@ function update(dt){
     }
     if(shut&&pds<pin.len&&G.invuln<=0){ // 擦身而过 +2⭐（每个夹子 1 秒冷却）
       if(!pin._nm||G.time-pin._nm>1){
-        pin._nm=G.time;Pet.stars+=2;totalStars+=2;petSave();
-        addFloat('Close! +2⭐',h.x,h.y-30,'#ffd54f');sfxStar();
+        pin._nm=G.time;Pet.stars+=1;totalStars+=1;petSave();
+        addFloat('Close! +1⭐',h.x,h.y-30,'#ffd54f');sfxStar();
       }
     }
   }
@@ -1433,7 +1437,7 @@ function update(dt){
   for(const s of L.stars){
     if(!s.got&&circleHit(s.x,s.y,10,h.x,h.y,h.r+4)){
       s.got=true;G.starGot++;
-      if(G.time-G.comboT<2.5)G.combo=Math.min(9,G.combo+1);else G.combo=1;
+      if(G.time-G.comboT<2.5)G.combo=Math.min(3,G.combo+1);else G.combo=1;
       G.comboT=G.time;
       totalStars+=G.combo;Pet.stars+=G.combo;petSave();sfxStar();
       if(G.combo>=2)addFloat('COMBO x'+G.combo+'!',s.x,s.y-26,'#ffca28');
