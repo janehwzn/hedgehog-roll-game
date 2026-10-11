@@ -287,6 +287,7 @@
         <button class="btn mint" style="flex:1" id="clearPetBtn">🐾 Pet Hollow</button>
         <button class="btn ghost" style="flex:1" id="clearMapBtn">🗺️ Map</button>
       </div>
+      <button class="btn ghost block" id="clearShopBtn" style="display:none;margin-top:8px;">💖 Low on hearts? Stock up in Shop</button>
     </div>
   </div>
 </div>
@@ -306,6 +307,9 @@
         <button class="btn ghost" style="flex:1" id="overMapBtn">🗺️ Map</button>
         <button class="btn ghost" style="flex:1" id="restartBtn">Start at Cave 1</button>
       </div>
+      <button class="btn block" id="overIapBtn" style="display:none;margin-top:8px;background:linear-gradient(135deg,#ff6b9d,#e0608a);">
+        <span class="stack">💖 Get 5 Hearts<small id="overIapPrice">Premium treats</small></span>
+      </button>
     </div>
   </div>
 </div>
@@ -432,6 +436,11 @@
         </div>
         <p id="iapStatus"></p>
         <p class="notice">Purchases are optional. Everything in Hedgehog Roll can be earned with stars.</p>
+        <p class="notice" style="margin-top:8px;font-size:12px;">
+          <a href="#" id="shopPrivacyLink" style="color:var(--caramel);text-decoration:underline;">Privacy Policy</a>
+          <span style="margin:0 6px;">·</span>
+          <a href="#" id="shopTermsLink" style="color:var(--caramel);text-decoration:underline;">Terms of Use</a>
+        </p>
       </div>
     </div>
   </div>

@@ -1064,6 +1064,17 @@ function gameOver(){
   document.getElementById('retryBtn').textContent='Try Cave '+(G.idx+1)+' again';
   document.getElementById('reviveBtn').style.display=Pet.stars>=20?'':'none';
   document.getElementById('restartBtn').style.display=G.idx>0?'':'none';
+  // Premium shop nudge: show IAP hearts button when store is ready
+  const overIapBtn=document.getElementById('overIapBtn');
+  if(overIapBtn){
+    const ready=typeof iapReady!=='undefined'&&iapReady;
+    overIapBtn.style.display=ready?'':'none';
+    if(ready&&typeof IAP_BTNS!=='undefined'){
+      const src=document.getElementById(IAP_BTNS.heart_pack_5);
+      if(src&&src.textContent.includes('\u2014'))
+        document.getElementById('overIapPrice').textContent=src.textContent.split('\u2014')[1].trim();
+    }
+  }
   document.getElementById('overOv').style.display='flex';
 }
 /* ---------- 过关 ---------- */
@@ -1078,6 +1089,11 @@ function showClear(idx){
   document.getElementById('clearBank').textContent=Pet.stars;
   document.getElementById('clearPetBtn').style.display='';
   document.getElementById('clearNextBtn').textContent='Next: Cave '+(idx+2)+' ▶';
+  // Premium shop nudge: low hearts after clearing a cave
+  const clearShopBtn=document.getElementById('clearShopBtn');
+  if(clearShopBtn){
+    clearShopBtn.style.display=(runHearts<=1&&typeof iapReady!=='undefined'&&iapReady)?'':'none';
+  }
   document.getElementById('clearOv').style.display='flex';
   confetti();
 }
@@ -2023,9 +2039,26 @@ document.addEventListener('visibilitychange',()=>{ // 切到后台自动暂停
 $id('clearNextBtn').addEventListener('click',()=>{const ni=Math.min(LEVELS.length-1,G.idx+1);startCave(ni,false);});
 $id('clearPetBtn').addEventListener('click',()=>showPet(null,false,Math.min(LEVELS.length-1,G.idx+1)));
 $id('clearMapBtn').addEventListener('click',()=>showLvSel(()=>{$id('clearOv').style.display='flex';}));
+// Premium: low-hearts nudge -> open Pet Hollow shop tab (parental gate applies)
+$id('clearShopBtn').addEventListener('click',()=>{
+  showPet(null,false,Math.min(LEVELS.length-1,G.idx+1));
+  setTimeout(()=>{
+    const t=document.querySelector('#petTabs .tab[data-panel="shop"]');
+    if(t)t.click();
+  },120);
+});
 // 心用完
 $id('retryBtn').addEventListener('click',()=>startCave(G.idx,true));
 $id('overMapBtn').addEventListener('click',()=>showLvSel(()=>{$id('overOv').style.display='flex';}));
+// Premium: buy hearts from the Oops screen, auto-retry on success
+$id('overIapBtn').addEventListener('click',async()=>{
+  const before=runHearts;
+  await buyIAP('heart_pack_5');
+  if(runHearts>before){
+    $id('overOv').style.display='none';
+    startCave(G.idx,true);
+  }
+});
 $id('winPetBtn').addEventListener('click',()=>showPet(null,false,null));
 // 宠物小家
 $id('petBackBtn').addEventListener('click',goHome);
@@ -2062,7 +2095,14 @@ $id('soundSw').addEventListener('click',()=>{UI.sound=!UI.sound;uiSave();syncSou
 $id('setCloseBtn').addEventListener('click',()=>{$id('settingsOv').style.display='none';});
 $id('setHowBtn').addEventListener('click',()=>{$id('settingsOv').style.display='none';showHow();});
 $id('privacyBtn').addEventListener('click',()=>{$id('privacyFrame').src='privacy-policy.html';$id('settingsOv').style.display='none';$id('privacyOv').style.display='flex';});
-$id('privacyCloseBtn').addEventListener('click',()=>{$id('privacyOv').style.display='none';$id('settingsOv').style.display='flex';});
+// Shop: privacy & terms links (return to Pet Hollow on close)
+$id('shopPrivacyLink').addEventListener('click',e=>{e.preventDefault();$id('privacyFrame').src='privacy-policy.html';$id('privacyOv').style.display='flex';$id('privacyOv').dataset.back='pet';});
+$id('shopTermsLink').addEventListener('click',e=>{e.preventDefault();$id('privacyFrame').src='https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';$id('privacyOv').style.display='flex';$id('privacyOv').dataset.back='pet';});
+$id('privacyCloseBtn').addEventListener('click',()=>{
+  $id('privacyOv').style.display='none';
+  if($id('privacyOv').dataset.back==='pet'){$id('privacyOv').dataset.back='';}
+  else{$id('settingsOv').style.display='flex';}
+});
 function showHow(){
   const order=['drag','skull','bow','sling','clamp','run','time','dark','key','boss','tools'];
   $id('howList').innerHTML=order.map(k=>{const t=TIPS[k];return '<li><span class="ic">'+t.ic+'</span><span><b>'+t.t+'.</b> '+t.d+'</span></li>';}).join('')+
