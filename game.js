@@ -1067,7 +1067,7 @@ function gameOver(){
   // Premium shop nudge: show IAP hearts button when store is ready
   const overIapBtn=document.getElementById('overIapBtn');
   if(overIapBtn){
-    const ready=typeof iapReady!=='undefined'&&iapReady;
+    const ready=typeof isNativeApp!=='undefined'&&isNativeApp();
     overIapBtn.style.display=ready?'':'none';
     if(ready&&typeof IAP_BTNS!=='undefined'){
       const src=document.getElementById(IAP_BTNS.heart_pack_5);
@@ -1092,7 +1092,7 @@ function showClear(idx){
   // Premium shop nudge: low hearts after clearing a cave
   const clearShopBtn=document.getElementById('clearShopBtn');
   if(clearShopBtn){
-    clearShopBtn.style.display=(typeof iapReady!=='undefined'&&iapReady)?'':'none';
+    clearShopBtn.style.display=(typeof isNativeApp!=='undefined'&&isNativeApp())?'':'none';
   }
   document.getElementById('clearOv').style.display='flex';
   confetti();
