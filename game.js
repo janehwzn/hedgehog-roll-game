@@ -1092,7 +1092,7 @@ function showClear(idx){
   // Premium shop nudge: low hearts after clearing a cave
   const clearShopBtn=document.getElementById('clearShopBtn');
   if(clearShopBtn){
-    clearShopBtn.style.display=(runHearts<=1&&typeof iapReady!=='undefined'&&iapReady)?'':'none';
+    clearShopBtn.style.display=(typeof iapReady!=='undefined'&&iapReady)?'':'none';
   }
   document.getElementById('clearOv').style.display='flex';
   confetti();
