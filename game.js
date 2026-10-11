@@ -314,7 +314,7 @@ function genHint(n,hasPinch,hasBow,hasSling,isBoss,isDark,isTime,isKey){
   if(hasBow)tips.push('bows fire fast');
   if(hasSling)tips.push('slingshots spray pebbles');
   if(!tips.length)tips.push('a twisty maze — follow the blue arrows');
-  return '\U0001F52D Camera says: '+tips.join(' · ')+'! You got this!';
+  return '\u{1F52D} Camera says: '+tips.join(' · ')+'! You got this!';
 }
 function genLevel(n){
   const rnd=mulberry32((n*2654435761)>>>0);
@@ -410,7 +410,7 @@ function validLevel(lv){
 }
 function safeLevel(n){ // 校验失败时的兜底关卡
   return {name:'Level '+n+' \u00B7 Safe Path',sub:'A calm maze',
-    hint:'\U0001F52D Camera says: follow the blue arrows, nice and easy!',
+    hint:'\u{1F52D} Camera says: follow the blue arrows, nice and easy!',
     waypoints:[[80,690],[80,500],[260,500],[260,320],[120,320],[120,150]],
     half:50,pinches:[],bows:[],slings:[],starN:6};
 }
@@ -450,7 +450,14 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 let AC=null;
 function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
 }return AC;}
+/* ---------- UI preferences (separate key; never touches the pet save) ---------- */
+const UI_KEY='hedgehog-ui-v1';
+const HERO_NAME='Pip'; // one constant so the character name is easy to change
+let UI={sound:true,seenTips:[]};
+try{const r=localStorage.getItem(UI_KEY);if(r){const u=JSON.parse(r);if(typeof u.sound==='boolean')UI.sound=u.sound;if(Array.isArray(u.seenTips))UI.seenTips=u.seenTips;}}catch(e){}
+function uiSave(){try{localStorage.setItem(UI_KEY,JSON.stringify(UI));}catch(e){}}
 function tone(f,d,type,v,when){
+  if(!UI.sound)return;
   try{
     const a=ac();if(!a)return;
     const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+(when||0);
@@ -515,7 +522,7 @@ function drawBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(22*s,-18*s);c.lineTo(33*s,-14*s);c.lineTo(22*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Shantell Sans", sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px ui-rounded, system-ui, sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -613,7 +620,7 @@ function drawTeenBirdie(c,x,y,s,t,opt){
   c.beginPath();c.moveTo(28*s,-20*s);c.lineTo(40*s,-15*s);c.lineTo(28*s,-10*s);c.closePath();c.fill();
   c.restore();
   if(opt.happy>0){
-    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px "Shantell Sans", sans-serif';c.textAlign='center';
+    c.fillStyle='#ef5350';c.font=Math.round(18*s)+'px ui-rounded, system-ui, sans-serif';c.textAlign='center';
     c.fillText('❤',x+28*s,y-36*s-Math.abs(Math.sin(t*9))*8*s);
   }
 }
@@ -674,7 +681,7 @@ function drawPetScene(){
   for(const fx of [40,W-30]){c.beginPath();c.arc(fx,H-30,5,0,7);c.fill();}
   c.fillStyle='#fff59d';
   for(const fx of [72,W-70]){c.beginPath();c.arc(fx,H-24,5,0,7);c.fill();}
-  c.font='66px "Shantell Sans", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='66px ui-rounded, system-ui, sans-serif';c.textAlign='center';c.textBaseline='middle';
   c.fillText('🦔',100,H-56);
   const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
   if(Pet.unlocked&&!sleeping){
@@ -694,17 +701,17 @@ function drawPetScene(){
   }
   if(sleeping)drawSleeping(c,W,H,t);
   drawSunflower(c,36,H-100,1.0,t); // 向日葵（植物不睡觉）
-  c.fillStyle='#4e342e';c.font='15px \"Shantell Sans\", sans-serif';
+  c.fillStyle='#4e342e';c.font='15px ui-rounded, system-ui, sans-serif';
   const nm=[];
   if(Pet.unlocked)nm.push('Birdie'+['(Baby)','(Teen)','(Adult)'][Pet.stage]||'');
   if(Pet.wesley)nm.push('Wesley'+(Pet.wstage>=1?'(Adult)':'(Kitten)'));
-  c.fillText(nm.join(' ＋ '),200,26);
+  // 名字已经在画布下方的标题里显示，这里不再重复画
   c.textBaseline='alphabetic';
 }
 // 宠物头顶状态：饿了冒饭碗，困了冒 Zzz
 function drawPetStatus(c,x,y,which,t){
   const hungry=petHungry(which),sleepy=petSleepy();
-  c.font='22px "Shantell Sans", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='22px ui-rounded, system-ui, sans-serif';c.textAlign='center';c.textBaseline='middle';
   if(hungry){
     c.fillText('🍚',x+30,y-14+Math.sin(t*5)*3);
   }
@@ -742,14 +749,14 @@ function drawSleeping(c,W,H,t){
     c.beginPath();c.arc(cx+32,cy-28-br,24,0,7);c.fill();
   }
   // Zzz / 打呼
-  c.font='20px "Shantell Sans", sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.font='20px ui-rounded, system-ui, sans-serif';c.textAlign='center';c.textBaseline='middle';
   const z1=(t%3),z2=((t+1.5)%3);
   c.fillStyle='rgba(92,107,192,'+(1-z1/3)+')';
   c.fillText('Z',cx-60-z1*8,cy-70-z1*14);
   c.fillStyle='rgba(92,107,192,'+(1-z2/3)+')';
   c.fillText('Z',cx+60+z2*8,cy-70-z2*14);
   if(Pet.sleepTogether){
-    c.font='18px "Shantell Sans", sans-serif';
+    c.font='18px ui-rounded, system-ui, sans-serif';
     c.fillText('💤 Snore snore…',cx,cy-96+Math.sin(t*3)*3);
   }
   c.textBaseline='alphabetic';
@@ -790,15 +797,25 @@ function updatePetUI(){
   const names=[];
   if(Pet.unlocked)names.push('🐦 Birdie');
   if(Pet.wesley)names.push('🐱 Wesley');
-  document.getElementById('petNames').innerHTML=names.join(' ｜ ');
-  document.getElementById('petStats').textContent='⭐ '+Pet.stars+' ｜ 🍖 Bird food x'+Pet.food+' ｜ 🐟 Cat food x'+Pet.catfood;
+  document.getElementById('petNames').textContent=names.join('  ·  ');
+  document.getElementById('petStats').textContent=names.length?('🍖 x'+Pet.food+(Pet.wesley?'  ·  🐟 x'+Pet.catfood:'')):'';
+  const $=id=>document.getElementById(id);
+  if($('petStarChip'))$('petStarChip').textContent=Pet.stars;
+  if($('noPets'))$('noPets').style.display=Pet.unlocked?'none':'';
+  if($('noTreats'))$('noTreats').style.display=Pet.unlocked?'none':'';
+  if($('feedBtn'))$('feedBtn').parentElement.style.display=Pet.unlocked?'':'none';
+  if($('birdBar'))$('birdBar').parentElement.parentElement.parentElement.style.display=Pet.unlocked?'':'none';
+  if($('birdBar'))$('birdBar').style.width=Math.min(100,Pet.fed/20*100)+'%';
+  if($('catBar'))$('catBar').style.width=Math.min(100,Pet.catfed/10*100)+'%';
+  if($('foodCount'))$('foodCount').textContent='🍖 x'+Pet.food;
+  if($('catFoodCount'))$('catFoodCount').textContent='🐟 x'+Pet.catfood;
   document.getElementById('petFedTxt').textContent=Pet.fed>=20?
-    'Birdie is an adult! ✨ Brings back 1 star every morning for breakfast!':
-    (Pet.fed>=10?'Birdie is a teen! Feed '+(20-Pet.fed)+' more to become adult':
-    'Fed '+Pet.fed+' / 20 bird food'+(Pet.fed>=10?'':'(10 to become teen)'));
+    'All grown up! Brings you 1 ⭐ for breakfast every morning.':
+    (Pet.fed>=10?'Teen! '+(20-Pet.fed)+' more treats to grow up.':
+    'Baby bird · '+Pet.fed+'/20 treats ('+(10-Pet.fed)+' more to become a teen)');
   document.getElementById('petCatFedTxt').textContent=!Pet.wesley?'':
-    (Pet.catfed>=10?(Pet.wstage>=1?'Wesley grew up! ✨':'Wesley is full!'):
-    'Fed '+Pet.catfed+' / 10 cat food');
+    (Pet.catfed>=10?(Pet.wstage>=1?'All grown up! Catches fireflies for dark caves.':'Wesley is full!'):
+    'Kitten · '+Pet.catfed+'/10 treats to grow up');
   document.getElementById('catRow').style.display=Pet.wesley?'':'none';
   document.getElementById('feedBtn').disabled=!(Pet.food>0&&Pet.fed<20);
   document.getElementById('exchangeBtn').disabled=!(Pet.stars>=10);
@@ -806,7 +823,7 @@ function updatePetUI(){
   document.getElementById('exchangeCatBtn').disabled=!(Pet.stars>=10);
   // 萤火虫库存
   const ff=document.getElementById('petFirefly');
-  if(ff)ff.textContent=Pet.wesley?('✨ Fireflies x'+(Pet.fireflies||0)+'(lights the Dark Cave)'):'';
+  if(ff)ff.textContent=Pet.wesley?('✨ Fireflies x'+(Pet.fireflies||0)+' (they light up dark caves)'):'';
   // 产心速度
   const hrB=heartRateText('birdie'),hrW=heartRateText('wesley');
   const hrEl=document.getElementById('petHeartRate');
@@ -814,7 +831,7 @@ function updatePetUI(){
     const parts=[];
     if(hrB)parts.push('🐦 Birdie: '+hrB);
     if(hrW)parts.push('🐱 Wesley: '+hrW);
-    hrEl.textContent=parts.join(' ｜ ')+' — pets make ❤️ while you play!';
+    hrEl.textContent=parts.length?('While you explore: '+parts.join('  ·  ')):'';
   }
   updateShopUI();
   updateSunUI();
@@ -832,18 +849,19 @@ function showPet(which,first,contIdx){
   petCont=contIdx;
   const bk=checkBreakfast(); // 大鸟每日早餐
   const isW=which==='wesley';
-  document.getElementById('winOv').style.display='none';
+  hideAllOverlays();
   document.getElementById('petOv').style.display='flex';
-  document.getElementById('petTitle').textContent=
-    isW?(first?'🎉 New Pet!':'🐱 Pet Home'):(first?'🎉 New Pet!':'🐦 Pet Home');
+  petTab('friends');
+  document.getElementById('petTitle').textContent=first?'🎉 New friend!':'Pet Hollow';
   const cer=document.getElementById('petCeremonyTxt');
   cer.style.display=first?'block':'none';
-  cer.innerHTML=isW?
-    'Cleared Level 8, amazing!<br>A kitten ran out of the grass —':
-    'The hedgehog left Cave 5!<br>A little bird fell from the sky and became its friend —';
+  cer.textContent=isW?
+    'Cave 8 cleared! A kitten tumbled out of the grass and wants to be '+HERO_NAME+'\'s friend.':
+    'Cave 5 cleared! A little bird fluttered down from the sky to be '+HERO_NAME+'\'s friend.';
+  if(first)confetti();
   document.getElementById('petNextBtn').style.display=contIdx!=null?'':'none';
-  if(contIdx!=null)document.getElementById('petNextBtn').textContent='Continue to Level '+(contIdx+1)+' ▶';
-  document.getElementById('petAgainBtn').style.display=contIdx!=null?'none':'';
+  if(contIdx!=null)document.getElementById('petNextBtn').textContent='Continue to Cave '+(contIdx+1)+' ▶';
+  document.getElementById('petAgainBtn').style.display='none';
   updatePetUI();
   if(bk)setTimeout(()=>banner(bk,2600),600);
   petT0=Date.now();
@@ -920,7 +938,7 @@ function showEvo(which){
     c.fillStyle=g;c.fillRect(0,0,W,H);
     if(isW)drawEvolvedWesley(c,W/2,H/2+26,0.95,1.2);
     else drawEvolvedBirdie(c,W/2-8,H/2+18,1.05,1.2,{});
-    c.fillStyle='#f9a825';c.font='15px \"Shantell Sans\", sans-serif';c.textAlign='center';
+    c.fillStyle='#f9a825';c.font='15px ui-rounded, system-ui, sans-serif';c.textAlign='center';
     c.fillText('✨ Grown Up! ✨',W/2,22);
   }
   sfxWin();
@@ -976,36 +994,99 @@ function loadLevel(idx){
   showIntro(idx,false);
 }
 
+/* ---------- Cave naming / regions ---------- */
+const REGIONS=[
+  {name:'Mossy Caves',from:0,to:24,emoji:'🌿',desc:'Soft moss, gentle turns and your very first friends.'},
+  {name:'Crystal Caverns',from:25,to:49,emoji:'💎',desc:'Sparkly tunnels, sneaky clamps and quick arrows.'},
+  {name:'Moonlit Hollow',from:50,to:74,emoji:'🌙',desc:'Dark, dreamy caves. Fireflies help you see.'},
+  {name:"Skull King's Lair",from:75,to:99,emoji:'👑',desc:'The trickiest caves of all. Only brave paws!'},
+];
+function regionOf(idx){return REGIONS.find(r=>idx>=r.from&&idx<=r.to)||REGIONS[0];}
+function caveTitle(idx){const n=LEVELS[idx].name;const p=n.split(' · ');return p[1]||n;}
+function cleanHint(h){const t=String(h||'').replace(/^\S*\s*Camera says:\s*/i,'');return t.charAt(0).toUpperCase()+t.slice(1);}
+
+/* ---------- Progressive tips: shown the first time a mechanic appears ---------- */
+const TIPS={
+  drag:{ic:'👆',t:'Drag to roll',d:'Hold your finger on '+HERO_NAME+' and slide. Follow the blue arrows to the glowing exit.'},
+  skull:{ic:'💀',t:'Skull tunnels',d:'Squeeze through the skull\'s mouth. It\'s a narrow spot!'},
+  bow:{ic:'🏹',t:'Watch for arrows',d:'Bows glow red with a ! right before they shoot. Wait, then dash.'},
+  sling:{ic:'🪨',t:'Slingshots',d:'Slingshots spray three pebbles at once. Pass between the shots.'},
+  clamp:{ic:'🦷',t:'Snapping clamps',d:'Spiky clamps open and close. Roll through while they\'re open.'},
+  run:{ic:'🏃',t:'Running clamps',d:'Some clamps slide along the tunnel. Watch their rhythm first.'},
+  time:{ic:'⏱️',t:'Beat the clock',d:'This cave has a timer. Keep rolling!'},
+  dark:{ic:'🔦',t:'Dark cave',d:'Catch fireflies to make your light bigger.'},
+  key:{ic:'🔑',t:'Key & door',d:'Find the key in the side cave first. Then the stone door opens.'},
+  boss:{ic:'👑',t:'The Skull King',d:'Double jaws and mini skeletons! Time your run between bites.'},
+  tools:{ic:'🛡️',t:'Shield & bomb',d:'Tap 🛡️ for 2 seconds of protection, or 💣 then a hazard to pop it. Get more in Pet Hollow.'},
+};
+function tipsFor(idx){
+  const d=LEVELS[idx],k=[];
+  k.push('drag');
+  if((d.pinches||[]).some(p=>p.skull&&!p.chomp))k.push('skull');
+  if((d.bows||[]).length){k.push('bow');k.push('tools');}
+  if((d.slings||[]).length)k.push('sling');
+  if((d.pinches||[]).some(p=>p.chomp&&!p.boss))k.push('clamp');
+  if((d.pinches||[]).some(p=>p.slide))k.push('run');
+  if(d.timeLimit)k.push('time');
+  if(d.dark)k.push('dark');
+  if(d.key)k.push('key');
+  if((d.pinches||[]).some(p=>p.boss))k.push('boss');
+  return k;
+}
+function tipHTML(k,isNew){const t=TIPS[k];return '<div class="tip'+(isNew?' new':'')+'"><div class="ic">'+t.ic+'</div><div><b>'+t.t+'</b><span>'+t.d+'</span></div></div>';}
+let pendingTips=[];
+
 function showIntro(idx,passed){
   const def=LEVELS[idx];
-  document.getElementById('introTitle').textContent='🦔 Hedgehog Roll';
-  document.getElementById('introLevel').textContent=def.name;
-  document.getElementById('introSub').textContent=passed?('🎉 '+(LEVELS[idx-1]?LEVELS[idx-1].name:'')+'Cleared!'):def.sub;
-  document.getElementById('introHint').textContent=def.hint;
-  document.getElementById('introRules').style.display=idx===0?'block':'none';
-  document.getElementById('startBtn').textContent=idx===0?'Start Rolling!':'Enter '+def.name.split(' ').slice(0,3).join(' ');
+  hideAllOverlays();
+  const reg=regionOf(idx);
+  document.getElementById('introTitle').textContent=reg.emoji+' '+reg.name+' · Cave '+(idx+1);
+  document.getElementById('introLevel').textContent=caveTitle(idx);
+  document.getElementById('introSub').textContent=def.sub;
+  pendingTips=tipsFor(idx).filter(k=>!UI.seenTips.includes(k)).slice(0,2);
+  document.getElementById('introTips').innerHTML=pendingTips.map(k=>tipHTML(k,true)).join('');
+  document.getElementById('introHint').textContent=cleanHint(def.hint);
+  document.getElementById('introHintBox').style.display=(pendingTips.length>=2||pendingTips.includes('drag'))?'none':'';
+  document.getElementById('startBtn').textContent=idx===0&&!UI.seenTips.includes('drag')?'Let\'s roll!':'Go!';
   document.getElementById('startOv').style.display='flex';
-  document.getElementById('winOv').style.display='none';
   updateHeartShop();
 }
 
 /* ---------- 心用完了 ---------- */
 function gameOver(){
   sfxHit();
+  hideAllOverlays();
   document.getElementById('overStars').textContent='⭐ '+Pet.stars;
   let close='';
   if(G&&G.level&&G.level.path.len>0&&G.sMax/G.level.path.len>0.8)
-    close='SO CLOSE! One more try? \U0001F4AA You almost had it!';
+    close='So close! You almost made it. \u{1F4AA}';
   document.getElementById('overClose').textContent=close;
+  document.getElementById('retryBtn').textContent='Try Cave '+(G.idx+1)+' again';
   document.getElementById('reviveBtn').style.display=Pet.stars>=20?'':'none';
+  document.getElementById('restartBtn').style.display=G.idx>0?'':'none';
   document.getElementById('overOv').style.display='flex';
+}
+/* ---------- 过关 ---------- */
+function showClear(idx){
+  hideAllOverlays();
+  const def=LEVELS[idx];
+  const titles=['Cave conquered!','Hooray, '+HERO_NAME+'!','You did it!','Rolling star!','Brilliant paws!'];
+  document.getElementById('clearTitle').textContent=titles[idx%titles.length];
+  document.getElementById('clearSub').textContent='Cave '+(idx+1)+' · '+caveTitle(idx)+' explored.';
+  document.getElementById('clearStars').textContent=G.starGot+'/'+def.starN;
+  document.getElementById('clearHearts').textContent=runHearts>0?'❤'.repeat(runHearts):'0';
+  document.getElementById('clearBank').textContent=Pet.stars;
+  document.getElementById('clearPetBtn').style.display='';
+  document.getElementById('clearNextBtn').textContent='Next: Cave '+(idx+2)+' ▶';
+  document.getElementById('clearOv').style.display='flex';
+  confetti();
 }
 /* ---------- 全部 12 关通关 ---------- */
 function showWin(){
-  document.getElementById('winStats').innerHTML=
-    '⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/'+MAX_HEARTS+'<br>'+
-    'You cleared all 100 mazes — a true Roll Master! 👑';
+  hideAllOverlays();
+  document.getElementById('winStats').textContent='⭐ '+Pet.stars+' stars saved  ·  ❤ '+runHearts+'/'+MAX_HEARTS;
   document.getElementById('winOv').style.display='flex';
+  confetti();
 }
 /* ---------- 哄睡 ---------- */
 function doSleep(){
@@ -1067,14 +1148,14 @@ function updateShopUI(){
     const btn=document.getElementById('shop_'+it.id);
     if(!btn)continue;
     if(Pet[it.id]){
-      if(it.id==='nest'){btn.innerHTML='🪹 Nest owned';btn.disabled=true;btn.onclick=null;}
+      if(it.id==='nest'){btn.innerHTML='🪹 Nest<small>✓ Yours</small>';btn.disabled=true;btn.onclick=null;}
       else{
         const eq=(it.id==='hat'&&Pet.equipHat)||(it.id==='scarf'&&Pet.equipScarf)||(it.id==='pajamas'&&Pet.equipPajamas);
-        btn.innerHTML=it.name+(eq?'<br><span style="font-size:13px;">✓ Wearing (tap to remove)</span>':'<br><span style="font-size:13px;">Tap to wear</span>');
+        btn.innerHTML=it.name+(eq?'<small>✓ Wearing · tap to take off</small>':'<small>Tap to wear</small>');btn.classList.toggle('mint',!!eq);
         btn.disabled=false;btn.onclick=()=>toggleAcc(it.id);
       }
     }else{
-      btn.innerHTML=it.name+'<br><span style="font-size:13px;">'+it.price+' ⭐</span>';
+      btn.innerHTML=it.name+'<small>'+it.price+' ⭐</small>';btn.classList.remove('mint');
       btn.disabled=!(Pet.stars>=it.price);
       btn.onclick=()=>buyAcc(it.id);
     }
@@ -1083,7 +1164,7 @@ function updateShopUI(){
   if(slp){
     const sleeping=Pet.sleepUntil&&Date.now()<Pet.sleepUntil;
     slp.style.display=(petSleepy()&&!sleeping)?'':'none';
-    slp.innerHTML='😴 Sleep<br><span style="font-size:13px;">'+(Pet.nest?'Tuck into nest':'Buy nest first')+'</span>';
+    slp.textContent=Pet.nest?'Tuck in':'Need a nest';
   }
 }
 /* ---------- 宠物产心 ---------- */
@@ -1111,8 +1192,10 @@ function heartRateText(which){
 }
 /* ---------- 每关开始前：20⭐ 换 1❤️ ---------- */
 function updateHeartShop(){
-  document.getElementById('shopInfo').innerHTML='⭐ '+Pet.stars+' ｜ <span style="color:#ff8a80;">❤</span> '+runHearts+'/'+MAX_HEARTS;
-  document.getElementById('heartBtn').disabled=!(Pet.stars>=20&&runHearts<3);
+  document.getElementById('shopInfo').textContent='❤ '+runHearts+'/'+MAX_HEARTS+'  ·  ⭐ '+Pet.stars;
+  const can=Pet.stars>=20&&runHearts<3;
+  document.getElementById('heartBtn').disabled=!can;
+  document.getElementById('heartBtn').style.display=runHearts<3?'':'none';
 }
 
 /* ---------- 输入：手指挪刺猬 ---------- */
@@ -1356,10 +1439,9 @@ function update(dt){
     }else if(G.idx>=LEVELS.length-1){
       showWin();                       // 第 12 关：打败大骷髅王，全部通关！
     }else{
-      banner('🎉 '+L.def.name+'Cleared!',2200);
       sfxLevel();
-      const ni=G.idx+1; // 通关后必须载入下一关的数据，否则会一直在重玩本关
-      setTimeout(()=>{loadLevel(ni);showIntro(ni,true);},1400);
+      const ci=G.idx; // 过关卡片：下一关 / 宠物小家 / 地图
+      setTimeout(()=>{if(G&&G.idx===ci&&G.phase==='done')showClear(ci);},700);
     }
   }
 }
@@ -1423,7 +1505,7 @@ function drawStartExit(){
   const st=pathFrame(L.path,8);
   ctx.fillStyle='#1c1512';
   ctx.beginPath();ctx.ellipse(st.x,st.y,halfWidthAt(L,8,G.time)*0.85,halfWidthAt(L,8,G.time)*0.7,0,0,7);ctx.fill();
-  ctx.fillStyle='#a1887f';ctx.font='15px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#a1887f';ctx.font='15px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
   ctx.fillText('Start',st.x,st.y+halfWidthAt(L,8,G.time)+22);
   const en=pathFrame(L.path,L.path.len-8);
   const g=ctx.createRadialGradient(en.x,en.y,4,en.x,en.y,52);
@@ -1431,7 +1513,7 @@ function drawStartExit(){
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(en.x,en.y,52,0,7);ctx.fill();
   ctx.fillStyle='#fffde7';ctx.strokeStyle='#ffb300';ctx.lineWidth=4;
   ctx.beginPath();ctx.arc(en.x,en.y,26,0,7);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#e65100';ctx.font='15px \"Shantell Sans\", sans-serif';
+  ctx.fillStyle='#e65100';ctx.font='15px ui-rounded, system-ui, sans-serif';
   ctx.fillText('Exit',en.x,en.y+5);
 }
 
@@ -1440,14 +1522,14 @@ function drawCamera(){
   const ang=Math.atan2(f.ty,f.tx);
   const cx=f.x+f.nx*-(halfWidthAt(L,52,G.time)*0.4),cy=f.y+f.ny*-(halfWidthAt(L,52,G.time)*0.4);
   ctx.save();ctx.translate(cx,cy);
-  ctx.font='30px "Shantell Sans", sans-serif';ctx.textAlign='center';
+  ctx.font='30px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
   ctx.fillText('📷',0,0);
   ctx.restore();
   ctx.save();ctx.translate(cx,cy-34);ctx.rotate(0);
   ctx.fillStyle='rgba(255,255,255,.94)';
   const tw=86;
   rr(-tw/2,-16,tw,28,13);ctx.fill();
-  ctx.fillStyle='#5d4037';ctx.font='14px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#5d4037';ctx.font='14px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
   ctx.fillText('This way!',0,3);
   ctx.restore();
 }
@@ -1518,7 +1600,7 @@ function drawBow(b){
   if(tele){
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*14))+')';
     ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='20px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='20px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
     ctx.fillText('!',0,-30);
   }
   ctx.strokeStyle='#6d4c41';ctx.lineWidth=6;ctx.lineCap='round';
@@ -1547,7 +1629,7 @@ function drawSling(b){
   if(tele){
     ctx.fillStyle='rgba(239,83,80,'+(0.22+0.18*Math.sin(G.time*14))+')';
     ctx.beginPath();ctx.arc(0,0,27,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='20px \"Shantell Sans\", sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='20px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
     ctx.fillText('!',0,-30);
   }
   ctx.strokeStyle='#6d4c41';ctx.lineWidth=7;ctx.lineCap='round';
@@ -1596,7 +1678,7 @@ function drawStars(){
     if(s.got)continue;
     const bob=Math.sin(G.time*4+s.ph)*3;
     ctx.save();ctx.translate(s.x,s.y+bob);
-    ctx.font='26px "Shantell Sans", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='26px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('⭐',0,0);
     ctx.restore();
   }
@@ -1746,9 +1828,9 @@ function draw(){
   drawFloats();
   if(G.bombAim){
     ctx.save();ctx.textAlign='center';
-    ctx.font='700 22px "Shantell Sans", sans-serif';
+    ctx.font='700 22px ui-rounded, system-ui, sans-serif';
     ctx.fillStyle='#fff';
-    ctx.fillText('\U0001F4A3 Tap a skull, bow or slingshot!',LW/2,64+Math.sin(G.time*6)*4);
+    ctx.fillText('\u{1F4A3} Tap a skull, bow or slingshot!',LW/2,64+Math.sin(G.time*6)*4);
     ctx.restore();
   }
   if(L.def.dark)drawDark();
@@ -1759,15 +1841,19 @@ function draw(){
 /* ---------- HUD ---------- */
 function hud(){
   const hh=Math.max(0,G.hearts);
-  document.getElementById('hHeart').innerHTML=hh>0?'<span style="color:#ff8a80;">'+'❤'.repeat(hh)+'</span>':'💔';
-  document.getElementById('hStar').textContent='⭐ '+G.starGot;
-  let lv=G.level.def.name.split(' ').slice(0,3).join(' ');
+  const hs=hh>0?'❤'.repeat(hh):'💔';
+  const hEl=document.getElementById('hHeart');
+  if(hEl.textContent!==hs){hEl.textContent=hs;hEl.setAttribute('aria-label',hh+' hearts');}
+  const ss='⭐ '+G.starGot+'/'+G.level.def.starN;
+  const sEl=document.getElementById('hStar');if(sEl.textContent!==ss)sEl.textContent=ss;
+  let lv='Cave '+(G.idx+1);
   if(G.timeLeft>0){
     const s=Math.ceil(G.timeLeft);
-    const urg=s<=15?' style="color:#ef5350;"':'';
-    lv+=' <span'+urg+'>⏱️'+s+'</span>';
+    const urg=s<=15?' style="color:#D9677A;"':'';
+    lv+='&nbsp;&nbsp;<span'+urg+'>⏱ '+s+'s</span>';
   }
-  document.getElementById('hLevel').innerHTML=lv;
+  const lEl=document.getElementById('hLevel');if(lEl._v!==lv){lEl._v=lv;lEl.innerHTML=lv;}
+  document.getElementById('pauseBtn').style.visibility=G.phase==='play'?'visible':'hidden';
   const tb=document.getElementById('toolBar');
   if(tb){
     tb.style.display=G.phase==='play'?'flex':'none';
@@ -1789,8 +1875,10 @@ function loop(ts){
 }
 document.getElementById('startBtn').addEventListener('click',()=>{
   document.getElementById('startOv').style.display='none';
+  for(const k of pendingTips)if(!UI.seenTips.includes(k))UI.seenTips.push(k);
+  uiSave();pendingTips=[];
   G.phase='play';
-  banner(G.level.def.hint,3000);
+  banner('🔭 '+cleanHint(G.level.def.hint),2600);
 });
 document.getElementById('againBtn').addEventListener('click',()=>{
   totalStars=0;setHearts(3);loadLevel(0);
@@ -1800,7 +1888,7 @@ document.getElementById('feedBtn').addEventListener('click',doFeed);
 document.getElementById('exchangeCatBtn').addEventListener('click',doExchangeCat);
 document.getElementById('feedCatBtn').addEventListener('click',doFeedCat);
 document.getElementById('sleepBtn').addEventListener('click',doSleep);
-document.getElementById('petAgainBtn').addEventListener('click',()=>{hidePet();totalStars=0;setHearts(3);loadLevel(0);});
+document.getElementById('petAgainBtn').addEventListener('click',goHome);
 document.getElementById('petNextBtn').addEventListener('click',()=>{
   if(petCont==null)return;
   hidePet();loadLevel(petCont);
@@ -1825,9 +1913,173 @@ document.getElementById('buyShieldBtn').addEventListener('click',buyShield);
 document.getElementById('buyBombBtn').addEventListener('click',buyBomb);
 document.getElementById('shieldBtn').addEventListener('click',useShield);
 document.getElementById('bombBtn').addEventListener('click',useBomb);
-document.getElementById('lvSelBtn').addEventListener('click',showLvSel);
-document.getElementById('lvCloseBtn').addEventListener('click',()=>{document.getElementById('lvSelOv').style.display='none';});
-resize();loadLevel(0);
+document.getElementById('lvCloseBtn').addEventListener('click',()=>{
+  document.getElementById('lvSelOv').style.display='none';
+  if(mapReturn)mapReturn();
+});
+
+/* ---------- 新 UI：首页 / 暂停 / 过关 / 地图 / 宠物小家 / 设置 ---------- */
+const $id=id=>document.getElementById(id);
+const OVERLAYS=['homeOv','startOv','pauseOv','clearOv','overOv','winOv','lvSelOv','petOv','evoOv','gateOv','settingsOv','howOv','privacyOv'];
+function hideAllOverlays(){for(const o of OVERLAYS){const e=$id(o);if(e)e.style.display='none';}}
+function continueIdx(){return Math.max(0,Math.min(LEVELS.length-1,Pet.maxLv||0));}
+let heroRAF=0,heroT0=Date.now();
+function goHome(){
+  hideAllOverlays();
+  if(G&&G.phase==='play')G.phase='paused';
+  const ci=continueIdx();
+  $id('homeStars').textContent=Pet.stars;
+  $id('playSub').textContent=(Pet.maxLv||0)>0?('Continue · Cave '+(ci+1)):'Cave 1 · '+caveTitle(0);
+  $id('hollowHint').textContent=Pet.unlocked?'':'friends join at Cave 5';
+  $id('homeOv').style.display='flex';
+  cancelAnimationFrame(heroRAF);
+  const tick=()=>{if($id('homeOv').style.display==='none')return;drawHero();heroRAF=requestAnimationFrame(tick);};
+  tick();
+}
+// 首页大刺猬：眨眼、歪头、轻轻弹
+function drawHero(){
+  const c=$id('heroCv').getContext('2d'),W=440,H=400,t=(Date.now()-heroT0)/1000;
+  c.clearRect(0,0,W,H);
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const bob=reduce?0:Math.sin(t*2.2)*6, squash=reduce?1:1+Math.sin(t*2.2)*0.025;
+  const tilt=reduce?0:Math.sin(t*0.7)*0.06;
+  // 光晕 + 小山洞口
+  const g=c.createRadialGradient(W/2,H*0.55,20,W/2,H*0.55,200);
+  g.addColorStop(0,'rgba(255,214,107,.55)');g.addColorStop(1,'rgba(255,214,107,0)');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(73,52,44,.14)';c.beginPath();c.ellipse(W/2,H*0.86,140,20,0,0,7);c.fill();
+  // 星星
+  for(let i=0;i<5;i++){const a=t*0.6+i*1.257,r=165;
+    c.font='26px system-ui';c.textAlign='center';c.textBaseline='middle';
+    c.globalAlpha=0.55+0.45*Math.sin(t*2+i);c.fillText('⭐',W/2+Math.cos(a)*r,H*0.5+Math.sin(a)*r*0.45);}
+  c.globalAlpha=1;
+  c.save();c.translate(W/2-10,H*0.56+bob);c.rotate(tilt);c.scale(1/squash,squash);
+  const S=6.4;
+  // 刺
+  c.fillStyle='#65453B';
+  for(let i=0;i<13;i++){
+    const ang=Math.PI*(1.05-i*0.085);
+    const x2=Math.cos(ang)*25*S,y2=-Math.abs(Math.sin(ang))*25*S-4*S;
+    c.beginPath();c.moveTo(Math.cos(ang+0.16)*14*S,-Math.abs(Math.sin(ang+0.16))*14*S);
+    c.quadraticCurveTo(x2*0.9,y2*0.9,x2,y2);
+    c.lineTo(Math.cos(ang-0.16)*14*S,-Math.abs(Math.sin(ang-0.16))*14*S);c.closePath();c.fill();}
+  // 身体
+  c.fillStyle='#8D6E63';c.beginPath();c.ellipse(0,0,19*S,16*S,0,0,7);c.fill();
+  // 肚皮/脸
+  c.fillStyle='#F2D7B0';c.beginPath();c.ellipse(4*S,3*S,13*S,11.5*S,0,0,7);c.fill();
+  // 耳朵
+  c.fillStyle='#E8C39A';c.beginPath();c.arc(-6*S,-10*S,3.4*S,0,7);c.fill();
+  c.fillStyle='#F28F9D';c.beginPath();c.arc(-6*S,-10*S,1.8*S,0,7);c.fill();
+  // 眼睛（眨眼）
+  const blink=(t%3.6)<0.14;
+  c.fillStyle='#2B1D18';
+  for(const ex of [-1,8]){
+    if(blink){c.fillRect((ex*S)-2.6*S,-1*S,5.2*S,1.1*S);}
+    else{c.beginPath();c.ellipse(ex*S,-1*S,2.4*S,3*S,0,0,7);c.fill();
+      c.fillStyle='#fff';c.beginPath();c.arc(ex*S+0.9*S,-2.2*S,0.9*S,0,7);c.fill();c.fillStyle='#2B1D18';}
+  }
+  // 鼻子 + 嘴
+  c.fillStyle='#49342C';c.beginPath();c.ellipse(15*S,3*S,2.6*S,2.1*S,0,0,7);c.fill();
+  c.strokeStyle='#49342C';c.lineWidth=0.9*S;c.lineCap='round';
+  c.beginPath();c.arc(8.5*S,5*S,2.6*S,0.2,Math.PI-0.6);c.stroke();
+  // 腮红
+  c.fillStyle='rgba(242,143,157,.7)';
+  c.beginPath();c.ellipse(-4*S,5*S,2.8*S,1.8*S,0,0,7);c.fill();
+  c.beginPath();c.ellipse(13*S,8*S,2.2*S,1.5*S,0,0,7);c.fill();
+  // 小脚
+  c.fillStyle='#65453B';
+  c.beginPath();c.ellipse(-8*S,15*S,4*S,2.4*S,0,0,7);c.fill();
+  c.beginPath();c.ellipse(8*S,15.5*S,4*S,2.4*S,0,0,7);c.fill();
+  c.restore();
+}
+function startCave(idx,freshRun){
+  hideAllOverlays();
+  if(freshRun||runHearts<=0){totalStars=0;setHearts(3);}
+  loadLevel(idx);
+}
+function confetti(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const box=document.createElement('div');box.className='confetti';
+  const em=['⭐','✨','💛','🌟'];
+  for(let i=0;i<22;i++){const s=document.createElement('i');s.textContent=em[i%em.length];
+    s.style.left=(Math.random()*100)+'%';s.style.animationDelay=(Math.random()*0.5)+'s';s.style.fontSize=(16+Math.random()*16)+'px';box.appendChild(s);}
+  document.body.appendChild(box);setTimeout(()=>box.remove(),2400);
+}
+// 首页
+$id('playBtn').addEventListener('click',()=>startCave(continueIdx(),false));
+$id('mapBtn').addEventListener('click',()=>showLvSel(goHome));
+$id('hollowBtn').addEventListener('click',()=>showPet(null,false,null));
+$id('howBtn').addEventListener('click',showHow);
+$id('introHomeBtn').addEventListener('click',goHome);
+// 暂停
+$id('pauseBtn').addEventListener('click',()=>{if(!G||G.phase!=='play')return;G.phase='paused';pActive=false;$id('pauseOv').style.display='flex';});
+$id('resumeBtn').addEventListener('click',()=>{$id('pauseOv').style.display='none';if(G)G.phase='play';last=0;});
+$id('pauseMapBtn').addEventListener('click',()=>showLvSel(()=>{$id('pauseOv').style.display='flex';}));
+$id('pauseHomeBtn').addEventListener('click',goHome);
+document.addEventListener('visibilitychange',()=>{ // 切到后台自动暂停
+  if(document.hidden&&G&&G.phase==='play'){G.phase='paused';pActive=false;$id('pauseOv').style.display='flex';}
+});
+// 过关
+$id('clearNextBtn').addEventListener('click',()=>{const ni=Math.min(LEVELS.length-1,G.idx+1);startCave(ni,false);});
+$id('clearPetBtn').addEventListener('click',()=>showPet(null,false,Math.min(LEVELS.length-1,G.idx+1)));
+$id('clearMapBtn').addEventListener('click',()=>showLvSel(()=>{$id('clearOv').style.display='flex';}));
+// 心用完
+$id('retryBtn').addEventListener('click',()=>startCave(G.idx,true));
+$id('overMapBtn').addEventListener('click',()=>showLvSel(()=>{$id('overOv').style.display='flex';}));
+$id('winPetBtn').addEventListener('click',()=>showPet(null,false,null));
+// 宠物小家
+$id('petBackBtn').addEventListener('click',goHome);
+function petTab(name){
+  document.querySelectorAll('#petTabs .tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.panel===name?'true':'false'));
+  document.querySelectorAll('#petOv .panel').forEach(p=>p.classList.toggle('on',p.dataset.panel===name));
+}
+let shopUnlockedUntil=0;
+$id('petTabs').addEventListener('click',e=>{
+  const b=e.target.closest('.tab');if(!b)return;
+  if(b.dataset.panel==='shop'&&Date.now()>shopUnlockedUntil){
+    parentalGate(()=>{shopUnlockedUntil=Date.now()+5*60*1000;petTab('shop');});return;
+  }
+  petTab(b.dataset.panel);
+});
+// 家长验证（儿童类 App 要求：购买前需要成人验证）
+function parentalGate(onPass){
+  const a=6+Math.floor(Math.random()*4),b=6+Math.floor(Math.random()*4),ans=a*b;
+  const words=['zero','one','two','three','four','five','six','seven','eight','nine'];
+  $id('gateQ').textContent='What is '+words[a]+' times '+words[b]+'?';
+  const opts=new Set([ans]);while(opts.size<6)opts.add(ans+(Math.floor(Math.random()*21)-10)||ans+11);
+  const arr=[...opts].sort(()=>Math.random()-0.5);
+  const box=$id('gateOpts');box.innerHTML='';
+  for(const v of arr){const btn=document.createElement('button');btn.className='btn ghost';btn.textContent=v;
+    btn.onclick=()=>{$id('gateOv').style.display='none';if(v===ans)onPass();else banner('That\'s not quite right. Ask a grown-up for help!',2000);};
+    box.appendChild(btn);}
+  $id('gateOv').style.display='flex';
+}
+$id('gateCancel').addEventListener('click',()=>{$id('gateOv').style.display='none';});
+// 设置 / 玩法 / 隐私
+function syncSound(){$id('soundSw').setAttribute('aria-checked',UI.sound?'true':'false');}
+$id('settingsBtn').addEventListener('click',()=>{syncSound();$id('settingsOv').style.display='flex';});
+$id('soundSw').addEventListener('click',()=>{UI.sound=!UI.sound;uiSave();syncSound();if(UI.sound)sfxStar();});
+$id('setCloseBtn').addEventListener('click',()=>{$id('settingsOv').style.display='none';});
+$id('setHowBtn').addEventListener('click',()=>{$id('settingsOv').style.display='none';showHow();});
+$id('privacyBtn').addEventListener('click',()=>{$id('privacyFrame').src='privacy-policy.html';$id('settingsOv').style.display='none';$id('privacyOv').style.display='flex';});
+$id('privacyCloseBtn').addEventListener('click',()=>{$id('privacyOv').style.display='none';$id('settingsOv').style.display='flex';});
+function showHow(){
+  const order=['drag','skull','bow','sling','clamp','run','time','dark','key','boss','tools'];
+  $id('howList').innerHTML=order.map(k=>{const t=TIPS[k];return '<li><span class="ic">'+t.ic+'</span><span><b>'+t.t+'.</b> '+t.d+'</span></li>';}).join('')+
+    '<li><span class="ic">⭐</span><span><b>Stars.</b> Grab stars quickly in a row for combo bonuses. Spend them in Pet Hollow.</span></li>'+
+    '<li><span class="ic">❤️</span><span><b>Hearts.</b> You start with 3. Pets and the sunflower make more while you play.</span></li>';
+  $id('howOv').style.display='flex';
+}
+$id('howCloseBtn').addEventListener('click',()=>{$id('howOv').style.display='none';});
+
+// 老玩家：已经玩过的关卡里的机制不再当作"新提示"
+if(!UI.seenTips.length&&(Pet.maxLv||0)>0){
+  for(let i=0;i<Math.min(LEVELS.length,Pet.maxLv);i++)for(const k of tipsFor(i))if(!UI.seenTips.includes(k))UI.seenTips.push(k);
+  uiSave();
+}
+resize();loadLevel(continueIdx());goHome();
+// 调试钩子：只在 URL 带 ?debug 时开启，正式版不受影响
+if(/[?&]debug\b/.test(location.search))window.__hr={getG:()=>G,Pet:()=>Pet,showClear:showClear,gameOver:gameOver,showPet:showPet,showWin:showWin,update:update,parentalGate:parentalGate,setHearts:setHearts};
 requestAnimationFrame(loop);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 
@@ -1838,7 +2090,7 @@ function addFloat(txt,x,y,color){
 }
 function drawFloats(){
   if(!G||!G.floats.length)return;
-  ctx.save();ctx.textAlign='center';ctx.font='700 20px "Shantell Sans", sans-serif';
+  ctx.save();ctx.textAlign='center';ctx.font='700 20px ui-rounded, system-ui, sans-serif';
   for(const f of G.floats){
     ctx.globalAlpha=Math.max(0,1-f.t/1.2);
     ctx.fillStyle=f.color||'#fff';
@@ -1922,8 +2174,8 @@ function updateSunUI(){
   const st=Pet.sunStage||0;
   const names=['🌰 Seed','🌱 Sprout','🌿 Bud','🌻 Blooming!'];
   const el=document.getElementById('sunTxt');
-  if(el)el.textContent=names[st]+' ｜ 💧 Water x'+(Pet.sunWater||0)+
-    (st>=3?' ｜ makes ❤️ every 8 min while you play!':' ｜ water to grow (5⭐ or 1 💧)');
+  if(el)el.textContent=names[st]+(st>=3?' · makes a ❤️ every 8 min while you play':' · water it to grow (5 ⭐ or 1 💧)')+
+    ((Pet.sunWater||0)>0?' · 💧 x'+Pet.sunWater:'');
   const wb=document.getElementById('waterBtn');
   if(wb)wb.disabled=!(st<3&&((Pet.sunWater||0)>0||Pet.stars>=5));
 }
@@ -1940,10 +2192,11 @@ function buyBomb(){
 }
 function updateToolUI(){
   const sb=document.getElementById('buyShieldBtn'),bb=document.getElementById('buyBombBtn');
-  if(sb){sb.innerHTML='🛡️ Shield<br><span style="font-size:13px;">30 ⭐</span>';sb.disabled=!(Pet.stars>=30);sb.onclick=buyShield;}
-  if(bb){bb.innerHTML='💣 Bomb<br><span style="font-size:13px;">25 ⭐</span>';bb.disabled=!(Pet.stars>=25);bb.onclick=buyBomb;}
+  // 注意：点击已经用 addEventListener 绑定了，这里不能再设 onclick，否则一次点击会买两次
+  if(sb){sb.textContent='30 ⭐';sb.disabled=!(Pet.stars>=30);}
+  if(bb){bb.textContent='25 ⭐';bb.disabled=!(Pet.stars>=25);}
   const ti=document.getElementById('toolInv');
-  if(ti)ti.textContent='Inventory: 🛡️ x'+(Pet.shield||0)+' ｜ 💣 x'+(Pet.bomb||0);
+  if(ti)ti.textContent='In your backpack: 🛡️ x'+(Pet.shield||0)+'  ·  💣 x'+(Pet.bomb||0);
 }
 function useShield(){
   if(!G||G.phase!=='play')return;
@@ -1991,27 +2244,71 @@ function bombTap(x,y){
   sfxStar();
 }
 // 选关：100 格，通一关解锁下一关
+// 洞穴地图：4 个区域，每区 25 个洞，弯弯曲曲的小路
+let mapReturn=null,mapRegion=0;
+function buildRegionTabs(){
+  const tabs=document.getElementById('regionTabs');if(!tabs)return;
+  const maxU=Math.min(LEVELS.length-1,Pet.maxLv||0);
+  tabs.innerHTML='';
+  REGIONS.forEach((r,i)=>{
+    const b=document.createElement('button');b.className='tab';b.setAttribute('role','tab');
+    const locked=r.from>maxU;
+    b.textContent=r.emoji+' '+r.name+(locked?' 🔒':'');
+    b.setAttribute('aria-selected',i===mapRegion?'true':'false');
+    b.addEventListener('click',()=>{mapRegion=i;buildRegionTabs();buildLvGrid();});
+    tabs.appendChild(b);
+  });
+}
 function buildLvGrid(){
   const grid=document.getElementById('lvGrid');
   if(!grid)return;
   grid.innerHTML='';
-  const maxU=Math.min(99,Pet.maxLv||0);
-  for(let i=0;i<100;i++){
+  const maxU=Math.min(LEVELS.length-1,Pet.maxLv||0);
+  const r=REGIONS[mapRegion];
+  const done=Math.min(r.to+1,maxU)-r.from; // 已通关的洞数
+  document.getElementById('regionDesc').textContent=Math.max(0,Math.min(25,done))+'/25 explored · '+r.desc;
+  document.getElementById('mapCount').textContent=maxU+'/100';
+  const n=r.to-r.from+1,gap=96,top=56;
+  const W=Math.min(408,(grid.clientWidth||360)-32);
+  const trail=document.createElement('div');trail.className='trail';
+  trail.style.height=(top*2+(n-1)*gap)+'px';
+  const pts=[];
+  for(let k=0;k<n;k++){const x=W/2+Math.sin(k*0.85)*(W*0.30);pts.push([x,top+k*gap]);}
+  let d='M'+pts[0][0]+' '+pts[0][1];
+  for(let k=1;k<n;k++){const p=pts[k-1],q=pts[k],my=(p[1]+q[1])/2;d+=' C'+p[0]+' '+my+' '+q[0]+' '+my+' '+q[0]+' '+q[1];}
+  trail.innerHTML='<svg viewBox="0 0 '+W+' '+(top*2+(n-1)*gap)+'" preserveAspectRatio="none" aria-hidden="true">'+
+    '<path d="'+d+'" fill="none" stroke="#E6D3B5" stroke-width="14" stroke-linecap="round"/>'+
+    '<path d="'+d+'" fill="none" stroke="#C9824B" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/></svg>';
+  let cur=null;
+  for(let k=0;k<n;k++){
+    const i=r.from+k;
     const b=document.createElement('button');
+    const st=i<maxU?'done':(i===maxU?'current':'locked');
+    const isBoss=(LEVELS[i].pinches||[]).some(p=>p.boss);
+    b.className='node '+st+(isBoss?' boss':'');
+    b.style.left=pts[k][0]+'px';b.style.top=pts[k][1]+'px';
     b.textContent=String(i+1);
-    b.className='lvbtn'+(i<=maxU?'':' locked');
-    if(i<=maxU){
-      (function(idx){
-        b.addEventListener('click',function(){
-          document.getElementById('lvSelOv').style.display='none';
-          loadLevel(idx);
-        });
-      })(i);
-    }else b.disabled=true;
-    grid.appendChild(b);
+    b.setAttribute('aria-label','Cave '+(i+1)+', '+caveTitle(i)+(isBoss?', Skull King':'')+(st==='done'?', explored':st==='current'?', next up':', locked'));
+    if(st!=='locked'){
+      b.addEventListener('click',()=>{
+        document.getElementById('lvSelOv').style.display='none';mapReturn=null;
+        startCave(i,runHearts<=0);
+      });
+    }else{b.disabled=true;}
+    if(st==='current')cur=b;
+    trail.appendChild(b);
   }
+  grid.appendChild(trail);
+  if(cur)setTimeout(()=>{grid.scrollTop=Math.max(0,parseFloat(cur.style.top)-grid.clientHeight/2);},0);
+  else grid.scrollTop=0;
 }
-function showLvSel(){buildLvGrid();document.getElementById('lvSelOv').style.display='flex';}
+function showLvSel(ret){
+  mapReturn=typeof ret==='function'?ret:null;
+  mapRegion=REGIONS.indexOf(regionOf(Math.min(LEVELS.length-1,Pet.maxLv||0)));
+  for(const o of ['homeOv','pauseOv','clearOv','overOv'])document.getElementById(o).style.display='none';
+  document.getElementById('lvSelOv').style.display='flex';
+  buildRegionTabs();buildLvGrid();
+}
 
 /* ---------- In-App Purchases (Capacitor native app only) ---------- */
 const IAP_BTNS={heart_pack_5:'iap_heart_pack',bird_food_5:'iap_bird_food',cat_food_5:'iap_cat_food',
@@ -2059,6 +2356,7 @@ async function initIAP(){
       } catch(e){ console.log('IAP product load failed:', pid, e); }
     }
     document.getElementById('iapShop').style.display = 'block';
+    document.getElementById('shopTab').style.display = ''; // 只在原生 App 显示，进入需要家长验证
     iapReady = true;
   } catch(e){
     console.log('IAP init failed:', e);

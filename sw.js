@@ -1,5 +1,5 @@
-const CACHE='hedgehog-roll-v11';
-const ASSETS=['./','./index.html','./game.js','./manifest.json','./icon-192.png','./icon-512.png'];
+const CACHE='hedgehog-roll-v12';
+const ASSETS=['./','./index.html','./game.js','./manifest.json','./icon-192.png','./icon-512.png','./privacy-policy.html'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
