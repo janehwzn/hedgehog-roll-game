@@ -3,193 +3,494 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>🦔 Hedgehog Roll</title>
+<title>Hedgehog Roll</title>
+<meta name="description" content="Tiny paws. Big adventures. Guide Pip the hedgehog through cozy caves, collect stars, and make animal friends.">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3e2723">
+<meta name="theme-color" content="#FFF7E8">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght@400;500;600;700&family=Gochi+Hand&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hedgehog Roll">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
+  /* ============ Design tokens: cozy storybook ============ */
+  :root{
+    --oat:#FFF7E8; --oat-2:#FBEBD0; --card:#FFFDF8;
+    --cocoa:#49342C; --cocoa-2:#7A5F52; --quill:#65453B;
+    --caramel:#C9824B; --mint:#A8DCCB; --mint-d:#5FA992;
+    --sky:#78BFE8; --butter:#FFD66B; --butter-d:#E9B53D;
+    --berry:#F28F9D; --berry-d:#D9677A; --moss:#7DAA78;
+    --line:rgba(73,52,44,.12);
+    --shadow:0 6px 18px rgba(73,52,44,.14), 0 2px 4px rgba(73,52,44,.08);
+    --shadow-btn:0 4px 0 rgba(73,52,44,.18);
+    --r-sm:14px; --r:20px; --r-lg:28px;
+    --font:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",-apple-system,system-ui,"Segoe UI",sans-serif;
+    --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{width:100%;height:100%;overflow:hidden;background:#f3ead8;font-family:"Gochi Hand","PingFang SC","Microsoft YaHei",cursive;touch-action:none;user-select:none;-webkit-user-select:none;color:#3e2723;}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--oat);font-family:var(--font);
+    touch-action:none;user-select:none;-webkit-user-select:none;color:var(--cocoa);-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer;}
+  button:focus-visible{outline:3px solid var(--sky);outline-offset:2px;}
   #cv{position:fixed;inset:0;display:block;touch-action:none;}
-  .pill{background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:6px 18px;font-family:"Shantell Sans",cursive;font-size:24px;font-weight:700;color:#3e2723;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(-.5deg);}
-  #hud{position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:5;}
-  #warn{position:fixed;top:calc(64px + env(safe-area-inset-top));left:0;right:0;text-align:center;z-index:6;pointer-events:none;opacity:0;transition:opacity .3s;padding:0 16px;}
-  #warn.show{opacity:1;}
-  #warn span{display:inline-block;background:#fffdf5;color:#c62828;border:2.5px solid #3e2723;font-family:"Shantell Sans",cursive;font-size:24px;font-weight:700;padding:8px 24px;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:2px 3px 0 rgba(62,39,35,.25);transform:rotate(.6deg);}
-  .overlay{position:fixed;inset:0;background:#f3ead8;background-image:radial-gradient(rgba(62,39,35,.06) 1.5px,transparent 1.5px);background-size:26px 26px;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#3e2723;}
-  .overlay h1{font-family:"Shantell Sans",cursive;font-size:52px;font-weight:700;color:#3e2723;margin:10px 0;transform:rotate(-1.2deg);}
-  .overlay h1 .hl{background:linear-gradient(transparent 55%,#ffca28 55%,#ffca28 92%,transparent 92%);padding:0 8px;}
-  .overlay h2{font-family:"Shantell Sans",cursive;font-size:32px;font-weight:700;color:#5d4037;margin:4px 0 10px;transform:rotate(.8deg);}
-  .overlay p{font-size:21px;color:#4e342e;line-height:1.6;margin:6px 0;max-width:360px;}
-  .overlay .big{font-size:68px;filter:drop-shadow(2px 3px 0 rgba(62,39,35,.2));}
-  .btn{margin-top:18px;background:#ffca28;color:#3e2723;border:3px solid #3e2723;font-family:"Shantell Sans",cursive;font-size:32px;font-weight:700;padding:8px 44px;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;box-shadow:3px 4px 0 rgba(62,39,35,.35);cursor:pointer;transition:transform .1s;transform:rotate(-1deg);}
-  .btn:nth-of-type(even){transform:rotate(1deg);}
-  .btn:active{transform:rotate(-1deg) scale(.94);box-shadow:1px 2px 0 rgba(62,39,35,.35);}
-  .rule{background:#fffdf5;border:3px solid #3e2723;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;padding:14px 20px;margin:8px 0;font-size:20px;color:#4e342e;text-align:left;box-shadow:3px 4px 0 rgba(62,39,35,.2);max-width:380px;line-height:1.7;transform:rotate(-.6deg);}
-  .hint{background:#fffdf5;border:3px solid #3e2723;border-radius:225px 15px 255px 15px/15px 255px 15px 225px;padding:12px 20px;margin:8px 0;font-size:20px;color:#2e7d32;max-width:380px;line-height:1.6;box-shadow:3px 4px 0 rgba(62,39,35,.2);transform:rotate(.6deg);}
-  .btn.sm{font-size:24px;padding:6px 22px;margin:6px 4px;}
-  .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
-  .btn:disabled{opacity:.45;box-shadow:none;filter:grayscale(.5);}
-  .shoprow{display:flex;align-items:center;gap:10px;justify-content:center;background:#fffdf5;border:2.5px solid #3e2723;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;padding:8px 10px 8px 20px;margin:8px 0;font-size:20px;color:#4e342e;box-shadow:2px 3px 0 rgba(62,39,35,.2);}
-  #petCv{border-radius:15px 225px 15px 255px/225px 15px 255px 15px;box-shadow:3px 4px 0 rgba(62,39,35,.3);max-width:92vw;height:auto;border:3px solid #3e2723;}
-  #toolBar{position:fixed;top:calc(64px + env(safe-area-inset-top));right:10px;display:none;flex-direction:column;gap:8px;z-index:5;}
-  #toolBar .btn{margin:0;font-size:22px;padding:6px 14px;}
-  #toolBar .btn.aim{background:#ef5350;color:#fff;}
-  #lvGrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;max-width:400px;width:92vw;max-height:50vh;overflow-y:auto;padding:10px;background:#fffdf5;border:3px solid #3e2723;border-radius:15px 225px 15px 255px/225px 15px 255px 15px;}
-  .lvbtn{font-family:"Shantell Sans",cursive;font-weight:700;font-size:15px;background:#ffca28;border:2.5px solid #3e2723;border-radius:10px;padding:7px 0;cursor:pointer;color:#3e2723;}
-  .lvbtn.locked{background:#d7ccc8;color:#a1887f;cursor:default;}
-  #overClose{font-size:22px;color:#ef6c00;font-weight:700;margin:4px 0;}
-  #evoCv{border-radius:225px 15px 255px 15px/15px 255px 15px 225px;box-shadow:3px 4px 0 rgba(62,39,35,.3);border:3px solid #3e2723;}
-  #petStats{font-family:"Shantell Sans",cursive;font-size:30px;font-weight:700;color:#3e2723;margin:10px 0 2px;transform:rotate(-.8deg);}
-  #petFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
-  #petCatFedTxt{font-size:14px;font-weight:700;color:#d7ccc8;margin:6px 0 2px;}
+
+  /* ============ Buttons ============ */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:12px 28px;
+    border-radius:999px;background:var(--butter);color:var(--cocoa);font-size:20px;font-weight:800;letter-spacing:.2px;
+    box-shadow:var(--shadow-btn);transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(73,52,44,.18);}
+  .btn:disabled{opacity:.45;box-shadow:none;transform:none;}
+  .btn.block{width:100%;}
+  .btn.big{min-height:62px;font-size:24px;}
+  .btn.mint{background:var(--mint);}
+  .btn.berry{background:var(--berry);color:#fff;}
+  .btn.ghost{background:var(--card);box-shadow:inset 0 0 0 2px var(--line);}
+  .btn.sm{min-height:44px;padding:8px 16px;font-size:16px;}
+  .btn small{display:block;font-size:12px;font-weight:700;opacity:.75;}
+  .btn .stack{display:flex;flex-direction:column;line-height:1.1;}
+  .iconbtn{width:44px;height:44px;border-radius:50%;background:rgba(255,253,248,.9);box-shadow:var(--shadow);
+    display:inline-flex;align-items:center;justify-content:center;font-size:20px;}
+  .linkbtn{font-size:15px;font-weight:700;color:var(--cocoa-2);padding:10px;min-height:44px;text-decoration:underline;text-underline-offset:3px;}
+
+  /* ============ Screens & sheets ============ */
+  .overlay{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
+    padding:calc(16px + var(--sat)) 16px calc(16px + var(--sab));text-align:center;}
+  .screen{background:var(--oat);
+    background-image:radial-gradient(circle at 20% 10%,rgba(255,214,107,.25),transparent 40%),
+      radial-gradient(circle at 85% 85%,rgba(168,220,203,.35),transparent 45%);overflow-y:auto;}
+  .scrim{background:rgba(42,30,26,.58);justify-content:flex-end;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+  .sheet{width:100%;max-width:420px;background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow);
+    padding:22px 20px 20px;animation:rise .28s cubic-bezier(.2,.9,.3,1.2);max-height:100%;overflow-y:auto;}
+  .scrim.center{justify-content:center;}
+  @keyframes rise{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .eyebrow{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--caramel);}
+  h1.title{font-size:28px;font-weight:900;line-height:1.12;margin:4px 0 6px;color:var(--cocoa);text-wrap:balance;}
+  .sub{font-size:16px;color:var(--cocoa-2);line-height:1.45;}
+  .stack-col{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:16px;}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;width:100%;text-align:left;}
+  .tip{display:flex;gap:12px;align-items:flex-start;background:#EAF6F1;border-radius:var(--r-sm);padding:10px 14px;margin-top:12px;text-align:left;}
+  #introHintBox span{font-size:13px;}
+  #startOv .stack-col{margin-top:20px;}
+  .tip .ic{font-size:26px;line-height:1;}
+  .tip b{display:block;font-size:15px;}
+  .tip span{font-size:14px;color:var(--cocoa-2);line-height:1.4;}
+  .tip.new{background:#FFF1C9;}
+  .tip.new b::after{content:"NEW";font-size:10px;font-weight:900;background:var(--berry);color:#fff;border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px;}
+
+  /* ============ Home ============ */
+  #homeOv{justify-content:space-between;}
+  .home-top{width:100%;display:flex;justify-content:space-between;align-items:center;}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border-radius:999px;padding:8px 14px;font-weight:800;font-size:16px;box-shadow:var(--shadow);}
+  .hero{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;width:100%;padding-bottom:4vh;}
+  #heroCv{width:min(320px,82vw);height:auto;aspect-ratio:440/400;margin-bottom:-18px;}
+  .logo{font-size:44px;font-weight:900;letter-spacing:-.5px;line-height:1;margin-top:4px;}
+  .logo .h{color:var(--caramel);}
+  .tagline{font-size:18px;font-weight:700;color:var(--cocoa-2);margin-top:8px;}
+  .home-actions{width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;}
+  .home-actions .row{flex-wrap:nowrap;}
+  .home-actions .row .btn{flex:1;font-size:17px;padding:10px 8px;white-space:nowrap;}
+  .sheet .row .btn{font-size:16px;padding:10px 8px;white-space:nowrap;}
+  .lockhint{font-size:11px;font-weight:700;opacity:.7;display:block;}
+
+  /* ============ HUD ============ */
+  #hud{position:fixed;top:calc(10px + var(--sat));left:10px;right:10px;display:flex;gap:8px;align-items:center;pointer-events:none;z-index:5;}
+  .pill{background:rgba(255,253,248,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:999px;
+    padding:8px 14px;font-size:17px;font-weight:800;box-shadow:var(--shadow);white-space:nowrap;min-height:40px;display:flex;align-items:center;}
+  #hLevel{flex:1;justify-content:center;overflow:hidden;text-overflow:ellipsis;}
+  #hHeart{color:var(--berry-d);letter-spacing:1px;}
+  #pauseBtn{pointer-events:auto;}
+  #warn{position:fixed;top:calc(62px + var(--sat));left:0;right:0;text-align:center;z-index:6;pointer-events:none;opacity:0;transform:translateY(-6px);transition:opacity .25s, transform .25s;padding:0 16px;}
+  #warn.show{opacity:1;transform:none;}
+  #warn span{display:inline-block;max-width:400px;background:rgba(255,253,248,.96);color:var(--cocoa);font-size:16px;font-weight:700;
+    padding:10px 16px;border-radius:var(--r-sm);box-shadow:var(--shadow);line-height:1.35;}
+  #toolBar{position:fixed;bottom:calc(16px + var(--sab));right:14px;display:none;flex-direction:column;gap:10px;z-index:5;}
+  #toolBar .btn{min-width:64px;min-height:56px;padding:6px 12px;font-size:20px;border-radius:20px;}
+  #toolBar .btn.aim{background:var(--berry);color:#fff;}
+  #toolBar .n{font-size:14px;font-weight:900;margin-left:2px;}
+
+  /* ============ Victory / oops ============ */
+  .big-emoji{font-size:64px;line-height:1;animation:bounce 1.2s ease-in-out infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .stats{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .stat{background:var(--oat);border-radius:999px;padding:8px 14px;display:flex;align-items:center;gap:6px;}
+  .stat b{font-size:18px;}
+  .stat span{font-size:12px;font-weight:700;color:var(--cocoa-2);}
+  .stat.hero-stat{background:#FFF1C9;padding:10px 18px;}
+  .stat.hero-stat b{font-size:24px;}
+  #clearOv .big-emoji{font-size:54px;}
+  #clearOv .stack-col{margin-top:14px;}
+  #clearNextBtn{min-height:64px;font-size:24px;}
+  #overClose{font-size:15px;font-weight:800;color:var(--caramel);margin-top:8px;min-height:1px;}
+
+  /* ============ Cave map ============ */
+  #mapOv{padding-left:0;padding-right:0;}
+  .topbar{width:100%;max-width:440px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px;gap:10px;}
+  .topbar h2{font-size:22px;font-weight:900;}
+  .tabs{display:flex;gap:6px;overflow-x:auto;width:100%;max-width:440px;padding:4px 16px 10px;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:var(--card);font-size:14px;font-weight:800;box-shadow:inset 0 0 0 2px var(--line);min-height:40px;}
+  .tab[aria-selected="true"]{background:var(--cocoa);color:var(--oat);box-shadow:none;}
+  .region-head{width:100%;max-width:440px;padding:0 16px;text-align:left;}
+  .region-head p{font-size:13px;color:var(--cocoa-2);line-height:1.35;}
+  #lvGrid{position:relative;width:100%;max-width:440px;flex:1;overflow-y:auto;padding:12px 16px 24px;}
+  .trail{position:relative;}
+  .trail svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .node{position:absolute;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;font-size:18px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn);}
+  .node.done{background:var(--mint);}
+  .node.done::after{content:"✓";position:absolute;right:-2px;top:-2px;width:20px;height:20px;border-radius:50%;background:var(--mint-d);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  .node.current{background:var(--butter);width:82px;height:82px;margin:-41px 0 0 -41px;font-size:24px;outline:4px solid var(--caramel);outline-offset:4px;animation:pulse 1.6s ease-in-out infinite;z-index:2;}
+  .node.current::before{content:"🦔";position:absolute;top:-34px;font-size:30px;}
+  .node.current::after{content:"Next";position:absolute;bottom:-30px;font-size:12px;font-weight:900;background:var(--cocoa);color:var(--oat);border-radius:99px;padding:2px 8px;}
+  .node.locked{background:#EADFCD;color:#A8968A;box-shadow:none;}
+  .node.locked::after{content:"🔒";position:absolute;right:-4px;bottom:-4px;font-size:14px;}
+  .node.boss{border:3px dashed var(--berry-d);}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,214,107,.7),var(--shadow-btn)}50%{box-shadow:0 0 0 10px rgba(255,214,107,0),var(--shadow-btn)}}
+  .legend{display:flex;gap:12px;justify-content:center;font-size:11px;font-weight:700;color:var(--cocoa-2);padding:4px 0 0;}
+
+  /* ============ Pet Hollow ============ */
+  #petOv{padding-left:0;padding-right:0;}
+  .pet-body{width:100%;max-width:440px;flex:1;overflow-y:auto;padding:0 16px 12px;}
+  #petCv{width:100%;height:auto;border-radius:var(--r);box-shadow:var(--shadow);display:block;}
+  #petCeremonyTxt{font-size:16px;font-weight:700;color:var(--cocoa-2);margin:4px 0 10px;}
+  #petNames{font-size:18px;font-weight:900;margin:12px 0 0;color:var(--cocoa);}
+  #petStats{display:none;}
+  .panel{display:none;}
+  .panel.on{display:block;}
+  .item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 14px;margin-top:10px;text-align:left;}
+  .item .ic{font-size:32px;width:44px;text-align:center;}
+  .item .tx{flex:1;}
+  .item .tx b{display:block;font-size:16px;}
+  .item .tx span{font-size:13px;color:var(--cocoa-2);line-height:1.35;display:block;}
+  .item .btn{min-height:44px;padding:8px 14px;font-size:15px;}
+  .progress{height:8px;background:var(--oat-2);border-radius:99px;margin-top:6px;overflow:hidden;}
+  .progress i{display:block;height:100%;background:var(--mint-d);border-radius:99px;transition:width .3s;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .grid2 .btn{border-radius:var(--r);min-height:70px;flex-direction:column;gap:2px;font-size:16px;}
+  .grid2 .btn small{font-size:12px;}
+  #petFedTxt,#petCatFedTxt{font-size:13px;color:var(--cocoa-2);}
+  #petFirefly,#petHeartRate,#toolInv,#sunTxt{font-size:12px;color:var(--cocoa-2);margin-top:6px;line-height:1.4;}
+  .pet-foot{width:100%;max-width:440px;padding:10px 16px 0;}
+  .empty{background:var(--card);border-radius:var(--r);padding:16px;margin-top:10px;font-size:14px;color:var(--cocoa-2);box-shadow:var(--shadow);}
+  #iapStatus{font-size:13px;color:var(--cocoa-2);margin-top:8px;}
+  .notice{font-size:12px;color:var(--cocoa-2);margin-top:10px;line-height:1.4;}
+
+  /* ============ Gate ============ */
+  .gate-q{font-size:22px;font-weight:900;margin:14px 0 4px;}
+  .gate-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+  .gate-opts .btn{border-radius:var(--r-sm);padding:10px 0;}
+
+  /* ============ Misc ============ */
+  #evoCv{border-radius:var(--r);box-shadow:var(--shadow);margin-top:12px;width:200px;height:160px;}
+  .toggle{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:16px;font-weight:700;text-align:left;}
+  .switch{width:52px;height:32px;border-radius:99px;background:#DCCFBE;position:relative;transition:background .2s;flex:0 0 auto;}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s;}
+  .switch[aria-checked="true"]{background:var(--mint-d);}
+  .switch[aria-checked="true"]::after{transform:translateX(20px);}
+  .howto li{list-style:none;display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:15px;line-height:1.4;text-align:left;border-bottom:1px solid var(--line);}
+  .howto li .ic{font-size:22px;width:30px;text-align:center;flex:0 0 auto;}
+  #privacyFrame{width:100%;height:60vh;border:0;border-radius:var(--r-sm);background:#fff;}
+  .credit{font-size:13px;color:var(--cocoa-2);margin-top:14px;line-height:1.5;}
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden;}
+  .confetti i{position:absolute;top:-20px;font-style:normal;font-size:22px;animation:fall 1.6s ease-in forwards;}
+  @keyframes fall{to{transform:translateY(105vh) rotate(260deg);opacity:.2}}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important;}
+  }
+  @media (max-height:700px){ #heroCv{width:230px;} .logo{font-size:38px;} }
 </style>
 </head>
 <body>
-<canvas id="cv"></canvas>
+<canvas id="cv" aria-label="Cave game area"></canvas>
 
+<!-- ===== HUD ===== -->
 <div id="hud">
-  <div class="pill" id="hHeart">❤❤❤</div>
-  <div class="pill" id="hLevel">Level 1</div>
+  <div class="pill" id="hHeart" aria-label="Hearts">❤❤❤</div>
+  <div class="pill" id="hLevel">Cave 1</div>
   <div class="pill" id="hStar">⭐ 0</div>
+  <button class="iconbtn" id="pauseBtn" aria-label="Pause">⏸</button>
 </div>
-<div id="warn"><span id="warnTxt"></span></div>
+<div id="warn" role="status" aria-live="polite"><span id="warnTxt"></span></div>
 <div id="toolBar">
-  <button class="btn sm" id="shieldBtn">🛡️<span id="shieldN">1</span></button>
-  <button class="btn sm" id="bombBtn">💣<span id="bombN">1</span></button>
+  <button class="btn" id="shieldBtn" aria-label="Use shield">🛡️<span class="n" id="shieldN">1</span></button>
+  <button class="btn" id="bombBtn" aria-label="Use bomb">💣<span class="n" id="bombN">1</span></button>
 </div>
 
-<div class="overlay" id="startOv">
-  <div class="big">🦔</div>
-  <h1 id="introTitle">Hedgehog Roll</h1>
-  <h2 id="introLevel">Level 1 · Follow the Arrows</h2>
-  <p id="introSub">The cave adventure begins!</p>
-  <div class="hint" id="introHint">🔭 Camera says: Follow the blue arrows through the cave, all the way up!</div>
-  <div class="rule" id="introRules">
-    🦔 You are a little hedgehog, <b>drag it with your finger</b><br>
-    ➡️ Follow the <b>blue arrows</b> through the cave, going up<br>
-    💀 Crawl through the <b>skull's mouth</b><br>
-    🦷 From Level 6, <b>skull clamps</b> snap shut — time your dash!<br>
-    🏹 From <b>Level 2</b>, <b>bows</b> and <b>slingshots</b> — watch out!<br>
-    🏃 From Level 9, <b>clamps run</b> — time it right!<br>
-    🔦 Level 10 <b>Dark Cave</b>: catch <b>fireflies</b> to grow your light!<br>
-    🔑 Level 11: find the <b>key</b> first, then open the <b>stone door</b>!<br>
-    👑 Level 12: <b>Skull King</b> — dodge the double jaws and mini skeletons!<br>
-    ⭐ Grab stars for points, reach the <b>exit</b> to clear!<br>
-    💖 Pets make <b>❤️</b> while you play — feed them to speed up!<br>
-    🗺️ <b>100 mazes</b> — tap 🗺️ Levels to jump to any unlocked maze!<br>
-    🛡️ <b>Shield</b> = 2s protection, 💣 <b>bomb</b> blows up one hazard — grab them in the Pet Home!<br>
-    🌻 Water the <b>sunflower</b> — it makes ❤️ while you play!
+<!-- ===== Home ===== -->
+<div class="overlay screen" id="homeOv">
+  <div class="home-top">
+    <div class="chip" aria-label="Stars"><span>⭐</span><span id="homeStars">0</span></div>
+    <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
   </div>
-  <div class="shoprow" id="heartShop">
-    <span id="shopInfo"></span>
-    <button class="btn sm" id="heartBtn">20⭐ → 1❤️</button>
+  <div class="hero">
+    <canvas id="heroCv" width="440" height="400" aria-hidden="true"></canvas>
+    <div class="logo">Hedgehog <span class="h">Roll</span></div>
+    <div class="tagline">Tiny paws. Big adventures.</div>
   </div>
-  <button class="btn" id="startBtn">Start Rolling!</button>
-  <button class="btn sm" id="lvSelBtn">🗺️ Levels</button>
-</div>
-
-<div class="overlay" id="overOv" style="display:none;">
-  <div class="big">😵</div>
-  <h1><span class="hl">The hedgehog fainted!</span></h1>
-  <p id="overStars"></p>
-  <p id="overClose"></p>
-  <p>Out of hearts! Trade stars for hearts to keep going!</p>
-  <div class="btnrow">
-    <button class="btn sm" id="reviveBtn">20⭐ → 1❤️<br><span style="font-size:13px;">Continue level</span></button>
-    <button class="btn sm" id="restartBtn">From Level 1<br><span style="font-size:13px;">Restart</span></button>
-  </div>
-</div>
-
-<div class="overlay" id="winOv" style="display:none;">
-  <div class="big">🎉</div>
-  <h1><span class="hl">All 100 Mazes Cleared!</span></h1>
-  <p id="winStats"></p>
-  <p style="font-size:15px;color:#a1887f;">The hedgehog rolls amazingly! 🦔💨</p>
-  <button class="btn" id="againBtn">Play Again</button>
-</div>
-
-<div class="overlay" id="petOv" style="display:none;">
-  <h1 id="petTitle">🎉 New Pet!</h1>
-  <p id="petCeremonyTxt">The hedgehog left all the caves!<br>A little bird fell from the sky and became its friend —</p>
-  <canvas id="petCv" width="360" height="230"></canvas>
-  <h2 id="petNames" style="font-size:20px;color:#ffcc80;margin:8px 0 0;"></h2>
-  <p id="petStats"></p>
-  <p id="petFedTxt"></p>
-  <div class="btnrow">
-    <button class="btn sm" id="exchangeBtn">Bird food<br><span style="font-size:13px;">10 ⭐ → 1 🍖</span></button>
-    <button class="btn sm" id="feedBtn">Feed Birdie 🍖</button>
-  </div>
-  <p id="petCatFedTxt"></p>
-  <div class="btnrow" id="catRow" style="display:none;">
-    <button class="btn sm" id="exchangeCatBtn">Cat food<br><span style="font-size:13px;">10 ⭐ → 1 🐟</span></button>
-    <button class="btn sm" id="feedCatBtn">Feed Wesley 🐟</button>
-  </div>
-  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🌻 Sunflower</h2>
-  <p id="sunTxt" style="font-size:14px;color:#a1887f;margin:0 0 6px;"></p>
-  <div class="btnrow">
-    <button class="btn sm" id="waterBtn">💧 Water<br><span style="font-size:13px;">5 ⭐ / 1 💧</span></button>
-  </div>
-  <p id="petFirefly" style="font-size:14px;color:#9ccc65;"></p>
-  <p id="petHeartRate" style="font-size:14px;color:#ff8a80;font-weight:700;"></p>
-  <div class="btnrow">
-    <button class="btn sm" id="sleepBtn" style="display:none;background:#7e57c2;">😴 Sleep</button>
-  </div>
-  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🎁 Treasure Box</h2>
-  <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">Buy outfits, tap to wear / remove</p>
-  <div class="btnrow">
-    <button class="btn sm" id="shop_nest">🪹 Nest</button>
-    <button class="btn sm" id="shop_hat">🎩 Hat</button>
-  </div>
-  <div class="btnrow">
-    <button class="btn sm" id="shop_scarf">🧣 Scarf</button>
-    <button class="btn sm" id="shop_pajamas">🌙 Pajamas</button>
-  </div>
-  <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">🧰 Tool Shed</h2>
-  <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">🛡️ Shield: 2s protection · 💣 Bomb: blow up one hazard</p>
-  <div class="btnrow">
-    <button class="btn sm" id="buyShieldBtn">🛡️ Shield</button>
-    <button class="btn sm" id="buyBombBtn">💣 Bomb</button>
-  </div>
-  <p id="toolInv" style="font-size:14px;color:#a1887f;margin:6px 0;"></p>
-  <div id="iapShop" style="display:none;">
-    <h2 style="font-size:18px;color:#ffcc80;margin:12px 0 4px;">💎 Premium Shop</h2>
-    <p style="font-size:13px;color:#a1887f;margin:0 0 6px;">Real-money treats for your pets</p>
-    <div class="btnrow">
-      <button class="btn sm" id="iap_heart_pack">💖 5 Hearts</button>
-      <button class="btn sm" id="iap_bird_food">🍖 5 Bird Food</button>
+  <div class="home-actions">
+    <button class="btn big block" id="playBtn"><span class="stack">Let's Roll!<small id="playSub">Cave 1</small></span></button>
+    <div class="row">
+      <button class="btn mint" id="mapBtn">🗺️ Cave Map</button>
+      <button class="btn mint" id="hollowBtn"><span class="stack">🐾 Pet Hollow<span class="lockhint" id="hollowHint"></span></span></button>
     </div>
-    <div class="btnrow">
-      <button class="btn sm" id="iap_cat_food">🐟 5 Cat Food</button>
-    </div>
-    <div class="btnrow">
-      <button class="btn sm" id="iap_water_pack">💧 5 Water</button>
-      <button class="btn sm" id="iap_shield_pack">🛡️ 3 Shields</button>
-      <button class="btn sm" id="iap_bomb_pack">💣 3 Bombs</button>
-    </div>
-    <p id="iapStatus" style="font-size:12px;color:#a1887f;margin:6px 0;"></p>
+    <button class="linkbtn" id="howBtn">How to play</button>
   </div>
-  <button class="btn" id="petNextBtn" style="display:none;background:#66bb6a;box-shadow:0 4px 12px rgba(102,187,106,.5);">Continue ▶</button>
-  <button class="btn" id="petAgainBtn">Play Again</button>
 </div>
 
-<div class="overlay" id="lvSelOv" style="display:none;">
-  <div class="big">🗺️</div>
-  <h1>Pick a Maze</h1>
-  <p>Clear a maze to unlock the next one!</p>
+<!-- ===== Pre-level card ===== -->
+<div class="overlay scrim" id="startOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-labelledby="introLevel">
+    <div class="eyebrow" id="introTitle">Mossy Caves</div>
+    <h1 class="title" id="introLevel">Cave 1</h1>
+    <p class="sub" id="introSub">The cave adventure begins!</p>
+    <div id="introTips"></div>
+    <div class="tip" id="introHintBox"><div class="ic">🔭</div><div><b>Camera says</b><span id="introHint"></span></div></div>
+    <div class="row" id="heartShop" style="margin-top:14px;align-items:center;">
+      <span class="sub" id="shopInfo" style="font-weight:800;"></span>
+      <button class="btn sm ghost" id="heartBtn">20⭐ → 1❤️</button>
+    </div>
+    <div class="stack-col">
+      <button class="btn big block" id="startBtn">Go!</button>
+      <button class="linkbtn" id="introHomeBtn">Back home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Pause ===== -->
+<div class="overlay scrim center" id="pauseOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-label="Paused">
+    <div class="big-emoji" style="animation:none">☕</div>
+    <h1 class="title">Little break</h1>
+    <p class="sub">Pip is catching its breath.</p>
+    <div class="stack-col">
+      <button class="btn big block" id="resumeBtn">Keep rolling</button>
+      <button class="btn ghost block" id="pauseMapBtn">🗺️ Cave Map</button>
+      <button class="btn ghost block" id="pauseHomeBtn">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Cave cleared ===== -->
+<div class="overlay scrim" id="clearOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-labelledby="clearTitle">
+    <div class="big-emoji">🎉</div>
+    <h1 class="title" id="clearTitle">Cave conquered!</h1>
+    <p class="sub" id="clearSub">Pip found the glowing exit.</p>
+    <div class="stats">
+      <div class="stat hero-stat"><b>⭐</b><b id="clearStars">0/0</b><span>stars found</span></div>
+      <div class="stat"><b id="clearHearts" style="color:var(--berry-d)">❤❤❤</b><span>left</span></div>
+      <div class="stat"><span>Star jar</span><b id="clearBank">0</b></div>
+    </div>
+    <div class="stack-col">
+      <button class="btn big block" id="clearNextBtn">Next Cave ▶</button>
+      <div class="row" style="flex-wrap:nowrap;">
+        <button class="btn mint" style="flex:1" id="clearPetBtn">🐾 Pet Hollow</button>
+        <button class="btn ghost" style="flex:1" id="clearMapBtn">🗺️ Map</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Oops (out of hearts) ===== -->
+<div class="overlay scrim" id="overOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-labelledby="overTitle">
+    <div class="big-emoji" style="animation:none">😴</div>
+    <h1 class="title" id="overTitle">Oops! Pip needs a little rest</h1>
+    <p class="sub">Every explorer bumps into things. Ready to try again?</p>
+    <p id="overClose"></p>
+    <div class="stats"><div class="stat"><span>Star jar</span><b id="overStars">⭐ 0</b></div></div>
+    <div class="stack-col">
+      <button class="btn big block" id="retryBtn">Try this cave again</button>
+      <button class="btn mint block" id="reviveBtn"><span class="stack">Keep going with 1 ❤️<small>uses 20 ⭐ · keep this run's progress</small></span></button>
+      <div class="row" style="flex-wrap:nowrap;">
+        <button class="btn ghost" style="flex:1" id="overMapBtn">🗺️ Map</button>
+        <button class="btn ghost" style="flex:1" id="restartBtn">Start at Cave 1</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== All caves cleared ===== -->
+<div class="overlay scrim center" id="winOv" style="display:none;">
+  <div class="sheet" role="dialog">
+    <div class="big-emoji">👑</div>
+    <h1 class="title">All 100 caves explored!</h1>
+    <p class="sub" id="winStats"></p>
+    <p class="sub" style="margin-top:6px;">Pip is a true Roll Master. 🦔💨</p>
+    <div class="stack-col">
+      <button class="btn big block" id="againBtn">Play again</button>
+      <button class="btn mint block" id="winPetBtn">🐾 Visit Pet Hollow</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Cave map ===== -->
+<div class="overlay screen" id="lvSelOv" style="display:none;">
+  <div class="topbar">
+    <button class="iconbtn" id="lvCloseBtn" aria-label="Close map">✕</button>
+    <h2>Choose a Cave</h2>
+    <div class="chip" id="mapCount">0/100</div>
+  </div>
+  <div class="tabs" role="tablist" id="regionTabs"></div>
+  <div class="region-head"><p id="regionDesc"></p></div>
+  <div class="legend"><span>✓ explored</span><span>🦔 you are here</span><span>🔒 locked</span></div>
   <div id="lvGrid"></div>
-  <button class="btn" id="lvCloseBtn">Close</button>
 </div>
 
-<div class="overlay" id="evoOv" style="display:none;">
-  <div class="big">✨</div>
-  <h1 id="evoTitle">✨ Grown Up!</h1>
-  <canvas id="evoCv" width="200" height="160"></canvas>
-  <p id="evoTxt">Ate 10 bird food and grew up!<br>Black body, golden head and feathers, so cool!</p>
-  <button class="btn" id="evoOkBtn">Awesome!</button>
+<!-- ===== Pet Hollow ===== -->
+<div class="overlay screen" id="petOv" style="display:none;">
+  <div class="topbar">
+    <button class="iconbtn" id="petBackBtn" aria-label="Back home">‹</button>
+    <h2 id="petTitle">Pet Hollow</h2>
+    <div class="chip"><span>⭐</span><span id="petStarChip">0</span></div>
+  </div>
+  <div class="tabs" role="tablist" id="petTabs">
+    <button class="tab" role="tab" data-panel="friends" aria-selected="true">Friends</button>
+    <button class="tab" role="tab" data-panel="treats" aria-selected="false">Treats</button>
+    <button class="tab" role="tab" data-panel="wardrobe" aria-selected="false">Wardrobe</button>
+    <button class="tab" role="tab" data-panel="tools" aria-selected="false">Tools</button>
+    <button class="tab" role="tab" data-panel="shop" aria-selected="false" id="shopTab" style="display:none;">Shop 🔒</button>
+  </div>
+  <div class="pet-body">
+    <!-- Friends -->
+    <div class="panel on" data-panel="friends">
+      <p id="petCeremonyTxt"></p>
+      <canvas id="petCv" width="360" height="230" aria-label="Your pets. Tap them to say hi!"></canvas>
+      <h2 id="petNames"></h2>
+      <p id="petStats"></p>
+      <div id="noPets" class="empty">🥚 A new friend is waiting deep in <b>Cave 5</b>. Keep exploring!</div>
+      <p id="petHeartRate"></p>
+      <p id="petFirefly"></p>
+      <div class="item" id="sleepItem">
+        <div class="ic">😴</div>
+        <div class="tx"><b>Nap time</b><span>Your friends get sleepy after 3 caves. Dreams bring gifts!</span></div>
+        <button class="btn sm" id="sleepBtn" style="display:none;">Sleep</button>
+      </div>
+      <div class="item">
+        <div class="ic">🌻</div>
+        <div class="tx"><b>Sunflower</b><span id="sunTxt"></span></div>
+        <button class="btn sm mint" id="waterBtn">💧 Water</button>
+      </div>
+    </div>
+    <!-- Treats -->
+    <div class="panel" data-panel="treats">
+      <div class="item">
+        <div class="ic">🐦</div>
+        <div class="tx"><b>Birdie</b><span id="petFedTxt"></span><div class="progress"><i id="birdBar"></i></div></div>
+      </div>
+      <div class="grid2">
+        <button class="btn ghost" id="exchangeBtn">🍖 Make bird food<small>10 ⭐ → 1 🍖</small></button>
+        <button class="btn" id="feedBtn">Feed Birdie<small id="foodCount">🍖 x0</small></button>
+      </div>
+      <div id="catRow" style="display:none;">
+        <div class="item">
+          <div class="ic">🐱</div>
+          <div class="tx"><b>Wesley</b><span id="petCatFedTxt"></span><div class="progress"><i id="catBar"></i></div></div>
+        </div>
+        <div class="grid2">
+          <button class="btn ghost" id="exchangeCatBtn">🐟 Make cat food<small>10 ⭐ → 1 🐟</small></button>
+          <button class="btn" id="feedCatBtn">Feed Wesley<small id="catFoodCount">🐟 x0</small></button>
+        </div>
+      </div>
+      <div id="noTreats" class="empty">Treats unlock when you meet your first friend in Cave 5.</div>
+    </div>
+    <!-- Wardrobe -->
+    <div class="panel" data-panel="wardrobe">
+      <p class="sub" style="margin-top:4px;">Buy cozy things with stars. Tap again to wear or take off. Outfits help pets make ❤️ faster!</p>
+      <div class="grid2">
+        <button class="btn ghost" id="shop_nest">🪹 Nest</button>
+        <button class="btn ghost" id="shop_hat">🎩 Hat</button>
+        <button class="btn ghost" id="shop_scarf">🧣 Scarf</button>
+        <button class="btn ghost" id="shop_pajamas">🌙 Pajamas</button>
+      </div>
+    </div>
+    <!-- Tools -->
+    <div class="panel" data-panel="tools">
+      <div class="item">
+        <div class="ic">🛡️</div>
+        <div class="tx"><b>Shield</b><span>2 seconds of bubbly protection.</span></div>
+        <button class="btn sm" id="buyShieldBtn">30 ⭐</button>
+      </div>
+      <div class="item">
+        <div class="ic">💣</div>
+        <div class="tx"><b>Bomb</b><span>Tap a skull, bow or slingshot to pop it.</span></div>
+        <button class="btn sm" id="buyBombBtn">25 ⭐</button>
+      </div>
+      <p id="toolInv"></p>
+    </div>
+    <!-- Premium shop (native app only, behind parental gate) -->
+    <div class="panel" data-panel="shop">
+      <div id="iapShop" style="display:none;">
+        <p class="sub">Real-money items. A grown-up confirmed access.</p>
+        <div class="grid2">
+          <button class="btn ghost" id="iap_heart_pack">💖 5 Hearts</button>
+          <button class="btn ghost" id="iap_bird_food">🍖 5 Bird Food</button>
+          <button class="btn ghost" id="iap_cat_food">🐟 5 Cat Food</button>
+          <button class="btn ghost" id="iap_water_pack">💧 5 Water</button>
+          <button class="btn ghost" id="iap_shield_pack">🛡️ 3 Shields</button>
+          <button class="btn ghost" id="iap_bomb_pack">💣 3 Bombs</button>
+        </div>
+        <p id="iapStatus"></p>
+        <p class="notice">Purchases are optional. Everything in Hedgehog Roll can be earned with stars.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pet-foot">
+    <button class="btn big block" id="petNextBtn" style="display:none;">Continue ▶</button>
+    <button class="btn ghost block" id="petAgainBtn" style="display:none;">Back home</button>
+  </div>
+</div>
+
+<!-- ===== Grown up ===== -->
+<div class="overlay scrim center" id="evoOv" style="display:none;">
+  <div class="sheet" role="dialog">
+    <div class="eyebrow">Look who grew!</div>
+    <h1 class="title" id="evoTitle">Grown up!</h1>
+    <canvas id="evoCv" width="200" height="160"></canvas>
+    <p class="sub" id="evoTxt" style="margin-top:12px;"></p>
+    <div class="stack-col"><button class="btn big block" id="evoOkBtn">Awesome!</button></div>
+  </div>
+</div>
+
+<!-- ===== Parental gate ===== -->
+<div class="overlay scrim center" id="gateOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-labelledby="gateTitle">
+    <div class="eyebrow">For grown-ups</div>
+    <h1 class="title" id="gateTitle">Ask a grown-up</h1>
+    <p class="sub">To open the shop, please answer:</p>
+    <div class="gate-q" id="gateQ"></div>
+    <div class="gate-opts" id="gateOpts"></div>
+    <div class="stack-col"><button class="linkbtn" id="gateCancel">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ===== Settings ===== -->
+<div class="overlay scrim" id="settingsOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-labelledby="setTitle">
+    <h1 class="title" id="setTitle">Settings</h1>
+    <div class="toggle"><span>🔊 Sounds</span><button class="switch" role="switch" id="soundSw" aria-checked="true" aria-label="Sounds"></button></div>
+    <div class="toggle"><span>📖 How to play</span><button class="btn sm ghost" id="setHowBtn">Open</button></div>
+    <div class="toggle"><span>🔒 Privacy policy</span><button class="btn sm ghost" id="privacyBtn">Read</button></div>
+    <p class="credit">Hedgehog Roll was inspired by a little boy's big imagination. Steven (age 5) drew the caves and made up the rules, and his mom built the game. 🦔💛</p>
+    <div class="stack-col"><button class="btn block" id="setCloseBtn">Done</button></div>
+  </div>
+</div>
+
+<!-- ===== How to play ===== -->
+<div class="overlay scrim" id="howOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-labelledby="howTitle">
+    <h1 class="title" id="howTitle">How to play</h1>
+    <ul class="howto" id="howList"></ul>
+    <div class="stack-col"><button class="btn block" id="howCloseBtn">Got it!</button></div>
+  </div>
+</div>
+
+<!-- ===== Privacy ===== -->
+<div class="overlay scrim" id="privacyOv" style="display:none;">
+  <div class="sheet" role="dialog" aria-label="Privacy policy">
+    <iframe id="privacyFrame" title="Privacy policy"></iframe>
+    <div class="stack-col"><button class="btn block" id="privacyCloseBtn">Close</button></div>
+  </div>
 </div>
 
 <script src="game.js"></script>

@@ -1,5 +1,10 @@
 {
   "appId": "com.janehwzn.hedgehogroll",
   "appName": "Hedgehog Roll Adventure",
-  "webDir": "www"
+  "webDir": "www",
+  "backgroundColor": "#FFF7E8",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#FFF7E8"
+  }
 }
