@@ -1096,7 +1096,12 @@ function showClear(idx){
   // Premium shop nudge: low hearts after clearing a cave
   const clearShopBtn=document.getElementById('clearShopBtn');
   if(clearShopBtn){
-    clearShopBtn.style.display=(typeof isNativeApp!=='undefined'&&isNativeApp())?'':'none';
+    console.log('[shop-nudge] isNativeApp type:', typeof isNativeApp);
+    let native=false;
+    try{ native = (typeof isNativeApp!=='undefined'&&isNativeApp()); }catch(e){ console.log('[shop-nudge] isNativeApp error:', e); }
+    console.log('[shop-nudge] native =', native);
+    clearShopBtn.style.display=''; // DEBUG: always show
+    console.log('[shop-nudge] button forced visible');
   }
   document.getElementById('clearOv').style.display='flex';
   confetti();
