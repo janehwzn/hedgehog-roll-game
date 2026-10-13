@@ -304,7 +304,7 @@ const GEN_NAMES=['Twisty Turny','Skull Alley','Arrow Storm','The Squeeze','Dark 
 const GEN_SUBS=['Deeper into the caves!','Trickier than ever!','Stay sharp!',
   'The adventure continues!','Can you roll through?','Watch your step!',
   'Almost a maze master!','Keep rolling!','The caves go on and on!'];
-function genHint(n,hasPinch,hasBow,hasSling,isBoss,isDark,isTime,isKey){
+function genHint(n,hasPinch,hasBow,hasSling,isBoss,isDark,isTime,isKey,tid){
   const tips=[];
   if(isBoss)tips.push('the Skull King is BACK — double jaws and mini skeletons');
   if(isDark)tips.push('pitch dark — catch fireflies to see');
@@ -313,127 +313,166 @@ function genHint(n,hasPinch,hasBow,hasSling,isBoss,isDark,isTime,isKey){
   if(hasPinch)tips.push('skull clamps snap shut');
   if(hasBow)tips.push('bows fire fast');
   if(hasSling)tips.push('slingshots spray pebbles');
+  if(tid){
+    const th=THEMES.find(t=>t.id===tid);
+    if(th&&th.tip)tips.unshift(th.tip);
+  }
   if(!tips.length)tips.push('a twisty maze — follow the blue arrows');
   return '\u{1F52D} Camera says: '+tips.join(' · ')+'! You got this!';
 }
+
+/* ---------------- 主题关卡 ----------------
+ * 13 关之后每关抽一个主题，决定关卡的"性格"：
+ * 箭雨 / 夹子巷 / 黑暗深渊 / 钥匙 hunt / 夹击 / 狙击手 / 螺旋 / 星星宝库 / 心跳 / 钢丝
+ * 同一种子=同一关号 → 每次玩都一样。
+ */
+const THEMES=[
+ {id:'arrow_storm',names:['Arrow Storm','Rain of Arrows','The Barrage'],sub:'Arrows everywhere — keep moving!',tip:'arrows rain down'},
+ {id:'clamp_alley',names:['Clamp Alley','Snap Snap','Jaws of Doom'],sub:'Chomping skulls in rhythm — time your roll!',tip:'clamps snap in rhythm'},
+ {id:'dark_depths',names:['Dark Depths','Pitch Black','Night Crawl'],sub:'Pitch dark — catch fireflies to see!',tip:'pitch dark — catch fireflies'},
+ {id:'key_hunt',names:['Key Hunt','Locked In','The Stone Door'],sub:'Find the key, then open the stone door!',tip:'find the key first'},
+ {id:'gauntlet',names:['The Gauntlet','Double Trouble','Crossfire'],sub:'Clamps AND arrows together — good luck!',tip:'clamps and arrows team up'},
+ {id:'sniper',names:["Sniper's Nest",'Bullseye','Sharp Shooters'],sub:'Few arrows, but blazing fast!',tip:'super-fast arrows'},
+ {id:'spiral',names:['The Spiral','Down the Drain','Nautilus'],sub:'A spiral into the deep — don\'t get dizzy!',tip:'a dizzying spiral'},
+ {id:'star_vault',names:['Star Vault','Risky Riches','Greed Cave'],sub:'Stars hiding next to danger — worth it?',tip:'stars next to danger'},
+ {id:'heartbeat',names:['Heartbeat','Beat the Clock','Race!'],sub:'So many hazards, so little time!',tip:'beat the clock'},
+ {id:'tightrope',names:['Tightrope','The Squeeze','Narrow Escape'],sub:'A super narrow path — precision rolling!',tip:'a super narrow path'},
+ {id:'mixed',names:['Twisty Turny','Skull Alley','The Squeeze','Dark Depths','Bone Yard','Windy Whirl','Narrow Pass','Shadow Run','Pebble Dash','The Gauntlet','Silent Hollow','Jagged Way','Moon Cave','Thorny Trail','Echo Cave','The Spiral','Misty Maze','Rocky Road','Deep Dark','Curvy Cave','Wild Ride','Sneaky Path','Dizzy Drop','Starlight Den'],sub:'Deeper into the caves!',tip:null},
+];
+function pickTheme(n,rnd,isBoss){
+  if(isBoss)return THEMES.find(t=>t.id==='mixed');
+  const pool=THEMES.filter(t=>t.id!=='mixed');
+  return pool[Math.floor(rnd()*pool.length)%pool.length];
+}
+
 function genLevel(n){
   const rnd=mulberry32((n*2654435761)>>>0);
   const R=(a,b)=>a+rnd()*(b-a);
   const RI=(a,b)=>a+Math.floor(rnd()*(b-a+1));
   const pick=arr=>arr[Math.floor(rnd()*arr.length)%arr.length];
   const prog=Math.min(1,Math.max(0,(n-13)/87)); // 0→1 难度进度
-  // 路径风格：0 经典蛇形 / 1 紧凑之字（窄而多弯） / 2 大回环（长直线+急弯）
-  const style=(n%10===0)?0:RI(0,2);
+  const isBoss=n%10===0;
+  const theme=pickTheme(n,rnd,isBoss);
+  const tid=theme.id;
+
+  /* ---- 路径 ---- */
+  // 0 经典蛇形 / 1 紧凑之字 / 2 大回环 / 3 螺旋
+  let pathStyle=RI(0,2);
+  if(tid==='arrow_storm')pathStyle=2;
+  if(tid==='clamp_alley'||tid==='dark_depths')pathStyle=1;
+  if(tid==='spiral')pathStyle=3;
   const wp=[[80,690]];
   let x=80,y=690,dir=1;
-  if(style===0){
-    const segs=RI(6,11);
-    for(let i=0;i<segs;i++){
-      if(i%2===0){
-        const ny=Math.max(110,y-R(120,200));
-        if(y-ny<80)break;
-        y=ny;
-      }else{
-        let nx=x+dir*R(120,220);
-        nx=Math.max(60,Math.min(340,nx));
-        if(Math.abs(nx-x)<80)nx=Math.max(60,Math.min(340,x-dir*R(120,220)));
-        if(Math.abs(nx-x)<80)break;
-        x=Math.round(nx);dir=-dir;
-      }
-      wp.push([Math.round(x),Math.round(y)]);
-      if(y<=110&&i>=5)break;
-    }
-  }else if(style===1){
-    const segs=RI(9,14);
-    for(let i=0;i<segs;i++){
-      if(i%2===0){
-        const ny=Math.max(110,y-R(85,150));
-        if(y-ny<85)break;
-        y=ny;
-      }else{
-        let nx=x+dir*R(85,150);
-        nx=Math.max(60,Math.min(340,nx));
-        if(Math.abs(nx-x)<85)nx=Math.max(60,Math.min(340,x-dir*R(85,150)));
-        if(Math.abs(nx-x)<85)break;
-        x=Math.round(nx);dir=-dir;
-      }
-      wp.push([Math.round(x),Math.round(y)]);
-      if(y<=110&&i>=7)break;
+  if(pathStyle===3){
+    // 螺旋：从外圈盘向中心
+    const pts=[[330,690],[330,170],[110,170],[110,580],[270,580],[270,300],[170,300]];
+    for(const [px,py] of pts){
+      wp.push([Math.round(px+R(-14,14)),Math.round(py+R(-14,14))]);
     }
   }else{
-    const segs=RI(5,7);
-    for(let i=0;i<segs;i++){
+    const cfg=pathStyle===0?{segs:RI(6,11),v:[120,200],h:[120,220],min:80,stop:5}
+          :pathStyle===1?{segs:RI(9,14),v:[85,150],h:[85,150],min:85,stop:7}
+          :{segs:RI(5,7),v:[140,220],h:[180,260],min:120,stop:4};
+    const xMin=pathStyle===2?50:60, xMax=pathStyle===2?350:340;
+    for(let i=0;i<cfg.segs;i++){
       if(i%2===0){
-        const ny=Math.max(110,y-R(140,220));
-        if(y-ny<100)break;
+        const ny=Math.max(110,y-R(cfg.v[0],cfg.v[1]));
+        if(y-ny<cfg.min)break;
         y=ny;
       }else{
-        let nx=x+dir*R(180,260);
-        nx=Math.max(50,Math.min(350,nx));
-        if(Math.abs(nx-x)<120)nx=Math.max(50,Math.min(350,x-dir*R(180,260)));
-        if(Math.abs(nx-x)<120)break;
+        let nx=x+dir*R(cfg.h[0],cfg.h[1]);
+        nx=Math.max(xMin,Math.min(xMax,nx));
+        if(Math.abs(nx-x)<cfg.min)nx=Math.max(xMin,Math.min(xMax,x-dir*R(cfg.h[0],cfg.h[1])));
+        if(Math.abs(nx-x)<cfg.min)break;
         x=Math.round(nx);dir=-dir;
       }
       wp.push([Math.round(x),Math.round(y)]);
-      if(y<=110&&i>=4)break;
+      if(y<=110&&i>=cfg.stop)break;
     }
   }
-  // 路径宽度：随等级变窄，紧凑之字再窄一点
-  const halfBase=Math.round(Math.max(34,56-(n-13)*0.25));
-  const half=style===1?Math.max(30,halfBase-6):halfBase;
-  const isBoss=n%10===0,isDark=n%7===0,isTime=n%9===0,isKey=n%11===0;
+  let half=Math.round(Math.max(34,56-(n-13)*0.25));
+  if(pathStyle===1)half=Math.max(30,half-6);
+  if(tid==='tightrope')half=30+RI(0,4);
+  if(tid==='sniper')half=Math.min(64,half+8);
+
+  /* ---- 机关数量（主题修正） ---- */
+  let pinchN=Math.min(5,2+Math.floor((n-13)/12));
+  let bowN=Math.min(6,2+Math.floor((n-13)/10));
+  let slingN=Math.min(4,1+Math.floor((n-13)/14));
+  if(tid==='arrow_storm'){bowN=6;pinchN=Math.max(1,pinchN-2);slingN=1;}
+  if(tid==='clamp_alley'){pinchN=5;bowN=1;slingN=0;}
+  if(tid==='gauntlet'){pinchN=Math.max(3,pinchN);bowN=Math.max(3,bowN);}
+  if(tid==='sniper'){bowN=3;pinchN=1;slingN=0;}
+  if(tid==='heartbeat'){pinchN=5;bowN=6;slingN=4;}
+  if(tid==='tightrope'){pinchN=2;bowN=2;slingN=1;}
+  if(tid==='star_vault'){pinchN=Math.max(2,pinchN);bowN=Math.max(2,bowN);}
+
+  const isDark=n%7===0||tid==='dark_depths';
+  const isTime=n%9===0||tid==='heartbeat';
+  const isKey=n%11===0||tid==='key_hunt';
+
+  /* ---- 夹子 ---- */
   const pinches=[];
   if(isBoss){
     pinches.push({frac:0.55,half:26,len:130,skull:true,spikes:true,shutHalf:10,boss:true,
       spit:{period:+Math.max(3.2,4.5-prog*1.0).toFixed(2)},
       chomp:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)},
       chomp2:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)}});
-    if(n>=50){ // 高等级 Boss：前后各加一个小夹子
+    if(n>=50){
       pinches.push({frac:0.25,half:24,len:60,skull:true,spikes:true,shutHalf:14,
         chomp:{period:2.6,open:1.4,warn:0.5,phase:+R(0,3).toFixed(2)}});
       pinches.push({frac:0.8,half:24,len:60,skull:true,spikes:true,shutHalf:14,
         chomp:{period:2.6,open:1.4,warn:0.5,phase:+R(0,3).toFixed(2)}});
     }
   }else{
-    // 从手写关卡的水准起步（13 关≈5 个机关），不再从 0 开始
-    const cnt=Math.min(5,2+Math.floor((n-13)/12));
     const used=[];
-    for(let i=0;i<cnt;i++){
+    for(let i=0;i<pinchN;i++){
       let f=0.5,ok=false;
       for(let t=0;t<30&&!ok;t++){f=R(0.15,0.85);ok=used.every(u=>Math.abs(u-f)>=0.12);}
       used.push(f);
       const p={frac:+f.toFixed(3),half:26,len:60,skull:true,spikes:rnd()<0.6,shutHalf:16};
-      if(rnd()<0.55+prog*0.3){
-        const open=+R(1.4,2.4-prog*0.6).toFixed(2);
-        p.chomp={period:+(open+R(1.2,2.2)).toFixed(2),open:open,warn:0.5,phase:+R(0,3).toFixed(2)};
+      const wantChomp=tid==='clamp_alley'||tid==='gauntlet'?true:(rnd()<0.55+prog*0.3);
+      if(wantChomp){
+        if(tid==='clamp_alley'){
+          // 节奏夹：相同周期、错开相位，像波浪一样咬合
+          p.chomp={period:3.0,open:1.6,warn:0.5,phase:+(i*0.75).toFixed(2)};
+        }else{
+          const open=+R(1.4,2.4-prog*0.6).toFixed(2);
+          p.chomp={period:+(open+R(1.2,2.2)).toFixed(2),open:open,warn:0.5,phase:+R(0,3).toFixed(2)};
+        }
       }
       pinches.push(p);
     }
   }
+
+  /* ---- 弓箭 ---- */
   const bows=[];
   {
-    const cnt=Math.min(6,2+Math.floor((n-13)/10));
     const used=[];
     const pinchFracs=pinches.map(p=>p.frac);
-    for(let i=0;i<cnt;i++){
+    const synergy=tid==='gauntlet'?0.85:0.4;
+    for(let i=0;i<bowN;i++){
       let f=0.5,ok=false;
-      if(pinchFracs.length&&rnd()<0.4){ // 夹击：弓放在夹子附近
+      if(pinchFracs.length&&rnd()<synergy){
         const pf=pick(pinchFracs);
         f=Math.max(0.1,Math.min(0.9,pf+R(-0.08,0.08)));
         ok=used.every(u=>Math.abs(u-f)>=0.06);
       }
       for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
       used.push(f);
-      bows.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,
-        period:+Math.max(1.4,2.8-prog*1.2+R(-0.2,0.4)).toFixed(2),
-        speed:Math.round(300+prog*140+R(-20,20))});
+      let period=+Math.max(1.4,2.8-prog*1.2+R(-0.2,0.4)).toFixed(2);
+      let speed=Math.round(300+prog*140+R(-20,20));
+      if(tid==='arrow_storm'){period=+R(1.6,2.2).toFixed(2);speed=Math.round(R(340,420));}
+      if(tid==='sniper'){period=+R(1.4,1.8).toFixed(2);speed=Math.round(R(420,480));}
+      bows.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,period:period,speed:speed});
     }
   }
+
+  /* ---- 弹弓 ---- */
   const slings=[];
   {
-    const cnt=Math.min(4,1+Math.floor((n-13)/14));
     const used=[];
-    for(let i=0;i<cnt;i++){
+    for(let i=0;i<slingN;i++){
       let f=0.5,ok=false;
       for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
       used.push(f);
@@ -441,16 +480,34 @@ function genLevel(n){
         period:+R(3.2-prog*0.6,4.2-prog*0.6).toFixed(2),speed:Math.round(R(220,280)+prog*40)});
     }
   }
-  const lv={name:'Level '+n+' \u00B7 '+pick(GEN_NAMES),
-    sub:pick(GEN_SUBS),
-    hint:genHint(n,pinches.length>0,bows.length>0,slings.length>0,isBoss,isDark,isTime,isKey),
+
+  /* ---- 星星：宝库主题把星星放在危险旁边 ---- */
+  const starN=6+(n%4);
+  let starFracs=null;
+  if(tid==='star_vault'){
+    const hfracs=[...pinches,...bows,...slings].map(h=>h.frac);
+    starFracs=[];
+    for(let i=0;i<starN;i++){
+      const hf=hfracs.length?pick(hfracs):(i+1)/(starN+1);
+      starFracs.push(+Math.max(0.05,Math.min(0.95,hf+R(-0.04,0.04))).toFixed(3));
+    }
+  }
+
+  const lv={name:'Level '+n+' \u00B7 '+pick(theme.names),
+    sub:theme.sub,
+    hint:genHint(n,pinches.length>0,bows.length>0,slings.length>0,isBoss,isDark,isTime,isKey,tid),
     waypoints:wp,half:half,pinches:pinches,bows:bows,slings:slings,
-    starN:6+(n%4)};
+    starN:starN,starFracs:starFracs,theme:tid};
   if(isDark){lv.dark=true;lv.fireflyN=RI(6,10);}
-  if(isTime){lv.timeLimit=70+(n%3)*10;}
+  if(isTime){lv.timeLimit=tid==='heartbeat'?60:70+(n%3)*10;}
   if(isKey){lv.alcove={frac:0.42,r:75};lv.key={frac:0.42,off:38};lv.door={frac:0.93};}
+  if(isBoss){
+    lv.name='Level '+n+' \u00B7 '+pick(['Skull King Returns','Revenge of the Skull King','Skull King Unleashed']);
+    lv.sub='Double jaws, mini skeletons — the ultimate showdown!';
+  }
   return lv;
 }
+
 function validLevel(lv){
   const wp=lv.waypoints;
   if(!wp||wp.length<3)return false;
@@ -1020,7 +1077,8 @@ function loadLevel(idx){
     fireflies:[],key:null,door:null,minions:[],spitT:3.5
   };
   for(let i=0;i<def.starN;i++){
-    const f=pathFrame(path,(i+1)/(def.starN+1)*path.len);
+    const sf=def.starFracs?def.starFracs[i%def.starFracs.length]:(i+1)/(def.starN+1);
+    const f=pathFrame(path,sf*path.len);
     const off=(i%2===0?1:-1)*def.half*0.35;
     level.stars.push({x:f.x+f.nx*off,y:f.y+f.ny*off,got:false,ph:Math.random()*6});
   }
