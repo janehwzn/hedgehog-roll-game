@@ -97,6 +97,14 @@ function halfWidthAt(level,s,t){
       hw=Math.max(hw,bulge);
     }
   }
+  const alc=level.alcoveList||[]; // 安全小洞（可以有好几个）
+  for(let k=0;k<alc.length;k++){
+    const d=Math.abs(s-alc[k].s);
+    if(d<alc[k].r){
+      const bulge=alc[k].r*(0.55+0.45*Math.cos(d/alc[k].r*Math.PI/2));
+      hw=Math.max(hw,bulge);
+    }
+  }
   return hw;
 }
 
@@ -120,21 +128,30 @@ function circleHit(ax,ay,ar,bx,by,br){
   return dx*dx+dy*dy<rr*rr;
 }
 
-/* ---------------- 关卡数据 ----------------
- * waypoints: 隧道走向（逻辑坐标 420x760）
- * half: 隧道半宽；pinches: 收窄点 {frac, half, len, skull}
- * bows: 弓箭 {frac, side, period, speed}
- * slings: 弹弓 {frac, side, period, speed}
+/* ---------------- 关卡数据：30 关，3 个世界 ----------------
+ * 设计原则：每关一个主要挑战；新机制先教、再练、再组合；Boss 关有独特解法。
+ * waypoints: 隧道走向（逻辑坐标 420x760）  half: 隧道半宽
+ * pinches: 收窄点/骷髅夹子 {frac, half, len, skull, spikes, chomp, slide, boss}
+ * bows / slings: 弓箭、弹弓 {frac, side, period, speed}
+ * 新机制（第 2、3 世界）：
+ *   alcoves:[{frac,r}]           安全小洞（隧道鼓出来的圆形空间）
+ *   switches:[{frac,off,gate,dur}] 水晶开关：碰一下，对应颜色的水晶门打开 dur 秒
+ *   gates:[{frac,color}]          水晶门（color: blue/pink/gold）
+ *   rocks:[{frac,side,period,speed,phase}] 滚石洞：预警后滚石横穿隧道
+ *   winds:[{frac,len,to,period,on,phase,force}] 风口：周期性把刺猬吹向 to 一侧，那边墙上有荆棘
+ *   starPos:[[frac,offFrac],...]  手动摆放星星（off = 半宽的倍数，>1 表示放进小洞里）
+ *   needStars:N                   出口前的金色星门：收集 N 颗星星才打开
  */
 const LEVELS=[
+  /* ===== 世界 1 · Mossy Caves：学会观察、走位和判断时机 ===== */
   { name:'Level 1 · Follow the Arrows',
     sub:'The cave adventure begins!',
     hint:'🔭 Camera says: Follow the blue arrows through the cave, all the way up!',
     waypoints:[[70,690],[70,470],[250,470],[250,270],[110,270],[110,140]],
     half:60, pinches:[], bows:[], slings:[], starN:6 },
-  { name:'Level 2 · Skull Mouth',
+  { name:'Level 2 · Skull\'s Smile',
     sub:'Careful, arrows ahead!',
-    hint:'🔭 Camera says: Crawl through the skull\'s mouth and dodge the arrows!',
+    hint:'🔭 Camera says: Crawl through the skull\'s mouth and wait for the arrows to pass!',
     waypoints:[[70,690],[70,540],[300,540],[300,380],[140,380],[140,220],[330,220],[330,120]],
     half:55,
     pinches:[{frac:0.55,half:28,len:70,skull:true}],
@@ -142,94 +159,81 @@ const LEVELS=[
            {frac:0.74,side:-1,period:3.4,speed:320}],
     slings:[], starN:7 },
   { name:'Level 3 · Arrow Rain',
-    sub:'The toughest cave yet!',
-    hint:'🔭 Camera says: Bows and slingshots together! Dash through the gaps!',
+    sub:'Red glow means wait!',
+    hint:'🔭 Camera says: When a bow glows red, stop — dash right after it shoots!',
     waypoints:[[90,690],[90,560],[290,560],[290,430],[130,430],[130,300],[310,300],[310,150]],
     half:52,
-    pinches:[{frac:0.34,half:28,len:70,skull:true},
-              {frac:0.68,half:28,len:70,skull:true}],
+    pinches:[{frac:0.34,half:28,len:70,skull:true}],
     bows:[{frac:0.20,side:1,period:2.6,speed:300},
-           {frac:0.52,side:-1,period:3.0,speed:340},
+           {frac:0.52,side:-1,period:3.0,speed:330},
            {frac:0.86,side:1,period:2.4,speed:320}],
-    slings:[{frac:0.42,side:-1,period:3.8,speed:220},
-             {frac:0.78,side:1,period:4.2,speed:240}],
+    slings:[{frac:0.70,side:1,period:4.0,speed:230}],
     starN:8 },
-  { name:'Level 4 · Winding Cave',
-    sub:'The cave gets windier!',
-    hint:'🔭 Camera says: More turns, more arrows — time your dash!',
-    waypoints:[[70,690],[70,580],[250,580],[250,470],[90,470],[90,360],[270,360],[270,240],[120,240],[120,130]],
-    half:48,
-    pinches:[{frac:0.30,half:26,len:60,skull:true},
-              {frac:0.68,half:26,len:60,skull:true}],
-    bows:[{frac:0.18,side:1,period:2.4,speed:320},
-           {frac:0.50,side:-1,period:2.8,speed:360},
-           {frac:0.86,side:1,period:2.2,speed:340}],
-    slings:[{frac:0.42,side:-1,period:3.6,speed:240},
-             {frac:0.78,side:1,period:4.0,speed:260}],
-    starN:8 },
-  { name:'Level 5 · Ultimate Adventure',
-    sub:'You can do it!',
-    hint:'🔭 Camera says: Three skulls, arrows like rain — charge!',
+  { name:'Level 4 · The Winding Path',
+    sub:'A narrow, twisty squeeze!',
+    hint:'🔭 Camera says: The tunnel is skinny — roll slowly and don\'t bump the walls!',
+    waypoints:[[70,690],[70,600],[250,600],[250,520],[90,520],[90,430],[300,430],[300,340],[120,340],[120,250],[290,250],[290,130]],
+    half:38,
+    pinches:[{frac:0.45,half:24,len:60,skull:true}],
+    bows:[{frac:0.72,side:1,period:3.2,speed:300}],
+    slings:[], starN:9 },
+  { name:'Level 5 · The First Gauntlet',
+    sub:'Everything you\'ve learned!',
+    hint:'🔭 Camera says: Skulls, bows and slingshots together — take it one at a time!',
     waypoints:[[90,690],[90,600],[300,600],[300,490],[110,490],[110,380],[310,380],[310,260],[130,260],[130,150],[260,150]],
     half:46,
     pinches:[{frac:0.26,half:26,len:60,skull:true},
               {frac:0.52,half:26,len:60,skull:true},
               {frac:0.78,half:26,len:60,skull:true}],
-    bows:[{frac:0.14,side:1,period:2.2,speed:340},
-           {frac:0.40,side:-1,period:2.6,speed:380},
-           {frac:0.65,side:1,period:2.0,speed:360},
-           {frac:0.90,side:-1,period:2.4,speed:380}],
-    slings:[{frac:0.33,side:-1,period:3.4,speed:260},
-             {frac:0.58,side:1,period:3.8,speed:280},
-             {frac:0.83,side:-1,period:3.2,speed:280}],
+    bows:[{frac:0.14,side:1,period:2.4,speed:330},
+           {frac:0.40,side:-1,period:2.8,speed:360},
+           {frac:0.65,side:1,period:2.2,speed:350},
+           {frac:0.90,side:-1,period:2.6,speed:360}],
+    slings:[{frac:0.33,side:-1,period:3.6,speed:250},
+             {frac:0.83,side:-1,period:3.4,speed:270}],
     starN:9 },
-  { name:'Level 6 · Skull Clamp',
+  { name:'Level 6 · Bite by Bite',
     sub:'Spiky clamps that snap shut!',
-    hint:'🔭 Camera says: Dash when the clamp opens — getting caught costs a heart!',
+    hint:'🔭 Camera says: Watch one bite first. Roll through right after it opens!',
     waypoints:[[80,690],[80,590],[260,590],[260,490],[100,490],[100,390],[280,390],[280,280],[140,280],[140,170]],
     half:48,
     pinches:[{frac:0.5,half:28,len:60,skull:true,spikes:true,shutHalf:16,
               chomp:{period:3.6,open:2.0,warn:0.6,phase:0}}],
     bows:[{frac:0.25,side:1,period:2.6,speed:320},
            {frac:0.75,side:-1,period:2.6,speed:340}],
-    slings:[{frac:0.62,side:1,period:3.8,speed:250}],
-    starN:8 },
-  { name:'Level 7 · Double Clamps',
+    slings:[], starN:8 },
+  { name:'Level 7 · Two Beats',
     sub:'Two clamps, different rhythms!',
-    hint:'🔭 Camera says: One clamp fast, one slow — time it right!',
+    hint:'🔭 Camera says: One clamp is fast, one is slow — count their beats!',
     waypoints:[[90,690],[90,600],[300,600],[300,500],[120,500],[120,400],[310,400],[310,300],[150,300],[150,190],[260,190]],
     half:46,
     pinches:[{frac:0.35,half:28,len:60,skull:true,spikes:true,shutHalf:16,
-              chomp:{period:3.2,open:1.8,warn:0.5,phase:0}},
+              chomp:{period:3.0,open:1.9,warn:0.6,phase:0}},
              {frac:0.68,half:28,len:60,skull:true,spikes:true,shutHalf:16,
-              chomp:{period:4.4,open:2.6,warn:0.6,phase:1.7}}],
+              chomp:{period:4.6,open:2.8,warn:0.7,phase:1.7}}],
     bows:[{frac:0.18,side:1,period:2.4,speed:340},
-           {frac:0.52,side:-1,period:2.8,speed:360},
            {frac:0.85,side:1,period:2.4,speed:340}],
-    slings:[{frac:0.45,side:-1,period:3.6,speed:250},
-             {frac:0.80,side:1,period:4.0,speed:270}],
+    slings:[{frac:0.52,side:-1,period:3.8,speed:250}],
     starN:8 },
-  { name:'Level 8 · Clamp Gauntlet',
-    sub:'Three clamps await!',
-    hint:'🔭 Camera says: Three clamps, each with its own rhythm — go!',
-    waypoints:[[70,690],[70,590],[280,590],[280,490],[100,490],[100,390],[300,390],[300,290],[120,290],[120,190],[270,190],[270,120]],
+  { name:'Level 8 · The Safe Pocket',
+    sub:'Three clamps — and cozy pockets to rest!',
+    hint:'🔭 Camera says: Rest in the round pockets between clamps and watch the next one!',
+    waypoints:[[70,690],[70,590],[280,590],[280,450],[100,450],[100,310],[300,310],[300,170],[120,170]],
     half:46,
-    pinches:[{frac:0.25,half:28,len:60,skull:true,spikes:true,shutHalf:16,
-              chomp:{period:2.8,open:1.6,warn:0.4,phase:0}},
-             {frac:0.5,half:28,len:60,skull:true,spikes:true,shutHalf:16,
-              chomp:{period:3.6,open:2.0,warn:0.6,phase:1.2}},
+    alcoves:[{frac:0.36,r:62},{frac:0.62,r:62}],
+    pinches:[{frac:0.24,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:2.8,open:1.5,warn:0.5,phase:0}},
+             {frac:0.49,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.4,open:1.6,warn:0.6,phase:1.2}},
              {frac:0.75,half:28,len:60,skull:true,spikes:true,shutHalf:16,
-              chomp:{period:4.6,open:2.8,warn:0.6,phase:2.3}}],
-    bows:[{frac:0.15,side:1,period:2.2,speed:360},
-           {frac:0.38,side:-1,period:2.6,speed:380},
-           {frac:0.62,side:1,period:2.2,speed:360},
-           {frac:0.88,side:-1,period:2.6,speed:380}],
-    slings:[{frac:0.42,side:1,period:3.4,speed:260},
-             {frac:0.66,side:-1,period:3.8,speed:280}],
-    starN:9 },
-  { name:'Level 9 · Running Clamps',
+              chomp:{period:2.4,open:1.2,warn:0.5,phase:0.4}}],
+    bows:[{frac:0.88,side:-1,period:2.6,speed:360}],
+    slings:[],
+    starPos:[[0.12,0.35],[0.36,1.0],[0.36,-1.0],[0.62,1.0],[0.62,-1.0],[0.9,0.35]],
+    starN:6 },
+  { name:'Level 9 · Runaway Jaws',
     sub:'The clamps can run! 75 seconds!',
-    hint:'🔭 Camera says: The clamps slide along the cave — time it right! Only 75 seconds, hurry!',
+    hint:'🔭 Camera says: The clamps slide along the cave. Watch which way they go first!',
     timeLimit:75,
     waypoints:[[80,690],[80,590],[270,590],[270,480],[110,480],[110,380],[290,380],[290,270],[130,270],[130,160],[250,160]],
     half:48,
@@ -240,23 +244,23 @@ const LEVELS=[
               chomp:{period:4.2,open:2.4,warn:0.6,phase:2.1},
               slide:{amp:90,period:9,phase:3.1}}],
     bows:[{frac:0.18,side:1,period:2.4,speed:340},
-           {frac:0.52,side:-1,period:2.8,speed:360},
            {frac:0.85,side:1,period:2.4,speed:340}],
-    slings:[{frac:0.5,side:-1,period:3.6,speed:250}],
-    starN:8 },
-  { name:'Level 10 · Dark Cave',
+    slings:[], starN:8 },
+  { name:'Level 10 · Firefly Hollow',
     sub:'So dark! Catch fireflies! 80 seconds!',
-    hint:'🔭 Camera says: Catch fireflies to grow your light! Wesley\'s fireflies help too! Only 80 seconds!',
+    hint:'🔭 Camera says: Catch fireflies to grow your light! Wesley\'s fireflies help too!',
     timeLimit:80,
     waypoints:[[70,690],[70,600],[280,600],[280,500],[120,500],[120,400],[300,400],[300,300],[140,300],[140,200],[260,200],[260,120]],
     half:50,
     dark:true,fireflyN:8,
-    pinches:[{frac:0.5,half:28,len:70,skull:true}],
+    pinches:[{frac:0.5,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.4,open:1.9,warn:0.6,phase:0.8}}],
     bows:[{frac:0.25,side:1,period:2.6,speed:320},
            {frac:0.75,side:-1,period:2.6,speed:340}],
-    slings:[{frac:0.6,side:1,period:3.8,speed:240}],
-    starN:6 },
-  { name:'Level 11 · Key & Door',
+    slings:[], starN:6 },
+
+  /* ===== 世界 2 · Crystal Caverns：学会计划、利用机关、做选择 ===== */
+  { name:'Level 11 · The Locked Door',
     sub:'A stone door blocks the exit!',
     hint:'🔭 Camera says: Find the key in the side cave first, then open the stone door!',
     waypoints:[[90,690],[90,600],[300,600],[300,500],[130,500],[130,400],[310,400],[310,300],[150,300],[150,180]],
@@ -268,245 +272,240 @@ const LEVELS=[
            {frac:0.65,side:-1,period:2.8,speed:360}],
     slings:[{frac:0.82,side:1,period:3.6,speed:250}],
     starN:8 },
-  { name:'Level 12 · Skull King',
-    sub:'Final battle: the Skull King!',
-    hint:'🔭 Camera says: Giant skull with double jaws that spits mini skeletons! Charge through!',
+  { name:'Level 12 · King\'s Warning',
+    sub:'The Skull King wakes up!',
+    hint:'🔭 Camera says: Giant double jaws! Wait until BOTH mouths open, then roll!',
     waypoints:[[80,690],[80,590],[260,590],[260,480],[100,480],[100,380],[280,380],[280,260],[120,260],[120,150]],
     half:48,
     pinches:[{frac:0.55,half:26,len:130,skull:true,spikes:true,shutHalf:10,boss:true,
               spit:{period:4.5},
               chomp:{period:3.2,open:1.8,warn:0.5,phase:0},
-              chomp2:{period:3.2,open:1.8,warn:0.5,phase:1.6}}],
-    bows:[{frac:0.2,side:1,period:2.4,speed:340},
-           {frac:0.85,side:-1,period:2.4,speed:360}],
-    slings:[{frac:0.35,side:-1,period:3.6,speed:250}],
+              chomp2:{period:3.2,open:1.8,warn:0.5,phase:0.8}}],
+    bows:[{frac:0.2,side:1,period:2.4,speed:340}],
+    slings:[{frac:0.85,side:-1,period:3.6,speed:250}],
     starN:8 },
+  { name:'Level 13 · Crystal Switch',
+    sub:'Touch the crystal to open the door!',
+    hint:'🔭 Camera says: Roll onto the glowing crystal — the blue door opens for a few seconds!',
+    waypoints:[[80,690],[80,560],[320,560],[320,420],[100,420],[100,280],[320,280],[320,130]],
+    half:50,
+    switches:[{frac:0.36,off:30,gate:0,dur:9}],
+    gates:[{frac:0.56,color:'blue'}],
+    pinches:[], bows:[{frac:0.8,side:-1,period:3.0,speed:300}],
+    slings:[], starN:7 },
+  { name:'Level 14 · Open the Right Door',
+    sub:'Two crystals, two doors. Which first?',
+    hint:'🔭 Camera says: Pink opens the FAR door and stays open longer. Plan your order!',
+    waypoints:[[70,690],[70,580],[330,580],[330,460],[90,460],[90,340],[330,340],[330,220],[110,220],[110,120]],
+    half:46,
+    switches:[{frac:0.15,off:-28,gate:1,dur:12},{frac:0.30,off:28,gate:0,dur:5}],
+    gates:[{frac:0.40,color:'blue'},{frac:0.80,color:'pink'}],
+    pinches:[{frac:0.60,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:2.4,open:1.4,warn:0.4,phase:0}}],
+    bows:[{frac:0.70,side:1,period:2.6,speed:330}],
+    slings:[], starN:8 },
+  { name:'Level 15 · Rolling Thunder',
+    sub:'Boulders rumble across the tunnel!',
+    hint:'🔭 Camera says: Rumble and dust mean a boulder is coming. Wait, then cross behind it!',
+    waypoints:[[60,690],[60,600],[360,600],[360,440],[60,440],[60,280],[360,280],[360,130]],
+    half:52,
+    rocks:[{frac:0.16,side:1,period:3.0,speed:170,phase:0},
+           {frac:0.40,side:-1,period:3.0,speed:170,phase:1.5},
+           {frac:0.62,side:1,period:2.8,speed:180,phase:0.6},
+           {frac:0.85,side:-1,period:2.6,speed:190,phase:1.2}],
+    alcoves:[{frac:0.28,r:60},{frac:0.74,r:60}],
+    pinches:[], bows:[], slings:[], starN:8 },
+  { name:'Level 16 · The Narrow Escape',
+    sub:'Boulders AND clamps!',
+    hint:'🔭 Camera says: Don\'t rush — wait in the wide spots for the boulders and the bites to line up.',
+    waypoints:[[80,690],[80,590],[300,590],[300,470],[110,470],[110,350],[310,350],[310,230],[120,230],[120,120],[280,120]],
+    half:44,
+    alcoves:[{frac:0.43,r:58}],
+    rocks:[{frac:0.20,side:-1,period:2.4,speed:180,phase:0},
+           {frac:0.62,side:1,period:2.2,speed:200,phase:0.8},
+           {frac:0.88,side:-1,period:2.6,speed:200,phase:1.4}],
+    pinches:[{frac:0.32,half:26,len:60,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.0,open:1.6,warn:0.5,phase:0}},
+             {frac:0.74,half:26,len:60,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.4,open:1.7,warn:0.6,phase:1.1}}],
+    bows:[], slings:[], starN:8 },
+  { name:'Level 17 · Wind Tunnel',
+    sub:'Whoosh! Don\'t touch the thorns!',
+    hint:'🔭 Camera says: The wind pushes you toward the thorns. Lean the other way when it blows!',
+    waypoints:[[70,690],[70,450],[200,450],[200,600],[340,600],[340,300],[200,300],[200,130]],
+    half:54,
+    winds:[{frac:0.15,len:180,to:1,period:4.6,on:2.0,phase:0,force:360},
+           {frac:0.62,len:250,to:-1,period:3.6,on:2.0,phase:1.0,force:560},
+           {frac:0.92,len:140,to:1,period:3.2,on:1.6,phase:0.4,force:520}],
+    pinches:[], bows:[], slings:[], starN:8 },
+  { name:'Level 18 · Against the Wind',
+    sub:'Wind, arrows and a skinny path!',
+    hint:'🔭 Camera says: Wind and arrows team up. Wait for calm air before you dash!',
+    waypoints:[[80,690],[80,560],[330,560],[330,430],[90,430],[90,300],[330,300],[330,150],[150,150]],
+    half:44,
+    winds:[{frac:0.22,len:200,to:-1,period:3.6,on:1.8,phase:0,force:540},
+           {frac:0.55,len:200,to:1,period:3.2,on:1.6,phase:1.2,force:560},
+           {frac:0.80,len:160,to:-1,period:3.0,on:1.5,phase:0.5,force:560}],
+    bows:[{frac:0.30,side:1,period:2.6,speed:340},{frac:0.62,side:-1,period:2.4,speed:350},
+          {frac:0.88,side:1,period:2.6,speed:350}],
+    pinches:[], slings:[], starN:8 },
+  { name:'Level 19 · The Golden Detour',
+    sub:'The golden door needs 7 stars!',
+    hint:'🔭 Camera says: Stars hide in risky side pockets. You need 7 to open the golden door!',
+    waypoints:[[80,690],[80,570],[320,570],[320,430],[100,430],[100,290],[320,290],[320,150],[120,150]],
+    half:46, needStars:7,
+    alcoves:[{frac:0.22,r:60},{frac:0.48,r:60},{frac:0.72,r:60}],
+    starPos:[[0.08,0.3],[0.22,1.05],[0.22,-1.05],[0.35,0.3],[0.48,1.05],[0.48,-1.05],[0.6,-0.3],[0.72,1.05],[0.72,-1.05]],
+    pinches:[{frac:0.40,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.8,open:1.5,warn:0.5,phase:0.3}}],
+    bows:[{frac:0.22,side:1,period:2.4,speed:330},{frac:0.48,side:-1,period:2.2,speed:340},
+          {frac:0.72,side:1,period:2.4,speed:350}],
+    slings:[], starN:9 },
+  { name:'Level 20 · Crystal Trial',
+    sub:'World boss! Use everything you know!',
+    hint:'🔭 Camera says: Crystal door, boulders, wind and bites — one stage at a time. 100 seconds!',
+    timeLimit:100,
+    waypoints:[[70,690],[70,600],[340,600],[340,500],[90,500],[90,400],[340,400],[340,300],[90,300],[90,200],[340,200],[340,110]],
+    half:44,
+    alcoves:[{frac:0.08,r:56},{frac:0.44,r:56},{frac:0.64,r:56}],
+    switches:[{frac:0.08,off:-36,gate:0,dur:9}],
+    gates:[{frac:0.22,color:'blue'}],
+    rocks:[{frac:0.30,side:1,period:2.4,speed:190,phase:0},{frac:0.36,side:-1,period:2.4,speed:190,phase:1.2}],
+    winds:[{frac:0.54,len:150,to:1,period:3.4,on:1.6,phase:0,force:500}],
+    pinches:[{frac:0.74,half:26,len:60,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.0,open:1.6,warn:0.5,phase:0}},
+             {frac:0.86,half:26,len:60,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.0,open:1.6,warn:0.5,phase:1.5}}],
+    bows:[], slings:[], starN:10 },
+
+  /* ===== 世界 3 · Moonlit Hollow：综合运用、挑战与最终 Boss ===== */
+  { name:'Level 21 · Lights Out',
+    sub:'Dark cave, glowing crystals!',
+    hint:'🔭 Camera says: The crystal glows in the dark. Light your way, then open the door!',
+    timeLimit:90,
+    waypoints:[[80,690],[80,580],[310,580],[310,460],[100,460],[100,340],[310,340],[310,220],[120,220],[120,120]],
+    half:48, dark:true, fireflyN:7,
+    switches:[{frac:0.46,off:-28,gate:0,dur:6}],
+    gates:[{frac:0.62,color:'blue'}],
+    pinches:[{frac:0.80,half:28,len:60,skull:true,spikes:true,shutHalf:16,
+              chomp:{period:3.4,open:1.9,warn:0.6,phase:0}}],
+    bows:[{frac:0.28,side:1,period:2.8,speed:320}], slings:[], starN:7 },
+  { name:'Level 22 · The Moving Maze',
+    sub:'Three running clamps on a spiral!',
+    hint:'🔭 Camera says: Follow behind a running clamp — never in front of it!',
+    waypoints:[[350,700],[350,150],[70,150],[70,620],[240,620],[240,290],[150,290]],
+    half:44,
+    pinches:[{frac:0.18,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.0,open:1.7,warn:0.5,phase:0},slide:{amp:120,period:6,phase:0}},
+             {frac:0.48,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.4,open:1.8,warn:0.5,phase:1.0},slide:{amp:130,period:7,phase:2.0}},
+             {frac:0.78,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.8,open:1.5,warn:0.5,phase:0.5},slide:{amp:90,period:5,phase:1.0}}],
+    rocks:[{frac:0.34,side:1,period:2.6,speed:200,phase:0.6}],
+    bows:[], slings:[], starN:8 },
+  { name:'Level 23 · Three Windows',
+    sub:'Bite, boulder, breeze!',
+    hint:'🔭 Camera says: Three hazards, three rhythms. Rest in each pocket and watch before you go!',
+    waypoints:[[80,690],[80,560],[330,560],[330,400],[90,400],[90,240],[330,240],[330,120]],
+    half:48,
+    alcoves:[{frac:0.27,r:58},{frac:0.53,r:58},{frac:0.80,r:58}],
+    pinches:[{frac:0.18,half:26,len:60,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.6,open:1.2,warn:0.5,phase:0}}],
+    rocks:[{frac:0.38,side:1,period:2.0,speed:220,phase:0},{frac:0.44,side:-1,period:2.0,speed:220,phase:1.0}],
+    winds:[{frac:0.67,len:180,to:-1,period:3.0,on:1.7,phase:0,force:600}],
+    bows:[{frac:0.90,side:1,period:2.2,speed:360}], slings:[], starN:8 },
+  { name:'Level 24 · Switchback Sprint',
+    sub:'Zig, zag — beat the crystal timer!',
+    hint:'🔭 Camera says: Each crystal gives you only a few seconds. Plan the path, THEN touch it!',
+    timeLimit:70,
+    waypoints:[[70,690],[340,600],[80,500],[340,400],[80,300],[340,200],[200,110]],
+    half:40,
+    switches:[{frac:0.12,off:22,gate:0,dur:5},{frac:0.52,off:-22,gate:1,dur:5}],
+    gates:[{frac:0.30,color:'blue'},{frac:0.70,color:'pink'}],
+    rocks:[{frac:0.40,side:1,period:2.2,speed:200,phase:0},{frac:0.86,side:-1,period:2.4,speed:210,phase:0.8}],
+    pinches:[], bows:[], slings:[{frac:0.62,side:1,period:3.6,speed:240}], starN:7 },
+  { name:'Level 25 · Star Collector',
+    sub:'The golden door needs 9 stars!',
+    hint:'🔭 Camera says: Every pocket hides stars next to danger. Pick a safe order to collect 9!',
+    waypoints:[[80,690],[80,570],[320,570],[320,430],[100,430],[100,290],[320,290],[320,150],[110,150]],
+    half:46, needStars:9,
+    alcoves:[{frac:0.16,r:60},{frac:0.40,r:60},{frac:0.63,r:60},{frac:0.84,r:58}],
+    starPos:[[0.16,1.05],[0.16,-1.05],[0.28,0.3],[0.40,1.05],[0.40,-1.05],[0.52,0.3],[0.63,1.05],[0.63,-1.05],[0.84,1.0],[0.84,-1.0]],
+    pinches:[{frac:0.28,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.6,open:1.4,warn:0.5,phase:0}}],
+    rocks:[{frac:0.52,side:1,period:2.2,speed:210,phase:0.4}],
+    bows:[{frac:0.16,side:-1,period:2.2,speed:350},{frac:0.40,side:1,period:2.0,speed:360},
+          {frac:0.84,side:-1,period:2.2,speed:360}],
+    slings:[{frac:0.63,side:1,period:3.2,speed:250}], starN:10 },
+  { name:'Level 26 · The Long Night',
+    sub:'Dark, windy and full of bites!',
+    hint:'🔭 Camera says: In the dark, listen for the wind. Hide in the pockets to catch your breath.',
+    timeLimit:95,
+    waypoints:[[340,690],[340,580],[110,580],[110,460],[320,460],[320,340],[110,340],[110,220],[300,220],[300,120]],
+    half:48, dark:true, fireflyN:9,
+    alcoves:[{frac:0.40,r:58},{frac:0.70,r:58}],
+    winds:[{frac:0.22,len:200,to:1,period:3.4,on:1.8,phase:0,force:540},
+           {frac:0.55,len:200,to:-1,period:3.2,on:1.7,phase:0.8,force:560}],
+    pinches:[{frac:0.84,half:26,len:60,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:3.0,open:1.6,warn:0.5,phase:0},slide:{amp:70,period:6,phase:0}}],
+    bows:[{frac:0.12,side:-1,period:2.6,speed:330}], slings:[], starN:8 },
+  { name:'Level 27 · No Time to Waste',
+    sub:'4 seconds of open door!',
+    hint:'🔭 Camera says: The door stays open only 4 seconds. Watch the bite rhythm BEFORE you touch the crystal!',
+    waypoints:[[80,690],[80,560],[330,560],[330,420],[90,420],[90,280],[330,280],[330,130]],
+    half:46,
+    switches:[{frac:0.40,off:-30,gate:0,dur:4},{frac:0.68,off:30,gate:1,dur:4}],
+    gates:[{frac:0.53,color:'blue'},{frac:0.86,color:'pink'}],
+    pinches:[{frac:0.47,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.4,open:1.3,warn:0.4,phase:0}},
+             {frac:0.80,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.2,open:1.2,warn:0.4,phase:0.6}}],
+    bows:[{frac:0.15,side:1,period:2.4,speed:350},{frac:0.28,side:-1,period:2.4,speed:350}],
+    slings:[], starN:8 },
+  { name:'Level 28 · The King\'s Arena',
+    sub:'The Skull King returns — angrier!',
+    hint:'🔭 Camera says: Mini skeletons and boulders! Clear a path, then slip through both jaws.',
+    waypoints:[[80,690],[80,580],[320,580],[320,440],[100,440],[100,300],[320,300],[320,140],[130,140]],
+    half:48,
+    pinches:[{frac:0.62,half:26,len:110,skull:true,spikes:true,shutHalf:10,boss:true,
+              spit:{period:3.4},
+              chomp:{period:3.0,open:1.7,warn:0.5,phase:0},
+              chomp2:{period:3.0,open:1.7,warn:0.5,phase:0.8}}],
+    rocks:[{frac:0.20,side:1,period:2.4,speed:200,phase:0},{frac:0.36,side:-1,period:2.2,speed:210,phase:1.0}],
+    bows:[{frac:0.86,side:1,period:2.4,speed:350}], slings:[], starN:8 },
+  { name:'Level 29 · Breaking the Crown',
+    sub:'A crystal shield guards the King!',
+    hint:'🔭 Camera says: The crystal in the side pocket breaks the King\'s shield for 8 seconds. Go!',
+    waypoints:[[70,690],[70,590],[330,590],[330,470],[90,470],[90,350],[330,350],[330,230],[110,230],[110,120]],
+    half:48,
+    alcoves:[{frac:0.36,r:62}],
+    switches:[{frac:0.36,off:-40,gate:0,dur:8}],
+    gates:[{frac:0.56,color:'gold'}],
+    pinches:[{frac:0.30,half:26,len:56,skull:true,spikes:true,shutHalf:14,
+              chomp:{period:2.6,open:1.4,warn:0.5,phase:0}},
+             {frac:0.70,half:26,len:110,skull:true,spikes:true,shutHalf:10,boss:true,
+              spit:{period:3.6},
+              chomp:{period:3.0,open:1.8,warn:0.5,phase:0},
+              chomp2:{period:3.0,open:1.8,warn:0.5,phase:0.8}}],
+    winds:[{frac:0.15,len:170,to:-1,period:3.4,on:1.8,phase:0,force:520}],
+    bows:[{frac:0.90,side:-1,period:2.4,speed:350}], slings:[], starN:8 },
+  { name:'Level 30 · Homeward Bound',
+    sub:'The final adventure — take Pip home!',
+    hint:'🔭 Camera says: Three stages: dodge the boulders, solve the crystal doors, then beat the King!',
+    waypoints:[[70,700],[70,610],[340,610],[340,510],[80,510],[80,410],[340,410],[340,310],[80,310],[80,210],[340,210],[340,110],[180,110]],
+    half:46,
+    rocks:[{frac:0.06,side:1,period:2.4,speed:200,phase:0},{frac:0.12,side:-1,period:2.4,speed:200,phase:1.2},
+           {frac:0.20,side:1,period:2.2,speed:210,phase:0.6}],
+    switches:[{frac:0.33,off:28,gate:1,dur:10},{frac:0.42,off:-28,gate:0,dur:5}],
+    gates:[{frac:0.48,color:'blue'},{frac:0.62,color:'pink'}],
+    winds:[{frac:0.55,len:160,to:1,period:3.2,on:1.6,phase:0,force:540}],
+    pinches:[{frac:0.82,half:26,len:110,skull:true,spikes:true,shutHalf:10,boss:true,
+              spit:{period:3.2},
+              chomp:{period:2.8,open:1.6,warn:0.5,phase:0},
+              chomp2:{period:2.8,open:1.6,warn:0.5,phase:0.7}}],
+    bows:[{frac:0.72,side:1,period:2.4,speed:350},{frac:0.93,side:-1,period:2.6,speed:350}],
+    slings:[], starN:10 },
 ];
-
-/* ---------------- 程序化关卡 13-100 ----------------
- * 用 seeded PRNG（mulberry32，种子=关卡号）生成，保证每次玩都一样。
- * 关卡定义格式与手写关卡完全一致，可直接被 loadLevel 使用。
- */
-function mulberry32(a){
-  return function(){
-    a|=0;a=a+0x6D2B79F5|0;
-    let t=Math.imul(a^a>>>15,1|a);
-    t=t+Math.imul(t^t>>>7,61|t)^t;
-    return ((t^t>>>14)>>>0)/4294967296;
-  };
-}
-const GEN_NAMES=['Twisty Turny','Skull Alley','Arrow Storm','The Squeeze','Dark Depths',
-  'Bone Yard','Windy Whirl','Spike Party','Narrow Pass','Shadow Run','Pebble Dash',
-  'The Gauntlet','Silent Hollow','Jagged Way','Moon Cave','Thorny Trail','Echo Cave',
-  'The Spiral','Crystal Grotto','Misty Maze','Rocky Road','Deep Dark','Swift Stream',
-  'Curvy Cave','Wild Ride','Bumpy Road','Sneaky Path','Happy Hollow','Dizzy Drop',
-  'Starlight Den'];
-const GEN_SUBS=['Deeper into the caves!','Trickier than ever!','Stay sharp!',
-  'The adventure continues!','Can you roll through?','Watch your step!',
-  'Almost a maze master!','Keep rolling!','The caves go on and on!'];
-function genHint(n,hasPinch,hasBow,hasSling,isBoss,isDark,isTime,isKey,tid){
-  const tips=[];
-  if(isBoss)tips.push('the Skull King is BACK — double jaws and mini skeletons');
-  if(isDark)tips.push('pitch dark — catch fireflies to see');
-  if(isTime)tips.push('beat the clock');
-  if(isKey)tips.push('find the key, then open the stone door');
-  if(hasPinch)tips.push('skull clamps snap shut');
-  if(hasBow)tips.push('bows fire fast');
-  if(hasSling)tips.push('slingshots spray pebbles');
-  if(tid){
-    const th=THEMES.find(t=>t.id===tid);
-    if(th&&th.tip)tips.unshift(th.tip);
-  }
-  if(!tips.length)tips.push('a twisty maze — follow the blue arrows');
-  return '\u{1F52D} Camera says: '+tips.join(' · ')+'! You got this!';
-}
-
-/* ---------------- 主题关卡 ----------------
- * 13 关之后每关抽一个主题，决定关卡的"性格"：
- * 箭雨 / 夹子巷 / 黑暗深渊 / 钥匙 hunt / 夹击 / 狙击手 / 螺旋 / 星星宝库 / 心跳 / 钢丝
- * 同一种子=同一关号 → 每次玩都一样。
- */
-const THEMES=[
- {id:'arrow_storm',names:['Arrow Storm','Rain of Arrows','The Barrage'],sub:'Arrows everywhere — keep moving!',tip:'arrows rain down'},
- {id:'clamp_alley',names:['Clamp Alley','Snap Snap','Jaws of Doom'],sub:'Chomping skulls in rhythm — time your roll!',tip:'clamps snap in rhythm'},
- {id:'dark_depths',names:['Dark Depths','Pitch Black','Night Crawl'],sub:'Pitch dark — catch fireflies to see!',tip:'pitch dark — catch fireflies'},
- {id:'key_hunt',names:['Key Hunt','Locked In','The Stone Door'],sub:'Find the key, then open the stone door!',tip:'find the key first'},
- {id:'gauntlet',names:['The Gauntlet','Double Trouble','Crossfire'],sub:'Clamps AND arrows together — good luck!',tip:'clamps and arrows team up'},
- {id:'sniper',names:["Sniper's Nest",'Bullseye','Sharp Shooters'],sub:'Few arrows, but blazing fast!',tip:'super-fast arrows'},
- {id:'spiral',names:['The Spiral','Down the Drain','Nautilus'],sub:'A spiral into the deep — don\'t get dizzy!',tip:'a dizzying spiral'},
- {id:'star_vault',names:['Star Vault','Risky Riches','Greed Cave'],sub:'Stars hiding next to danger — worth it?',tip:'stars next to danger'},
- {id:'heartbeat',names:['Heartbeat','Beat the Clock','Race!'],sub:'So many hazards, so little time!',tip:'beat the clock'},
- {id:'tightrope',names:['Tightrope','The Squeeze','Narrow Escape'],sub:'A super narrow path — precision rolling!',tip:'a super narrow path'},
- {id:'mixed',names:['Twisty Turny','Skull Alley','The Squeeze','Dark Depths','Bone Yard','Windy Whirl','Narrow Pass','Shadow Run','Pebble Dash','The Gauntlet','Silent Hollow','Jagged Way','Moon Cave','Thorny Trail','Echo Cave','The Spiral','Misty Maze','Rocky Road','Deep Dark','Curvy Cave','Wild Ride','Sneaky Path','Dizzy Drop','Starlight Den'],sub:'Deeper into the caves!',tip:null},
-];
-function pickTheme(n,rnd,isBoss){
-  if(isBoss)return THEMES.find(t=>t.id==='mixed');
-  const pool=THEMES.filter(t=>t.id!=='mixed');
-  return pool[Math.floor(rnd()*pool.length)%pool.length];
-}
-
-function genLevel(n){
-  const rnd=mulberry32((n*2654435761)>>>0);
-  const R=(a,b)=>a+rnd()*(b-a);
-  const RI=(a,b)=>a+Math.floor(rnd()*(b-a+1));
-  const pick=arr=>arr[Math.floor(rnd()*arr.length)%arr.length];
-  const prog=Math.min(1,Math.max(0,(n-13)/87)); // 0→1 难度进度
-  const isBoss=n%10===0;
-  const theme=pickTheme(n,rnd,isBoss);
-  const tid=theme.id;
-
-  /* ---- 路径 ---- */
-  // 0 经典蛇形 / 1 紧凑之字 / 2 大回环 / 3 螺旋
-  let pathStyle=RI(0,2);
-  if(tid==='arrow_storm')pathStyle=2;
-  if(tid==='clamp_alley'||tid==='dark_depths')pathStyle=1;
-  if(tid==='spiral')pathStyle=3;
-  const wp=[[80,690]];
-  let x=80,y=690,dir=1;
-  if(pathStyle===3){
-    // 螺旋：从外圈盘向中心
-    const pts=[[330,690],[330,170],[110,170],[110,580],[270,580],[270,300],[170,300]];
-    for(const [px,py] of pts){
-      wp.push([Math.round(px+R(-14,14)),Math.round(py+R(-14,14))]);
-    }
-  }else{
-    const cfg=pathStyle===0?{segs:RI(6,11),v:[120,200],h:[120,220],min:80,stop:5}
-          :pathStyle===1?{segs:RI(9,14),v:[85,150],h:[85,150],min:85,stop:7}
-          :{segs:RI(5,7),v:[140,220],h:[180,260],min:120,stop:4};
-    const xMin=pathStyle===2?50:60, xMax=pathStyle===2?350:340;
-    for(let i=0;i<cfg.segs;i++){
-      if(i%2===0){
-        const ny=Math.max(110,y-R(cfg.v[0],cfg.v[1]));
-        if(y-ny<cfg.min)break;
-        y=ny;
-      }else{
-        let nx=x+dir*R(cfg.h[0],cfg.h[1]);
-        nx=Math.max(xMin,Math.min(xMax,nx));
-        if(Math.abs(nx-x)<cfg.min)nx=Math.max(xMin,Math.min(xMax,x-dir*R(cfg.h[0],cfg.h[1])));
-        if(Math.abs(nx-x)<cfg.min)break;
-        x=Math.round(nx);dir=-dir;
-      }
-      wp.push([Math.round(x),Math.round(y)]);
-      if(y<=110&&i>=cfg.stop)break;
-    }
-  }
-  let half=Math.round(Math.max(34,56-(n-13)*0.25));
-  if(pathStyle===1)half=Math.max(30,half-6);
-  if(tid==='tightrope')half=30+RI(0,4);
-  if(tid==='sniper')half=Math.min(64,half+8);
-
-  /* ---- 机关数量（主题修正） ---- */
-  let pinchN=Math.min(5,2+Math.floor((n-13)/12));
-  let bowN=Math.min(6,2+Math.floor((n-13)/10));
-  let slingN=Math.min(4,1+Math.floor((n-13)/14));
-  if(tid==='arrow_storm'){bowN=6;pinchN=Math.max(1,pinchN-2);slingN=1;}
-  if(tid==='clamp_alley'){pinchN=5;bowN=1;slingN=0;}
-  if(tid==='gauntlet'){pinchN=Math.max(3,pinchN);bowN=Math.max(3,bowN);}
-  if(tid==='sniper'){bowN=3;pinchN=1;slingN=0;}
-  if(tid==='heartbeat'){pinchN=5;bowN=6;slingN=4;}
-  if(tid==='tightrope'){pinchN=2;bowN=2;slingN=1;}
-  if(tid==='star_vault'){pinchN=Math.max(2,pinchN);bowN=Math.max(2,bowN);}
-
-  const isDark=n%7===0||tid==='dark_depths';
-  const isTime=n%9===0||tid==='heartbeat';
-  const isKey=n%11===0||tid==='key_hunt';
-
-  /* ---- 夹子 ---- */
-  const pinches=[];
-  if(isBoss){
-    pinches.push({frac:0.55,half:26,len:130,skull:true,spikes:true,shutHalf:10,boss:true,
-      spit:{period:+Math.max(3.2,4.5-prog*1.0).toFixed(2)},
-      chomp:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)},
-      chomp2:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)}});
-    if(n>=50){
-      pinches.push({frac:0.25,half:24,len:60,skull:true,spikes:true,shutHalf:14,
-        chomp:{period:2.6,open:1.4,warn:0.5,phase:+R(0,3).toFixed(2)}});
-      pinches.push({frac:0.8,half:24,len:60,skull:true,spikes:true,shutHalf:14,
-        chomp:{period:2.6,open:1.4,warn:0.5,phase:+R(0,3).toFixed(2)}});
-    }
-  }else{
-    const used=[];
-    for(let i=0;i<pinchN;i++){
-      let f=0.5,ok=false;
-      for(let t=0;t<30&&!ok;t++){f=R(0.15,0.85);ok=used.every(u=>Math.abs(u-f)>=0.12);}
-      used.push(f);
-      const p={frac:+f.toFixed(3),half:26,len:60,skull:true,spikes:rnd()<0.6,shutHalf:16};
-      const wantChomp=tid==='clamp_alley'||tid==='gauntlet'?true:(rnd()<0.55+prog*0.3);
-      if(wantChomp){
-        if(tid==='clamp_alley'){
-          // 节奏夹：相同周期、错开相位，像波浪一样咬合
-          p.chomp={period:3.0,open:1.6,warn:0.5,phase:+(i*0.75).toFixed(2)};
-        }else{
-          const open=+R(1.4,2.4-prog*0.6).toFixed(2);
-          p.chomp={period:+(open+R(1.2,2.2)).toFixed(2),open:open,warn:0.5,phase:+R(0,3).toFixed(2)};
-        }
-      }
-      pinches.push(p);
-    }
-  }
-
-  /* ---- 弓箭 ---- */
-  const bows=[];
-  {
-    const used=[];
-    const pinchFracs=pinches.map(p=>p.frac);
-    const synergy=tid==='gauntlet'?0.85:0.4;
-    for(let i=0;i<bowN;i++){
-      let f=0.5,ok=false;
-      if(pinchFracs.length&&rnd()<synergy){
-        const pf=pick(pinchFracs);
-        f=Math.max(0.1,Math.min(0.9,pf+R(-0.08,0.08)));
-        ok=used.every(u=>Math.abs(u-f)>=0.06);
-      }
-      for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
-      used.push(f);
-      let period=+Math.max(1.4,2.8-prog*1.2+R(-0.2,0.4)).toFixed(2);
-      let speed=Math.round(300+prog*140+R(-20,20));
-      if(tid==='arrow_storm'){period=+R(1.6,2.2).toFixed(2);speed=Math.round(R(340,420));}
-      if(tid==='sniper'){period=+R(1.4,1.8).toFixed(2);speed=Math.round(R(420,480));}
-      bows.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,period:period,speed:speed});
-    }
-  }
-
-  /* ---- 弹弓 ---- */
-  const slings=[];
-  {
-    const used=[];
-    for(let i=0;i<slingN;i++){
-      let f=0.5,ok=false;
-      for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
-      used.push(f);
-      slings.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,
-        period:+R(3.2-prog*0.6,4.2-prog*0.6).toFixed(2),speed:Math.round(R(220,280)+prog*40)});
-    }
-  }
-
-  /* ---- 星星：宝库主题把星星放在危险旁边 ---- */
-  const starN=6+(n%4);
-  let starFracs=null;
-  if(tid==='star_vault'){
-    const hfracs=[...pinches,...bows,...slings].map(h=>h.frac);
-    starFracs=[];
-    for(let i=0;i<starN;i++){
-      const hf=hfracs.length?pick(hfracs):(i+1)/(starN+1);
-      starFracs.push(+Math.max(0.05,Math.min(0.95,hf+R(-0.04,0.04))).toFixed(3));
-    }
-  }
-
-  const lv={name:'Level '+n+' \u00B7 '+pick(theme.names),
-    sub:theme.sub,
-    hint:genHint(n,pinches.length>0,bows.length>0,slings.length>0,isBoss,isDark,isTime,isKey,tid),
-    waypoints:wp,half:half,pinches:pinches,bows:bows,slings:slings,
-    starN:starN,starFracs:starFracs,theme:tid};
-  if(isDark){lv.dark=true;lv.fireflyN=RI(6,10);}
-  if(isTime){lv.timeLimit=tid==='heartbeat'?60:70+(n%3)*10;}
-  if(isKey){lv.alcove={frac:0.42,r:75};lv.key={frac:0.42,off:38};lv.door={frac:0.93};}
-  if(isBoss){
-    lv.name='Level '+n+' \u00B7 '+pick(['Skull King Returns','Revenge of the Skull King','Skull King Unleashed']);
-    lv.sub='Double jaws, mini skeletons — the ultimate showdown!';
-  }
-  return lv;
-}
 
 function validLevel(lv){
   const wp=lv.waypoints;
@@ -517,24 +516,20 @@ function validLevel(lv){
   }
   return true;
 }
-function safeLevel(n){ // 校验失败时的兜底关卡
-  return {name:'Level '+n+' \u00B7 Safe Path',sub:'A calm maze',
-    hint:'\u{1F52D} Camera says: follow the blue arrows, nice and easy!',
-    waypoints:[[80,690],[80,500],[260,500],[260,320],[120,320],[120,150]],
-    half:50,pinches:[],bows:[],slings:[],starN:6};
-}
-for(let _n=13;_n<=100;_n++){
-  const _lv=genLevel(_n);
-  if(validLevel(_lv))LEVELS.push(_lv);
-  else{console.warn('[genLevel] invalid level '+_n+', using fallback');LEVELS.push(safeLevel(_n));}
+
+// 风口状态：{on:是否在吹, warn:是否即将吹}
+function windState(w,t){
+  const cyc=(((t==null?0:t)+(w.phase||0))%w.period+w.period)%w.period;
+  if(cyc<w.on)return {on:true,warn:false};
+  if(cyc>w.period-0.9)return {on:false,warn:true};
+  return {on:false,warn:false};
 }
 
 if(typeof module!=='undefined'){
   module.exports={buildPath:buildPath,pathFrame:pathFrame,
     nearestOnPath:nearestOnPath,halfWidthAt:halfWidthAt,chompState:chompState,
     pinchS:pinchS,clampToTunnel:clampToTunnel,stepProjectile:stepProjectile,
-    circleHit:circleHit,LEVELS:LEVELS,
-    mulberry32:mulberry32,genLevel:genLevel,validLevel:validLevel,safeLevel:safeLevel};
+    circleHit:circleHit,LEVELS:LEVELS,validLevel:validLevel,windState:windState};
 }
 
 /* =====================================================================
@@ -594,7 +589,7 @@ let Pet={unlocked:false,stars:0,food:0,fed:0,stage:0,
   sleepUntil:0,sleepTogether:false,
   nest:false,hat:false,scarf:false,pajamas:false,
   equipHat:false,equipScarf:false,equipPajamas:false,
-  limited:[]};
+  limited:[],lvVer:0,newCaves:false};
 try{
   const raw=localStorage.getItem(PET_KEY);
   if(raw){const p=JSON.parse(raw);for(const k in Pet){if(typeof p[k]===typeof Pet[k])Pet[k]=p[k];}}
@@ -606,6 +601,13 @@ else if(Pet.fed>=10&&Pet.stage<1){Pet.stage=1;petSave();}
 if(Pet.catfed>=10&&Pet.wstage<1){Pet.wstage=1;petSave();} // 老玩家：猫喂满过直接长大
 if(Pet.unlocked&&!Pet.lastFedB)Pet.lastFedB=Date.now();
 if(Pet.wesley&&!Pet.lastFedW)Pet.lastFedW=Date.now();
+// 关卡改版迁移：100 关(程序化) → 30 关手工设计。1–12 关不变，13 关以后按比例映射，宠物/星星/道具都保留。
+if(Pet.lvVer!==2){
+  const old=Pet.maxLv||0;
+  if(old>12)Pet.maxLv=Math.min(29,12+Math.round((old-12)*18/88));
+  if(old>0)Pet.newCaves=true; // 老玩家：首页提示"全新 30 关"
+  Pet.lvVer=2;petSave();
+}
 function petSave(){try{localStorage.setItem(PET_KEY,JSON.stringify(Pet));}catch(e){}}
 
 // 照着 Steven 的画：圆滚滚绿身体 + 小圆头 + 豆豆眼 + 右边尖嘴 + 左边尖尾巴
@@ -1074,12 +1076,30 @@ function loadLevel(idx){
     bows:(def.bows||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:1.1+i*0.8})),
     slings:(def.slings||[]).map((b,i)=>({s:b.frac*path.len,side:b.side,period:b.period,speed:b.speed,timer:2.0+i*1.1})),
     stars:[],
-    fireflies:[],key:null,door:null,minions:[],spitT:3.5
+    fireflies:[],key:null,door:null,minions:[],spitT:3.5,
+    alcoveList:(def.alcoves||[]).map(a=>({s:a.frac*path.len,r:a.r})),
+    gates:(def.gates||[]).map(g=>({s:g.frac*path.len,color:g.color||'blue',openUntil:-1,passed:false})),
+    switches:(def.switches||[]).map(w=>{const f=pathFrame(path,w.frac*path.len);
+      return {x:f.x+f.nx*(w.off||0),y:f.y+f.ny*(w.off||0),gate:w.gate,dur:w.dur||6,pressT:-9};}),
+    rocks:(def.rocks||[]).map((r,i)=>({s:r.frac*path.len,side:r.side,period:r.period,speed:r.speed,timer:1.6+(r.phase||0)})),
+    boulders:[],
+    winds:(def.winds||[]).map(w=>({s:w.frac*path.len,len:w.len,to:w.to,period:w.period,on:w.on,phase:w.phase||0,force:w.force||520})),
+    starGate:def.needStars?{s:0.95*path.len,need:def.needStars,passed:false}:null
   };
+  for(const g of level.switches)if(level.gates[g.gate])level.gates[g.gate].color=level.gates[g.gate].color;
   for(let i=0;i<def.starN;i++){
-    const sf=def.starFracs?def.starFracs[i%def.starFracs.length]:(i+1)/(def.starN+1);
-    const f=pathFrame(path,sf*path.len);
-    const off=(i%2===0?1:-1)*def.half*0.35;
+    let f,off;
+    if(def.starPos&&def.starPos[i]){
+      f=pathFrame(path,def.starPos[i][0]*path.len);off=def.starPos[i][1]*def.half;
+      if(Math.abs(def.starPos[i][1])>1){ // 放进小洞：按小洞半径摆放
+        const a=level.alcoveList.find(a=>Math.abs(a.s-def.starPos[i][0]*path.len)<a.r);
+        if(a)off=Math.sign(off)*(a.r-22);
+      }
+    }else{
+      const sf=def.starFracs?def.starFracs[i%def.starFracs.length]:(i+1)/(def.starN+1);
+      f=pathFrame(path,sf*path.len);
+      off=(i%2===0?1:-1)*def.half*0.35;
+    }
     level.stars.push({x:f.x+f.nx*off,y:f.y+f.ny*off,got:false,ph:Math.random()*6});
   }
   if(def.dark){ // L10 黑黑大山洞：萤火虫
@@ -1110,10 +1130,9 @@ function loadLevel(idx){
 
 /* ---------- Cave naming / regions ---------- */
 const REGIONS=[
-  {name:'Mossy Caves',from:0,to:24,emoji:'🌿',desc:'Soft moss, gentle turns and your very first friends.'},
-  {name:'Crystal Caverns',from:25,to:49,emoji:'💎',desc:'Sparkly tunnels, sneaky clamps and quick arrows.'},
-  {name:'Moonlit Hollow',from:50,to:74,emoji:'🌙',desc:'Dark, dreamy caves. Fireflies help you see.'},
-  {name:"Skull King's Lair",from:75,to:99,emoji:'👑',desc:'The trickiest caves of all. Only brave paws!'},
+  {name:'Mossy Caves',from:0,to:9,emoji:'🌿',desc:'Learn to watch, wait and roll. Your first friends live here.'},
+  {name:'Crystal Caverns',from:10,to:19,emoji:'💎',desc:'Crystal doors, rolling boulders and whooshing wind.'},
+  {name:'Moonlit Hollow',from:20,to:29,emoji:'🌙',desc:'Dark, tricky caves — and the Skull King\'s last stand.'},
 ];
 function regionOf(idx){return REGIONS.find(r=>idx>=r.from&&idx<=r.to)||REGIONS[0];}
 function caveTitle(idx){const n=LEVELS[idx].name;const p=n.split(' · ');return p[1]||n;}
@@ -1131,6 +1150,11 @@ const TIPS={
   dark:{ic:'🔦',t:'Dark cave',d:'Catch fireflies to make your light bigger.'},
   key:{ic:'🔑',t:'Key & door',d:'Find the key in the side cave first. Then the stone door opens.'},
   boss:{ic:'👑',t:'The Skull King',d:'Double jaws and mini skeletons! Time your run between bites.'},
+  crystal:{ic:'💎',t:'Crystal doors',d:'Roll onto a glowing crystal to open the door of the same color — but only for a few seconds!'},
+  rock:{ic:'🪨',t:'Rolling boulders',d:'Rumbling dust means a boulder is about to roll across. Wait, then cross right behind it.'},
+  wind:{ic:'🌬️',t:'Windy tunnels',d:'Swirls mean wind is coming. Lean away from the thorny wall while it blows.'},
+  stargate:{ic:'🌟',t:'Golden star door',d:'This door opens only when you have collected enough stars in the cave.'},
+  pocket:{ic:'🫧',t:'Safe pockets',d:'Round pockets in the tunnel are safe spots. Stop there and watch the next hazard.'},
   tools:{ic:'🛡️',t:'Shield & bomb',d:'Tap 🛡️ for 2 seconds of protection, or 💣 then a hazard to pop it. Get more in Pet Hollow.'},
 };
 function tipsFor(idx){
@@ -1145,6 +1169,11 @@ function tipsFor(idx){
   if(d.dark)k.push('dark');
   if(d.key)k.push('key');
   if((d.pinches||[]).some(p=>p.boss))k.push('boss');
+  if((d.switches||[]).length)k.push('crystal');
+  if((d.rocks||[]).length)k.push('rock');
+  if((d.winds||[]).length)k.push('wind');
+  if(d.needStars)k.push('stargate');
+  if((d.alcoves||[]).length&&!d.needStars)k.push('pocket');
   return k;
 }
 function tipHTML(k,isNew){const t=TIPS[k];return '<div class="tip'+(isNew?' new':'')+'"><div class="ic">'+t.ic+'</div><div><b>'+t.t+'</b><span>'+t.d+'</span></div></div>';}
@@ -1157,7 +1186,10 @@ function showIntro(idx,passed){
   document.getElementById('introTitle').textContent=reg.emoji+' '+reg.name+' · Cave '+(idx+1);
   document.getElementById('introLevel').textContent=caveTitle(idx);
   document.getElementById('introSub').textContent=def.sub;
-  pendingTips=tipsFor(idx).filter(k=>!UI.seenTips.includes(k)).slice(0,2);
+  pendingTips=tipsFor(idx).filter(k=>!UI.seenTips.includes(k));
+  const NEWFIRST=['crystal','rock','wind','stargate','pocket','boss','key','dark'];
+  pendingTips.sort((a,b)=>(NEWFIRST.includes(b)?1:0)-(NEWFIRST.includes(a)?1:0));
+  pendingTips=pendingTips.slice(0,2);
   document.getElementById('introTips').innerHTML=pendingTips.map(k=>tipHTML(k,true)).join('');
   document.getElementById('introHint').textContent=cleanHint(def.hint);
   document.getElementById('introHintBox').style.display=(pendingTips.length>=2||pendingTips.includes('drag'))?'none':'';
@@ -1433,20 +1465,103 @@ function update(dt){
   const px=h.x,py=h.y;
   h.x+=(h.tx-h.x)*k;h.y+=(h.ty-h.y)*k;
   if(Math.abs(h.tx-h.x)>2)h.face=h.tx>h.x?1:-1;
+  // 风口：把刺猬吹向荆棘墙
+  const lastS=G.lastS||0;
+  for(const w of L.winds){
+    if(Math.abs(lastS-w.s)<w.len/2&&windState(w,G.time).on){
+      const wf=pathFrame(L.path,lastS);
+      h.x+=wf.nx*w.to*w.force*dt;h.y+=wf.ny*w.to*w.force*dt;
+    }
+  }
   const c=clampToTunnel(L.path,L,h.x,h.y,h.r,G.time);
   h.x=c.x;h.y=c.y;
-  if(c.s>G.sMax)G.sMax=c.s;
+  // 挡路的门：石门 / 水晶门 / 金色星门
+  const block=(bs,hintKey,msg)=>{
+    if(c.s>bs-26){
+      const df=pathFrame(L.path,bs-26);
+      const lat=(h.x-df.x)*df.nx+(h.y-df.y)*df.ny;
+      h.x=df.x+df.nx*lat;h.y=df.y+df.ny*lat;c.s=bs-26;
+      if(!G['_h'+hintKey]||G.time-G['_h'+hintKey]>4){G['_h'+hintKey]=G.time;banner(msg,2200);}
+    }
+  };
   // L11 石门：没钥匙不能过去
-  if(L.door&&!L.door.open){
-    if(c.s>L.door.s-26){
-      const df=pathFrame(L.path,L.door.s-26);
-      h.x=df.x;h.y=df.y;h.tx=df.x;h.ty=df.y;
-      if(!G._doorHint||G.time-G._doorHint>4){
-        G._doorHint=G.time;
-        banner('🚪 Stone door blocks the way! Find the key in the side path first 🔑',2200);
+  if(L.door&&!L.door.open)block(L.door.s,'door','🚪 Stone door blocks the way! Find the key in the side path first 🔑');
+  for(let gi=0;gi<L.gates.length;gi++){
+    const g=L.gates[gi];
+    if(g.passed)continue;
+    const open=G.time<g.openUntil;
+    if(c.s>g.s+12)g.passed=true;
+    else if(!open){
+      if(c.s>g.s-8)g.passed=true; // 门关上时已经挤过去一大半：算你过
+      else block(g.s,'gate'+gi,g.color==='gold'?'👑 A crystal shield! Find the gold crystal to break it.':
+        '💎 Crystal door! Touch the '+(g.color==='pink'?'pink':'blue')+' crystal to open it.');
+    }
+  }
+  if(L.starGate&&!L.starGate.passed){
+    if(G.starGot>=L.starGate.need){
+      if(!L.starGate.opened){L.starGate.opened=true;banner('🌟 The golden door opens!',1800);sfxLevel();}
+      if(c.s>L.starGate.s)L.starGate.passed=true;
+    }else block(L.starGate.s,'star','🌟 The golden door needs '+L.starGate.need+' stars — you have '+G.starGot+'. Go back for more!');
+  }
+  G.lastS=c.s;
+  if(c.s>G.sMax)G.sMax=c.s;
+  // 水晶开关
+  for(const w of L.switches){
+    const g=L.gates[w.gate];
+    if(!g)continue;
+    if(circleHit(w.x,w.y,16,h.x,h.y,h.r)){
+      {
+        if(G.time>=g.openUntil){
+          banner('💎 Click! The '+(g.color==='gold'?'King\'s shield breaks':g.color+' door opens')+' for '+w.dur+' seconds — go!',1800);
+          tone(1046,0.12,'sine',0.14);tone(1568,0.2,'sine',0.12,0.08);
+        }
+        g.openUntil=Math.max(g.openUntil,G.time+w.dur);w.pressT=G.time;
       }
     }
   }
+  // 门快关了：滴答声
+  for(const g of L.gates){
+    const left=g.openUntil-G.time;
+    if(!g.passed&&left>0&&left<1.6){
+      const tick=Math.floor(left*4);
+      if(g._tick!==tick){g._tick=tick;tone(1400,0.04,'square',0.05);}
+    }
+  }
+  // 风口墙上的荆棘
+  for(const w of L.winds){
+    if(Math.abs(c.s-w.s)<w.len/2&&G.invuln<=0){
+      const wf=pathFrame(L.path,c.s);
+      const lat=((h.x-wf.x)*wf.nx+(h.y-wf.y)*wf.ny)*w.to;
+      if(lat>halfWidthAt(L,c.s,G.time)-h.r-3){
+        setHearts(runHearts-1);G.invuln=1.6;sfxHit();
+        if(runHearts<=0){gameOver();G.phase='over';return;}
+        banner('Ouch, thorns! Lean away from the wind. Hearts left: '+'❤'.repeat(runHearts),1800);
+      }
+    }
+  }
+  // 滚石洞：预警后滚石横穿隧道
+  for(const r of L.rocks){
+    r.timer-=dt;
+    if(r.timer<=0){
+      r.timer=r.period;
+      const f=pathFrame(L.path,r.s),hw=halfWidthAt(L,r.s,G.time);
+      L.boulders.push({x:f.x+f.nx*r.side*(hw+14),y:f.y+f.ny*r.side*(hw+14),
+        vx:-f.nx*r.side*r.speed,vy:-f.ny*r.side*r.speed,life:(2*hw+40)/r.speed,rot:0,r:19});
+      tone(70,0.25,'triangle',0.12);
+    }
+  }
+  const bkeep=[];
+  for(const b of L.boulders){
+    b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;b.rot+=dt*b.vx/30+dt*b.vy/30;
+    if(b.life<=0)continue;
+    if(G.invuln<=0&&circleHit(b.x,b.y,b.r-2,h.x,h.y,h.r)){
+      setHearts(runHearts-1);G.invuln=1.6;sfxHit();
+      if(runHearts<=0){gameOver();G.phase='over';return;}
+      banner('Bonk! A boulder rolled over you! Hearts left: '+'❤'.repeat(runHearts),1800);
+    }
+    bkeep.push(b);
+  }
+  L.boulders=bkeep;
   // L11 捡钥匙
   if(L.key&&!L.key.got&&circleHit(L.key.x,L.key.y,12,h.x,h.y,h.r+6)){
     L.key.got=true;G.hasKey=true;if(L.door)L.door.open=true;
@@ -1557,7 +1672,7 @@ function update(dt){
   if(G.sMax>=L.path.len-30){
     G.phase='done';sfxWin();
     Pet.levelsSinceSleep=(Pet.levelsSinceSleep||0)+1;
-    Pet.maxLv=Math.max(Pet.maxLv||0,Math.min(99,G.idx+1));petSave(); // 解锁下一关（选关用）
+    Pet.maxLv=Math.max(Pet.maxLv||0,Math.min(LEVELS.length-1,G.idx+1));petSave(); // 解锁下一关（选关用）
     if(G.idx===4){
       const first=!Pet.unlocked;      // 第 5 关：小鸟泥
       Pet.unlocked=true;petSave();
@@ -1933,6 +2048,187 @@ function drawDark(){
   ctx.fillStyle=g;
   ctx.fillRect(0,0,LW,LH);
 }
+/* ---------- 新机制的画法 ---------- */
+const GEM={blue:['#7FD3FF','#2E86C1','#D6F1FF'],pink:['#FF9ED8','#C2185B','#FFE0F2'],gold:['#FFD66B','#E09B00','#FFF4C9']};
+function drawPockets(){
+  const L=G.level;
+  for(const a of L.alcoveList){
+    const f=pathFrame(L.path,a.s);
+    ctx.save();
+    ctx.fillStyle='rgba(129,199,132,.18)';
+    ctx.beginPath();ctx.arc(f.x,f.y,a.r-8,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(102,187,106,.45)';ctx.lineWidth=2;ctx.setLineDash([4,7]);
+    ctx.beginPath();ctx.arc(f.x,f.y,a.r-10,0,7);ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawGem(x,y,size,col,glow){
+  ctx.save();ctx.translate(x,y);
+  if(glow>0){
+    const g=ctx.createRadialGradient(0,0,2,0,0,size*2.2);
+    g.addColorStop(0,col[2]);g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.globalAlpha=glow;ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,size*2.2,0,7);ctx.fill();ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=col[0];ctx.strokeStyle=col[1];ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,-size);ctx.lineTo(size*0.75,-size*0.2);ctx.lineTo(0,size);ctx.lineTo(-size*0.75,-size*0.2);ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.75)';
+  ctx.beginPath();ctx.moveTo(-size*0.15,-size*0.7);ctx.lineTo(size*0.3,-size*0.2);ctx.lineTo(-size*0.15,-size*0.1);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+function drawSwitches(){
+  const L=G.level;
+  for(const w of L.switches){
+    const g=L.gates[w.gate];if(!g)continue;
+    const col=GEM[g.color]||GEM.blue;
+    const open=G.time<g.openUntil;
+    // 地上的圆形压板
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(w.x,w.y+6,18,8,0,0,7);ctx.fill();
+    ctx.fillStyle=open?col[2]:'#efe3d0';ctx.strokeStyle=col[1];ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(w.x,w.y,15,0,7);ctx.fill();ctx.stroke();
+    ctx.restore();
+    const pulse=open?1:0.55+0.45*Math.sin(G.time*4);
+    drawGem(w.x,w.y-4-(open?0:Math.sin(G.time*3)*2),11,col,pulse);
+  }
+}
+function drawGates(){
+  const L=G.level;
+  for(const g of L.gates){
+    if(g.passed&&G.time>=g.openUntil)continue;
+    const f=pathFrame(L.path,g.s),ang=Math.atan2(f.ty,f.tx);
+    const hw=halfWidthAt(L,g.s,G.time)+6;
+    const col=GEM[g.color]||GEM.blue;
+    const left=g.openUntil-G.time;
+    const open=left>0;
+    ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);
+    // 门框
+    ctx.fillStyle=col[1];
+    rr(-7,-hw-6,14,10,4);ctx.fill();rr(-7,hw-4,14,10,4);ctx.fill();
+    if(!open){
+      // 关着：一排水晶柱
+      for(let y=-hw+6;y<hw-4;y+=13){
+        ctx.fillStyle=col[0];ctx.strokeStyle=col[1];ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.moveTo(-6,y);ctx.lineTo(0,y-6);ctx.lineTo(6,y);ctx.lineTo(0,y+8);ctx.closePath();ctx.fill();ctx.stroke();
+      }
+      ctx.globalAlpha=0.35+0.15*Math.sin(G.time*3);
+      ctx.fillStyle=col[2];rr(-5,-hw,10,hw*2,5);ctx.fill();ctx.globalAlpha=1;
+      if(g.color==='gold'){ctx.rotate(-ang);ctx.font='18px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';ctx.fillText('👑',0,-hw-12);}
+    }else{
+      // 开着：半透明 + 倒计时圆环（快关时闪烁）
+      const blink=left<1.5&&Math.floor(G.time*8)%2===0;
+      ctx.globalAlpha=blink?0.75:0.3;ctx.fillStyle=col[0];ctx.strokeStyle=col[1];ctx.lineWidth=1.5;
+      for(let y=-hw+6;y<hw-4;y+=13){ // 打开的门：水晶柱缩到两边墙里，留下淡淡的影子
+        const yy=y<0?y-6:y+6;
+        ctx.beginPath();ctx.moveTo(-5,yy);ctx.lineTo(0,yy-5);ctx.lineTo(5,yy);ctx.lineTo(0,yy+6);ctx.closePath();ctx.fill();ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+      ctx.rotate(-ang);
+      const dur=Math.max(0.1,(L.switches.find(w=>L.gates[w.gate]===g)||{dur:6}).dur);
+      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=7;
+      ctx.beginPath();ctx.arc(0,0,13,0,7);ctx.stroke();
+      ctx.strokeStyle=(left<1.5&&dur<=6)?'#E5484D':col[1];ctx.lineWidth=5;
+      ctx.beginPath();ctx.arc(0,0,13,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.min(1,left/dur));ctx.stroke();
+      ctx.fillStyle='#4A3328';ctx.font='700 12px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(Math.ceil(left),0,1);ctx.textBaseline='alphabetic';
+    }
+    ctx.restore();
+  }
+}
+function drawStarGate(){
+  const L=G.level,sg=L.starGate;
+  if(!sg||sg.passed)return;
+  const f=pathFrame(L.path,sg.s),ang=Math.atan2(f.ty,f.tx);
+  const hw=halfWidthAt(L,sg.s,G.time)+6;
+  const ok=G.starGot>=sg.need;
+  ctx.save();ctx.translate(f.x,f.y);ctx.rotate(ang);
+  ctx.globalAlpha=ok?0.35:1;
+  ctx.fillStyle='#FFD66B';ctx.strokeStyle='#C98A00';ctx.lineWidth=2.5;
+  rr(-8,-hw,16,hw*2,8);ctx.fill();ctx.stroke();
+  ctx.globalAlpha=1;ctx.rotate(-ang);
+  ctx.fillStyle='rgba(255,255,255,.95)';rr(-30,-hw-34,60,26,13);ctx.fill();
+  ctx.fillStyle=ok?'#2E7D32':'#8A5A00';ctx.font='700 14px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
+  ctx.fillText('⭐ '+Math.min(G.starGot,sg.need)+'/'+sg.need,0,-hw-16);
+  ctx.restore();
+}
+function drawRockHoles(){
+  const L=G.level;
+  for(const r of L.rocks){
+    const f=pathFrame(L.path,r.s),hw=halfWidthAt(L,r.s,G.time);
+    const x=f.x+f.nx*r.side*(hw+8),y=f.y+f.ny*r.side*(hw+8);
+    const tele=r.timer<0.9;
+    ctx.save();ctx.translate(x,y);
+    if(tele){ctx.translate(Math.sin(G.time*50)*2,Math.cos(G.time*45)*2);}
+    ctx.fillStyle='#1c1512';ctx.beginPath();ctx.arc(0,0,20,0,7);ctx.fill();
+    ctx.strokeStyle='#6d4c41';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,21,0,7);ctx.stroke();
+    if(tele){
+      // 灰尘 + 红色预警
+      ctx.fillStyle='rgba(239,83,80,'+(0.25+0.2*Math.sin(G.time*14))+')';
+      ctx.beginPath();ctx.arc(0,0,30,0,7);ctx.fill();
+      ctx.fillStyle='rgba(215,204,200,.8)';
+      for(let i=0;i<5;i++){const a=G.time*3+i*1.3,d=22+((G.time*40+i*9)%14);ctx.beginPath();ctx.arc(Math.cos(a)*d,Math.sin(a)*d,3,0,7);ctx.fill();}
+      ctx.fillStyle='#fff';ctx.font='700 18px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';ctx.fillText('!',0,-26);
+    }
+    ctx.restore();
+  }
+  // 横穿隧道的危险带（淡淡的提示线）
+  for(const r of L.rocks){
+    if(r.timer>=0.9)continue;
+    const f=pathFrame(L.path,r.s),hw=halfWidthAt(L,r.s,G.time);
+    ctx.save();ctx.strokeStyle='rgba(239,83,80,.35)';ctx.lineWidth=36;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(f.x+f.nx*hw,f.y+f.ny*hw);ctx.lineTo(f.x-f.nx*hw,f.y-f.ny*hw);ctx.stroke();ctx.restore();
+  }
+}
+function drawBoulders(){
+  for(const b of G.level.boulders){
+    ctx.save();ctx.translate(b.x,b.y);
+    ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(3,b.r-3,b.r,6,0,0,7);ctx.fill();
+    ctx.rotate(b.rot);
+    ctx.fillStyle='#8d8079';ctx.strokeStyle='#4e423c';ctx.lineWidth=3;
+    ctx.beginPath();
+    for(let i=0;i<9;i++){const a=i/9*Math.PI*2,rr2=b.r*(0.88+0.12*Math.sin(i*2.3));ctx.lineTo(Math.cos(a)*rr2,Math.sin(a)*rr2);}
+    ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#5d514b';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(-8,-4);ctx.lineTo(2,2);ctx.lineTo(6,-6);ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawWinds(){
+  const L=G.level;
+  for(const w of L.winds){
+    const st=windState(w,G.time);
+    // 荆棘墙
+    for(let s=w.s-w.len/2;s<=w.s+w.len/2;s+=14){
+      const f=pathFrame(L.path,s),hw=halfWidthAt(L,s,G.time);
+      const bx=f.x+f.nx*w.to*(hw+2),by=f.y+f.ny*w.to*(hw+2);
+      const ix=-f.nx*w.to,iy=-f.ny*w.to;
+      ctx.fillStyle='#2e7d32';ctx.beginPath();ctx.arc(bx,by,6,0,7);ctx.fill();
+      ctx.fillStyle='#c62828';
+      ctx.beginPath();ctx.moveTo(bx+f.tx*4,by+f.ty*4);ctx.lineTo(bx+ix*12,by+iy*12);ctx.lineTo(bx-f.tx*4,by-f.ty*4);ctx.closePath();ctx.fill();
+    }
+    // 风：吹的时候白色流线，快吹时淡淡的漩涡
+    if(st.on||st.warn){
+      ctx.save();
+      ctx.strokeStyle=st.on?'rgba(255,255,255,.75)':'rgba(255,255,255,.3)';ctx.lineWidth=st.on?3:2;ctx.lineCap='round';
+      const n=st.on?9:4;
+      for(let i=0;i<n;i++){
+        const s=w.s-w.len/2+((i*w.len/n+G.time*37)%w.len);
+        const f=pathFrame(L.path,s),hw=halfWidthAt(L,s,G.time);
+        const prog=st.on?((G.time*2.2+i*0.37)%1):0.5;
+        const lat=(-1+2*prog)*hw*w.to;
+        const x=f.x+f.nx*lat,y=f.y+f.ny*lat;
+        ctx.beginPath();ctx.moveTo(x-f.nx*w.to*16,y-f.ny*w.to*16);
+        ctx.quadraticCurveTo(x+f.tx*6,y+f.ty*6,x,y);ctx.stroke();
+      }
+      if(st.warn){
+        const f=pathFrame(L.path,w.s);
+        ctx.fillStyle='rgba(255,255,255,.9)';ctx.font='20px ui-rounded, system-ui, sans-serif';ctx.textAlign='center';
+        ctx.fillText('🌬️',f.x-f.nx*w.to*(halfWidthAt(L,w.s,G.time)+18),f.y-f.ny*w.to*(halfWidthAt(L,w.s,G.time)+18)+7);
+      }
+      ctx.restore();
+    }
+  }
+}
 function draw(){
   const W=window.innerWidth,H=window.innerHeight;
   ctx.fillStyle='#201a18';ctx.fillRect(0,0,W,H);
@@ -1942,16 +2238,23 @@ function draw(){
   bg.addColorStop(0,'#3a2c28');bg.addColorStop(1,'#2a211e');
   ctx.fillStyle=bg;ctx.fillRect(0,0,LW,LH);
   drawTunnel();
+  drawPockets();
+  drawWinds();
   drawStartExit();
   drawCamera();
   const L=G.level;
+  drawRockHoles();
   for(const pin of L.pinches)if(pin.skull)drawSkull(pin);
   drawDoor();
+  drawGates();
+  drawStarGate();
+  drawSwitches();
   drawStars();
   drawKey();
   for(const b of L.bows)drawBow(b);
   for(const b of L.slings)drawSling(b);
   drawProjs();
+  drawBoulders();
   drawMinions();
   drawHedgehog();
   drawBooms();
@@ -1963,7 +2266,7 @@ function draw(){
     ctx.fillText('\u{1F4A3} Tap a skull, bow or slingshot!',LW/2,64+Math.sin(G.time*6)*4);
     ctx.restore();
   }
-  if(L.def.dark)drawDark();
+  if(L.def.dark){drawDark();drawSwitches();} // 水晶在黑暗里也会发光
   drawFireflies(); // 萤火虫在黑暗上层发光
   ctx.restore();
 }
@@ -2062,6 +2365,12 @@ function goHome(){
   $id('playSub').textContent=(Pet.maxLv||0)>0?('Continue · Cave '+(ci+1)):'Cave 1 · '+caveTitle(0);
   $id('hollowHint').textContent=Pet.unlocked?'':'friends join at Cave 5';
   $id('homeOv').style.display='flex';
+  if(Pet.newCaves){ // 老玩家第一次看到改版
+    Pet.newCaves=false;petSave();
+    setTimeout(()=>{const w=$id('warn');w.style.zIndex='30';
+      banner('✨ New! 30 hand-crafted caves with crystal doors, boulders and wind. Your pets and stars are safe!',4600);
+      setTimeout(()=>{w.style.zIndex='';},5000);},400);
+  }
   cancelAnimationFrame(heroRAF);
   const tick=()=>{if($id('homeOv').style.display==='none')return;drawHero();heroRAF=requestAnimationFrame(tick);};
   tick();
@@ -2218,7 +2527,7 @@ $id('privacyCloseBtn').addEventListener('click',()=>{
   else{$id('settingsOv').style.display='flex';}
 });
 function showHow(){
-  const order=['drag','skull','bow','sling','clamp','run','time','dark','key','boss','tools'];
+  const order=['drag','skull','bow','sling','clamp','pocket','run','time','dark','key','crystal','rock','wind','stargate','boss','tools'];
   $id('howList').innerHTML=order.map(k=>{const t=TIPS[k];return '<li><span class="ic">'+t.ic+'</span><span><b>'+t.t+'.</b> '+t.d+'</span></li>';}).join('')+
     '<li><span class="ic">⭐</span><span><b>Stars.</b> Grab stars quickly in a row for combo bonuses. Spend them in Pet Hollow.</span></li>'+
     '<li><span class="ic">❤️</span><span><b>Hearts.</b> You start with 3. Pets and the sunflower make more while you play.</span></li>';
@@ -2375,7 +2684,7 @@ function bombTap(x,y){
     const d=Math.hypot(x-f.x,y-f.y);
     if(d<bestD){bestD=d;best=pin;bestKind='pinch';bx=f.x;by=f.y;}
   }
-  const shooters=[['bow',L.bows],['sling',L.slings]];
+  const shooters=[['bow',L.bows],['sling',L.slings],['rock',L.rocks]];
   for(const pair of shooters){
     const kind=pair[0],arr=pair[1];
     for(const b of arr){
@@ -2386,11 +2695,12 @@ function bombTap(x,y){
       if(d<bestD){bestD=d;best=b;bestKind=kind;bx=sx;by=sy;}
     }
   }
-  if(!best){banner('💣 No target there — tap a skull, bow or slingshot!',1600);return;}
+  if(!best){banner('💣 No target there — tap a skull, bow, slingshot or boulder hole!',1600);return;}
   Pet.bomb--;petSave();
   G.bombAim=false;
   if(bestKind==='pinch')L.pinches.splice(L.pinches.indexOf(best),1);
   else if(bestKind==='bow')L.bows.splice(L.bows.indexOf(best),1);
+  else if(bestKind==='rock')L.rocks.splice(L.rocks.indexOf(best),1);
   else L.slings.splice(L.slings.indexOf(best),1);
   G.booms.push({x:bx,y:by,t:0});
   tone(90,0.4,'sawtooth',0.18);tone(60,0.5,'square',0.12,0.05);
@@ -2420,8 +2730,9 @@ function buildLvGrid(){
   const maxU=Math.min(LEVELS.length-1,Pet.maxLv||0);
   const r=REGIONS[mapRegion];
   const done=Math.min(r.to+1,maxU)-r.from; // 已通关的洞数
-  document.getElementById('regionDesc').textContent=Math.max(0,Math.min(25,done))+'/25 explored · '+r.desc;
-  document.getElementById('mapCount').textContent=maxU+'/100';
+  const rn=r.to-r.from+1;
+  document.getElementById('regionDesc').textContent=Math.max(0,Math.min(rn,done))+'/'+rn+' explored · '+r.desc;
+  document.getElementById('mapCount').textContent=maxU+'/'+LEVELS.length;
   const n=r.to-r.from+1,gap=96,top=56;
   const W=Math.min(408,(grid.clientWidth||360)-32);
   const trail=document.createElement('div');trail.className='trail';
@@ -2570,6 +2881,6 @@ if(typeof module!=='undefined'&&typeof process!=='undefined'){
     getPet:function(){return Pet},showPet:showPet,doExchange:doExchange,doFeed:doFeed,doExchangeCat:doExchangeCat,doFeedCat:doFeedCat,updatePetUI:updatePetUI,
     setHearts:setHearts,gameOver:gameOver,
     waterSunflower:waterSunflower,buyShield:buyShield,buyBomb:buyBomb,useShield:useShield,useBomb:useBomb,
-    buildLvGrid:buildLvGrid,showLvSel:showLvSel,addFloat:addFloat,bombTap:bombTap,genLevel:genLevel};
+    buildLvGrid:buildLvGrid,showLvSel:showLvSel,addFloat:addFloat,bombTap:bombTap};
 }
 })();
