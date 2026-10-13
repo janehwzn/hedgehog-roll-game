@@ -321,72 +321,124 @@ function genLevel(n){
   const R=(a,b)=>a+rnd()*(b-a);
   const RI=(a,b)=>a+Math.floor(rnd()*(b-a+1));
   const pick=arr=>arr[Math.floor(rnd()*arr.length)%arr.length];
-  // 蛇形路径：起点 [80,690]，竖直/水平交替，每段 120-220px
+  const prog=Math.min(1,Math.max(0,(n-13)/87)); // 0→1 难度进度
+  // 路径风格：0 经典蛇形 / 1 紧凑之字（窄而多弯） / 2 大回环（长直线+急弯）
+  const style=(n%10===0)?0:RI(0,2);
   const wp=[[80,690]];
   let x=80,y=690,dir=1;
-  const segs=RI(6,11);
-  for(let i=0;i<segs;i++){
-    if(i%2===0){ // 竖直向上
-      const ny=Math.max(110,y-R(120,200));
-      if(y-ny<80)break;
-      y=ny;
-    }else{ // 水平蛇形
-      let nx=x+dir*R(120,220);
-      nx=Math.max(60,Math.min(340,nx));
-      if(Math.abs(nx-x)<80)nx=Math.max(60,Math.min(340,x-dir*R(120,220)));
-      if(Math.abs(nx-x)<80)break;
-      x=Math.round(nx);dir=-dir;
+  if(style===0){
+    const segs=RI(6,11);
+    for(let i=0;i<segs;i++){
+      if(i%2===0){
+        const ny=Math.max(110,y-R(120,200));
+        if(y-ny<80)break;
+        y=ny;
+      }else{
+        let nx=x+dir*R(120,220);
+        nx=Math.max(60,Math.min(340,nx));
+        if(Math.abs(nx-x)<80)nx=Math.max(60,Math.min(340,x-dir*R(120,220)));
+        if(Math.abs(nx-x)<80)break;
+        x=Math.round(nx);dir=-dir;
+      }
+      wp.push([Math.round(x),Math.round(y)]);
+      if(y<=110&&i>=5)break;
     }
-    wp.push([Math.round(x),Math.round(y)]);
-    if(y<=110&&i>=5)break;
+  }else if(style===1){
+    const segs=RI(9,14);
+    for(let i=0;i<segs;i++){
+      if(i%2===0){
+        const ny=Math.max(110,y-R(85,150));
+        if(y-ny<85)break;
+        y=ny;
+      }else{
+        let nx=x+dir*R(85,150);
+        nx=Math.max(60,Math.min(340,nx));
+        if(Math.abs(nx-x)<85)nx=Math.max(60,Math.min(340,x-dir*R(85,150)));
+        if(Math.abs(nx-x)<85)break;
+        x=Math.round(nx);dir=-dir;
+      }
+      wp.push([Math.round(x),Math.round(y)]);
+      if(y<=110&&i>=7)break;
+    }
+  }else{
+    const segs=RI(5,7);
+    for(let i=0;i<segs;i++){
+      if(i%2===0){
+        const ny=Math.max(110,y-R(140,220));
+        if(y-ny<100)break;
+        y=ny;
+      }else{
+        let nx=x+dir*R(180,260);
+        nx=Math.max(50,Math.min(350,nx));
+        if(Math.abs(nx-x)<120)nx=Math.max(50,Math.min(350,x-dir*R(180,260)));
+        if(Math.abs(nx-x)<120)break;
+        x=Math.round(nx);dir=-dir;
+      }
+      wp.push([Math.round(x),Math.round(y)]);
+      if(y<=110&&i>=4)break;
+    }
   }
-  const half=Math.round(Math.max(38,58-(n-13)*0.22));
+  // 路径宽度：随等级变窄，紧凑之字再窄一点
+  const halfBase=Math.round(Math.max(34,56-(n-13)*0.25));
+  const half=style===1?Math.max(30,halfBase-6):halfBase;
   const isBoss=n%10===0,isDark=n%7===0,isTime=n%9===0,isKey=n%11===0;
   const pinches=[];
-  if(isBoss){ // Boss 关：大骷髅王
+  if(isBoss){
     pinches.push({frac:0.55,half:26,len:130,skull:true,spikes:true,shutHalf:10,boss:true,
-      spit:{period:4.5},
+      spit:{period:+Math.max(3.2,4.5-prog*1.0).toFixed(2)},
       chomp:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)},
       chomp2:{period:3.2,open:1.8,warn:0.5,phase:+R(0,3).toFixed(2)}});
+    if(n>=50){ // 高等级 Boss：前后各加一个小夹子
+      pinches.push({frac:0.25,half:24,len:60,skull:true,spikes:true,shutHalf:14,
+        chomp:{period:2.6,open:1.4,warn:0.5,phase:+R(0,3).toFixed(2)}});
+      pinches.push({frac:0.8,half:24,len:60,skull:true,spikes:true,shutHalf:14,
+        chomp:{period:2.6,open:1.4,warn:0.5,phase:+R(0,3).toFixed(2)}});
+    }
   }else{
-    const cnt=Math.min(5,Math.floor((n-10)/8));
+    // 从手写关卡的水准起步（13 关≈5 个机关），不再从 0 开始
+    const cnt=Math.min(5,2+Math.floor((n-13)/12));
     const used=[];
     for(let i=0;i<cnt;i++){
       let f=0.5,ok=false;
       for(let t=0;t<30&&!ok;t++){f=R(0.15,0.85);ok=used.every(u=>Math.abs(u-f)>=0.12);}
       used.push(f);
       const p={frac:+f.toFixed(3),half:26,len:60,skull:true,spikes:rnd()<0.6,shutHalf:16};
-      if(rnd()<0.55){
-        const open=+R(1.4,2.4).toFixed(2);
+      if(rnd()<0.55+prog*0.3){
+        const open=+R(1.4,2.4-prog*0.6).toFixed(2);
         p.chomp={period:+(open+R(1.2,2.2)).toFixed(2),open:open,warn:0.5,phase:+R(0,3).toFixed(2)};
       }
       pinches.push(p);
     }
   }
-  const prog=Math.min(1,Math.max(0,(n-13)/87)); // 0→1 难度进度
   const bows=[];
   {
-    const cnt=Math.min(6,Math.floor((n-8)/6));
+    const cnt=Math.min(6,2+Math.floor((n-13)/10));
     const used=[];
+    const pinchFracs=pinches.map(p=>p.frac);
     for(let i=0;i<cnt;i++){
       let f=0.5,ok=false;
+      if(pinchFracs.length&&rnd()<0.4){ // 夹击：弓放在夹子附近
+        const pf=pick(pinchFracs);
+        f=Math.max(0.1,Math.min(0.9,pf+R(-0.08,0.08)));
+        ok=used.every(u=>Math.abs(u-f)>=0.06);
+      }
       for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
       used.push(f);
       bows.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,
-        period:+Math.max(1.6,2.8-prog*1.0+R(-0.2,0.4)).toFixed(2),
-        speed:Math.round(300+prog*120+R(-20,20))});
+        period:+Math.max(1.4,2.8-prog*1.2+R(-0.2,0.4)).toFixed(2),
+        speed:Math.round(300+prog*140+R(-20,20))});
     }
   }
   const slings=[];
   {
-    const cnt=Math.min(4,Math.floor((n-12)/9));
+    const cnt=Math.min(4,1+Math.floor((n-13)/14));
     const used=[];
     for(let i=0;i<cnt;i++){
       let f=0.5,ok=false;
       for(let t=0;t<30&&!ok;t++){f=R(0.1,0.9);ok=used.every(u=>Math.abs(u-f)>=0.1);}
       used.push(f);
       slings.push({frac:+f.toFixed(3),side:rnd()<0.5?1:-1,
-        period:+R(3.2,4.2).toFixed(2),speed:Math.round(R(220,280))});
+        period:+R(3.2-prog*0.6,4.2-prog*0.6).toFixed(2),speed:Math.round(R(220,280)+prog*40)});
     }
   }
   const lv={name:'Level '+n+' \u00B7 '+pick(GEN_NAMES),
@@ -395,7 +447,7 @@ function genLevel(n){
     waypoints:wp,half:half,pinches:pinches,bows:bows,slings:slings,
     starN:6+(n%4)};
   if(isDark){lv.dark=true;lv.fireflyN=RI(6,10);}
-  if(isTime){lv.timeLimit=60+(n%3)*10;}
+  if(isTime){lv.timeLimit=70+(n%3)*10;}
   if(isKey){lv.alcove={frac:0.42,r:75};lv.key={frac:0.42,off:38};lv.door={frac:0.93};}
   return lv;
 }
